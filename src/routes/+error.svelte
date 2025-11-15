@@ -1,5 +1,5 @@
 <script lang="ts">
-	let { error, status } = $props();
+	import { page } from '$app/state';
 
 	const titles: Record<number, string> = {
 		400: 'Solicitud incorrecta',
@@ -19,43 +19,49 @@
 
 	const showDetails = import.meta.env.DEV;
 
-	const isClientError = status >= 400 && status < 500;
-	const title = titles[status] ?? (isClientError ? 'Algo salió mal con tu solicitud' : 'Algo se rompió en el servidor');
+	const statusCode = page.status;
+	const pageError = page.error as any;
+
+	const isClientError = statusCode >= 400 && statusCode < 500;
+	const title = titles[statusCode] ?? `Error ${statusCode}`;
 	const description =
-		descriptions[status] ??
+		descriptions[statusCode] ??
 		(isClientError
-			? 'Tu solicitud no se pudo completar. Intenta nuevamente o revisa los datos enviados.'
-			: 'No pudimos completar tu solicitud. Intenta de nuevo en unos minutos.');
+			? 'Hubo un problema con tu solicitud. Revisa los datos e inténtalo de nuevo.'
+			: 'Hubo un problema al procesar tu solicitud. Intenta nuevamente en unos minutos.');
 </script>
 
-<div class="min-h-[60vh] flex items-center justify-center">
-	<section class="w-full max-w-xl space-y-6 rounded-2xl border border-slate-800 bg-slate-900/80 px-6 py-8 shadow-xl">
+<div class="flex min-h-[60vh] items-center justify-center">
+	<section
+		class="w-full max-w-xl space-y-6 rounded-2xl border border-slate-200 bg-white px-6 py-8 shadow-xl"
+	>
 		<header class="space-y-2">
-			<p class="text-xs uppercase tracking-[0.25em] text-slate-500">Error {status}</p>
-			<h1 class="text-2xl font-semibold tracking-tight text-slate-50">{title}</h1>
-			<p class="text-sm text-slate-400">{description}</p>
+			<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Error {statusCode}</p>
+			<h1 class="text-2xl font-semibold tracking-tight text-slate-900">{title}</h1>
+			<p class="text-sm text-slate-600">{description}</p>
 		</header>
 
 		<div class="flex flex-wrap items-center gap-3 text-xs">
 			<a
 				href="/feed"
-				class="inline-flex items-center justify-center rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 hover:bg-sky-400 transition-colors"
+				class="inline-flex items-center justify-center rounded-full bg-sky-500 px-4 py-2 text-sm font-semibold text-slate-950 transition-colors hover:bg-sky-400"
 			>
 				Ir al inicio
 			</a>
 			<button
 				type="button"
-				on:click={() => history.back()}
-				class="inline-flex items-center justify-center rounded-full border border-slate-700 bg-slate-900 px-4 py-2 text-sm font-medium text-slate-200 hover:bg-slate-800 transition-colors"
+				onclick={() => history.back()}
+				class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-50"
 			>
 				Volver atrás
 			</button>
 		</div>
 
-		{#if showDetails && error}
-			<div class="mt-4 space-y-2 rounded-xl border border-slate-800 bg-slate-950/80 p-3">
-				<p class="text-[11px] font-medium text-slate-400">Detalles técnicos (solo en desarrollo)</p>
-				<pre class="max-h-48 overflow-auto whitespace-pre-wrap break-words text-[11px] text-slate-400">{error.message}</pre>
+		{#if showDetails && pageError}
+			<div class="mt-4 space-y-2 rounded-xl border border-slate-200 bg-slate-50 p-3">
+				<p class="text-[11px] font-medium text-slate-500">Detalles técnicos (solo en desarrollo)</p>
+				<pre
+					class="max-h-48 overflow-auto text-[11px] break-words whitespace-pre-wrap text-slate-600">{pageError?.message}</pre>
 			</div>
 		{/if}
 	</section>

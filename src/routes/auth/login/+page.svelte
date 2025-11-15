@@ -26,16 +26,17 @@
 	};
 </script>
 
-<div class="min-h-screen flex items-center justify-center bg-slate-950 text-slate-50">
-	<div class="w-full max-w-md space-y-6 p-8 bg-slate-900/80 border border-slate-800 rounded-2xl shadow-xl">
+
+<div class="min-h-screen flex items-center justify-center bg-slate-50 text-slate-900">
+	<div class="w-full max-w-md space-y-6 p-8 bg-white border border-slate-200 rounded-2xl shadow-xl">
 		<header class="space-y-2 text-center">
 			<h1 class="text-2xl font-semibold tracking-tight">Inicia sesión</h1>
-			<p class="text-sm text-slate-400">Accede al periódico escolar con tu cuenta</p>
+			<p class="text-sm text-slate-600">Accede al periódico escolar con tu cuenta</p>
 		</header>
 
 		<button
 			type="button"
-			class="w-full flex items-center justify-center gap-2 rounded-full border border-slate-700 bg-slate-900 px-4 py-2.5 text-sm font-medium hover:bg-slate-800 transition-colors disabled:opacity-60"
+			class="w-full flex items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50 transition-colors disabled:opacity-60"
 			disabled
 		>
 			<span class="i-[mdi--google] h-4 w-4"></span>
@@ -43,32 +44,32 @@
 		</button>
 
 		<div class="flex items-center gap-3 text-xs text-slate-500">
-			<div class="h-px flex-1 bg-slate-800"></div>
+			<div class="h-px flex-1 bg-slate-200"></div>
 			<span>o con tu correo</span>
-			<div class="h-px flex-1 bg-slate-800"></div>
+			<div class="h-px flex-1 bg-slate-200"></div>
 		</div>
 
 		{#if error}
-			<div class="rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-200">
+			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
 				{error}
 			</div>
 		{/if}
 
 		<form class="space-y-4" method="POST" on:submit|preventDefault={handleSubmit}>
 			<div class="space-y-2">
-				<label class="block text-xs font-medium text-slate-300" for="email">Correo electrónico</label>
+				<label class="block text-xs font-medium text-slate-700" for="email">Correo electrónico</label>
 				<input
 					id="email"
 					name="email"
 					type="email"
 					bind:value={email}
 					required
-					class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm outline-none ring-0 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
+					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-0 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
 				/>
 			</div>
 
 			<div class="space-y-2">
-				<label class="block text-xs font-medium text-slate-300" for="password">Contraseña</label>
+				<label class="block text-xs font-medium text-slate-700" for="password">Contraseña</label>
 				<input
 					id="password"
 					name="password"
@@ -76,7 +77,7 @@
 					bind:value={password}
 					minlength="6"
 					required
-					class="w-full rounded-xl border border-slate-700 bg-slate-950/60 px-3 py-2 text-sm outline-none ring-0 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/40"
+					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm outline-none ring-0 focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
 				/>
 			</div>
 
@@ -95,7 +96,7 @@
 
 		<p class="text-xs text-center text-slate-500">
 			¿No tienes cuenta?
-			<a href="/auth/register" class="text-sky-400 hover:underline">Regístrate</a>
+			<a href="/auth/register" class="text-sky-600 hover:underline">Regístrate</a>
 		</p>
 	</div>
 </div>
