@@ -1,8 +1,19 @@
 <script lang="ts">
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
+	import { page } from '$app/state';
 
 	let { children, data } = $props();
+
+	const links = [
+		{ href: '/feed', label: 'Inicio' },
+		{ href: '/redaccion', label: 'Redacción' }
+	] as const;
+
+	const isActive = (href: string) => {
+		const path = page.url.pathname;
+		return path === href || path.startsWith(`${href}/`);
+	};
 </script>
 
 <svelte:head>
@@ -11,39 +22,63 @@
 
 <div class="min-h-screen bg-slate-50 text-slate-900">
 	<header class="border-b border-slate-200 bg-white/80 backdrop-blur">
-		<div class="max-w-5xl mx-auto px-4 py-3 flex items-center justify-between gap-4">
-			<a href="/feed" class="flex flex-col">
-				<span class="text-sm font-semibold tracking-tight">Periódico escolar</span>
-				<span class="text-[11px] text-slate-500 leading-tight">Tu escuela</span>
+		<div class="max-w-5xl mx-auto flex items-center justify-between gap-4 px-4 py-3">
+			<a href="/feed" class="flex items-center gap-2">
+				<div
+					class="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-500/20 bg-sky-500/10"
+				>
+					<span class="text-sm font-semibold text-sky-600">PE</span>
+				</div>
+				<div class="flex flex-col">
+					<span class="text-sm font-semibold tracking-tight">Periódico escolar</span>
+					<span class="text-[11px] leading-tight text-slate-500">Tu escuela</span>
+				</div>
 			</a>
 
-			<nav class="flex items-center gap-4 text-xs text-slate-600">
-				<a href="/feed" class="text-slate-600 hover:text-sky-700">Inicio</a>
-				<a href="/redaccion" class="text-slate-600 hover:text-sky-700">Redacción</a>
-				{#if data.user}
-					<span class="hidden sm:inline text-slate-300">•</span>
-					<span class="hidden sm:inline text-slate-600">{data.user.email}</span>
-					<form method="POST" action="/auth/logout">
-						<button
-							type="submit"
-							class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 hover:bg-slate-50 transition-colors"
+			<nav class="flex items-center gap-4">
+				<div
+					class="hidden items-center gap-1 rounded-full bg-slate-100 px-1 py-1 text-xs text-slate-600 sm:flex"
+				>
+					{#each links as link}
+						<a
+							href={link.href}
+							aria-current={isActive(link.href) ? 'page' : undefined}
+							class={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 transition-colors ${
+								isActive(link.href)
+									? 'bg-white text-slate-900 shadow-sm'
+									: 'text-slate-600 hover:bg-slate-200/80 hover:text-slate-900'
+							}`}
 						>
-							Cerrar sesión
-						</button>
-					</form>
-				{:else}
-					<a
-						href="/auth/login"
-						class="rounded-full bg-sky-500 px-4 py-1.5 text-xs font-semibold text-slate-950 hover:bg-sky-600 transition-colors"
-					>
-						Iniciar sesión
-					</a>
-				{/if}
+							{link.label}
+						</a>
+					{/each}
+				</div>
+
+				<div class="flex items-center gap-3 text-xs text-slate-600">
+					{#if data.user}
+						<span class="hidden sm:inline text-slate-500">{data.user.email}</span>
+						<form method="POST" action="/auth/logout">
+							<button
+								type="submit"
+								class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 transition-colors hover:bg-slate-50"
+							>
+								Cerrar sesión
+							</button>
+						</form>
+					{:else}
+						<a
+							href="/auth/login"
+							class="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-slate-50 transition-colors hover:bg-slate-800"
+						>
+							Iniciar sesión
+						</a>
+					{/if}
+				</div>
 			</nav>
 		</div>
 	</header>
 
-	<main class="max-w-5xl mx-auto px-4 py-6">
+	<main class="max-w-5xl mx-auto px-4 py-8">
 		{@render children()}
 	</main>
-</div>
+	</div>
