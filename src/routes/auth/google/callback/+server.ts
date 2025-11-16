@@ -9,9 +9,11 @@ const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
 export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	const code = url.searchParams.get('code');
+	const error = url.searchParams.get('error');
 
-	if (!code) {
-		return new Response('Falta el parámetro code de Google', { status: 400 });
+	// Si el usuario canceló o hubo un error en Google, redirigir al login
+	if (!code || error) {
+		throw redirect(303, '/auth/login');
 	}
 
 	if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {

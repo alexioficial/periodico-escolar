@@ -2,6 +2,7 @@
 	import '../app.css';
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
+	import ToastHost from '$lib/components/ToastHost.svelte';
 
 	let { children, data } = $props();
 
@@ -78,7 +79,9 @@
 		</div>
 	</header>
 
-	<main class="mx-auto max-w-5xl px-4 py-8">
+	<main class="mx-auto max-w-5xl px-4 py-6">
 		{@render children()}
 	</main>
+
+	<ToastHost />
 </div>

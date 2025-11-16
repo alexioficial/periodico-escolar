@@ -12,7 +12,7 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
 
 			event.locals.user = user
 				? {
-						_id: user._id,
+						_id: user._id.toString(),
 						email: user.email,
 						provider: user.provider
 					}

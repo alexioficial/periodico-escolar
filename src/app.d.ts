@@ -7,7 +7,7 @@ declare global {
 		// interface Error {}
 		interface Locals {
 			user: {
-				_id: ObjectId;
+				_id: string;
 				email: string;
 				provider: 'credentials' | 'google';
 			} | null;
