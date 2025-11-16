@@ -13,7 +13,7 @@ export const handle: Handle = async ({ event, resolve }) => {
 						_id: user._id,
 						email: user.email,
 						provider: user.provider
-				  }
+					}
 				: null;
 		} catch (error) {
 			console.error('Error al recuperar usuario de la sesión:', error);

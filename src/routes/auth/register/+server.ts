@@ -1,14 +1,18 @@
 import { json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { createUser } from '$lib/server/auth';
+import { createAndSendVerificationCode } from '$lib/server/verification';
 
 export const POST: RequestHandler = async ({ request }) => {
 	try {
 		const formData = await request.formData();
-		const email = String(formData.get('email') ?? '').trim().toLowerCase();
+		const email = String(formData.get('email') ?? '')
+			.trim()
+			.toLowerCase();
+		const username = String(formData.get('username') ?? '').trim();
 		const password = String(formData.get('password') ?? '');
 
-		if (!email || !password) {
+		if (!email || !username || !password) {
 			return json({ message: 'Faltan datos' }, { status: 400 });
 		}
 
@@ -16,8 +20,11 @@ export const POST: RequestHandler = async ({ request }) => {
 			return json({ message: 'La contraseña debe tener al menos 6 caracteres' }, { status: 400 });
 		}
 
-		await createUser(email, password);
-		return json({ message: 'Usuario creado correctamente' });
+		await createUser(email, username, password);
+		await createAndSendVerificationCode(email);
+		return json({
+			message: 'Cuenta creada. Revisa tu correo para ingresar el código de verificación.'
+		});
 	} catch (error: unknown) {
 		console.error('Error en registro:', error);
 

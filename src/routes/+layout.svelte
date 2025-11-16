@@ -22,7 +22,7 @@
 
 <div class="min-h-screen bg-slate-50 text-slate-900">
 	<header class="border-b border-slate-200 bg-white/80 backdrop-blur">
-		<div class="max-w-5xl mx-auto flex items-center justify-between gap-4 px-4 py-3">
+		<div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
 			<a href="/feed" class="flex items-center gap-2">
 				<div
 					class="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-500/20 bg-sky-500/10"
@@ -56,7 +56,7 @@
 
 				<div class="flex items-center gap-3 text-xs text-slate-600">
 					{#if data.user}
-						<span class="hidden sm:inline text-slate-500">{data.user.email}</span>
+						<span class="hidden text-slate-500 sm:inline">{data.user.email}</span>
 						<form method="POST" action="/auth/logout">
 							<button
 								type="submit"
@@ -78,7 +78,7 @@
 		</div>
 	</header>
 
-	<main class="max-w-5xl mx-auto px-4 py-8">
+	<main class="mx-auto max-w-5xl px-4 py-8">
 		{@render children()}
 	</main>
-	</div>
+</div>

@@ -6,13 +6,11 @@ declare global {
 	namespace App {
 		// interface Error {}
 		interface Locals {
-			user:
-				| {
-						_id: ObjectId;
-						email: string;
-						provider: 'credentials' | 'google';
-				  }
-				| null;
+			user: {
+				_id: ObjectId;
+				email: string;
+				provider: 'credentials' | 'google';
+			} | null;
 		}
 		// interface PageData {}
 		// interface PageState {}

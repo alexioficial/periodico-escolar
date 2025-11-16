@@ -7,6 +7,7 @@ const USERS_COLLECTION = 'users';
 interface UserDoc {
 	_id: ObjectId;
 	email: string;
+	username?: string;
 	passwordHash?: string;
 	salt?: string;
 	provider: 'credentials' | 'google';
@@ -31,23 +32,31 @@ function hashPassword(password: string, salt?: string) {
 	return { hash, salt: usedSalt };
 }
 
-export async function createUser(email: string, password: string) {
+export async function createUser(email: string, username: string, password: string) {
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
 
-	const existing = await users.findOne({ email });
-	if (existing) {
+	const [existingEmail, existingUsername] = await Promise.all([
+		users.findOne({ email }),
+		users.findOne({ username })
+	]);
+	if (existingEmail) {
 		throw new Error('El correo ya está registrado');
+	}
+	if (existingUsername) {
+		throw new Error('El nombre de usuario ya está en uso');
 	}
 
 	const { hash, salt } = hashPassword(password);
 
 	const result = await users.insertOne({
 		email,
+		username,
 		passwordHash: hash,
 		salt,
 		createdAt: new Date(),
-		provider: 'credentials'
+		provider: 'credentials',
+		emailVerified: false
 	} as UserDoc);
 
 	return result.insertedId;
