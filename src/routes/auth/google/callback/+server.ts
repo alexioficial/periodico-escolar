@@ -2,9 +2,10 @@ import type { RequestHandler } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
 import { findOrCreateUserFromGoogle } from '$lib/server/auth';
 import { createSession } from '$lib/server/session';
+import { env } from '$env/dynamic/private';
 
-const GOOGLE_CLIENT_ID = process.env.GOOGLE_CLIENT_ID;
-const GOOGLE_CLIENT_SECRET = process.env.GOOGLE_CLIENT_SECRET;
+const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
+const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
 export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	const code = url.searchParams.get('code');
@@ -14,7 +15,10 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	}
 
 	if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
-		return new Response('GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no configurados', { status: 500 });
+		console.error('GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no configurados. Revisa tu .env');
+		return new Response('Configuración de Google OAuth incompleta (client id/secret).', {
+			status: 500
+		});
 	}
 
 	const redirectUri = new URL('/auth/google/callback', url.origin).toString();

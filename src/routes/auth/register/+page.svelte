@@ -45,14 +45,13 @@
 			<p class="text-sm text-slate-600">Regístrate para colaborar en el periódico escolar</p>
 		</header>
 
-		<button
-			type="button"
-			class="flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50 disabled:opacity-60"
-			disabled
+		<a
+			href="/auth/google"
+			class="flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
 		>
 			<span class="i-[mdi--google] h-4 w-4"></span>
-			<span>Continuar con Google (próximamente)</span>
-		</button>
+			<span>Continuar con Google</span>
+		</a>
 
 		<div class="flex items-center gap-3 text-xs text-slate-500">
 			<div class="h-px flex-1 bg-slate-200"></div>
