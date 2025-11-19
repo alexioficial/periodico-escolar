@@ -95,7 +95,6 @@ export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
 			name: profile.name,
 			picture: profile.picture,
 			emailVerified: profile.email_verified,
-			emailVerified: profile.email_verified,
 			role: 'user',
 			createdAt: new Date()
 		} as UserDoc);
