@@ -16,6 +16,7 @@ interface UserDoc {
 	name?: string;
 	picture?: string;
 	emailVerified?: boolean;
+	role: 'user' | 'admin' | 'superadmin';
 }
 
 interface GoogleUserProfile {
@@ -56,7 +57,8 @@ export async function createUser(email: string, username: string, password: stri
 		salt,
 		createdAt: new Date(),
 		provider: 'credentials',
-		emailVerified: false
+		emailVerified: false,
+		role: 'user'
 	} as UserDoc);
 
 	return result.insertedId;
@@ -93,6 +95,8 @@ export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
 			name: profile.name,
 			picture: profile.picture,
 			emailVerified: profile.email_verified,
+			emailVerified: profile.email_verified,
+			role: 'user',
 			createdAt: new Date()
 		} as UserDoc);
 

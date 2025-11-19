@@ -10,6 +10,7 @@ declare global {
 				_id: string;
 				email: string;
 				provider: 'credentials' | 'google';
+				role: 'user' | 'admin' | 'superadmin';
 			} | null;
 		}
 		// interface PageData {}
@@ -18,4 +19,4 @@ declare global {
 	}
 }
 
-export {};
+export { };

@@ -1,54 +1,23 @@
 <script lang="ts">
-	import { page } from '$app/stores';
+	import { enhance } from '$app/forms';
 	let { data } = $props();
-
-	const categories = ['Noticias', 'Deportes', 'Cultura', 'Opinión', 'Entrevistas'];
 </script>
 
 <section class="space-y-8">
 	<header class="space-y-3">
-		<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Periódico escolar</p>
+		<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Tu Perfil</p>
 		<h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-			Últimas Noticias
+			Artículos Guardados
 		</h1>
 		<p class="max-w-2xl text-sm text-slate-600">
-			Explora las historias más recientes de nuestra comunidad educativa.
+			Colección de noticias y publicaciones que has marcado para leer más tarde.
 		</p>
 	</header>
 
-	<nav class="flex flex-wrap gap-2">
-		<a
-			href="/feed"
-			class="rounded-full px-4 py-1.5 text-sm font-medium transition-colors
-			{!data.currentCategory
-				? 'bg-slate-900 text-white'
-				: 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
-		>
-			Todas
-		</a>
-		{#each categories as category}
-			<a
-				href="/feed?category={category}"
-				class="rounded-full px-4 py-1.5 text-sm font-medium transition-colors
-				{data.currentCategory === category
-					? 'bg-slate-900 text-white'
-					: 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
-			>
-				{category}
-			</a>
-		{/each}
-	</nav>
-
 	{#if data.articles.length === 0}
 		<div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
-			<p class="text-lg font-medium text-slate-900">No hay noticias</p>
-			<p class="mt-1 text-sm text-slate-500">
-				{#if data.currentCategory}
-					No hay artículos publicados en la categoría "{data.currentCategory}" todavía.
-				{:else}
-					Aún no se han publicado artículos en el periódico.
-				{/if}
-			</p>
+			<p class="text-lg font-medium text-slate-900">No tienes guardados</p>
+			<p class="mt-1 text-sm text-slate-500">Marca artículos con la estrella para verlos aquí.</p>
 		</div>
 	{:else}
 		<div class="mx-auto grid max-w-2xl gap-8">
@@ -168,10 +137,10 @@
 							</div>
 						{/if}
 
-						<!-- Actions -->
+						<!-- Actions (Reusing actions from feed, pointing to feed actions) -->
 						<div class="flex items-center justify-between pt-2">
 							<div class="flex items-center gap-4">
-								<form method="POST" action="?/toggleLike" use:enhance>
+								<form method="POST" action="/feed?/toggleLike" use:enhance>
 									<input type="hidden" name="id" value={article._id} />
 									<button type="submit" class="group flex items-center gap-1.5">
 										<svg
@@ -224,7 +193,7 @@
 								</button>
 							</div>
 
-							<form method="POST" action="?/toggleSave" use:enhance>
+							<form method="POST" action="/feed?/toggleSave" use:enhance>
 								<input type="hidden" name="id" value={article._id} />
 								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
 									<svg

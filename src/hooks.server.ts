@@ -12,10 +12,11 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
 
 			event.locals.user = user
 				? {
-						_id: user._id.toString(),
-						email: user.email,
-						provider: user.provider
-					}
+					_id: user._id.toString(),
+					email: user.email,
+					provider: user.provider,
+					role: user.role || 'user'
+				}
 				: null;
 		} catch (error) {
 			console.error('Error al recuperar usuario de la sesión:', error);
@@ -30,7 +31,8 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
 					event.locals.user = {
 						_id: undefined as unknown as string,
 						email: session.user.email,
-						provider: 'google'
+						provider: 'google',
+						role: 'user'
 					} as any;
 				} else {
 					event.locals.user = null;
