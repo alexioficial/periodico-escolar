@@ -6,10 +6,34 @@
 
 	let { children, data } = $props();
 
-	const links = [
-		{ href: '/feed', label: 'Inicio' },
-		{ href: '/redaccion', label: 'Redacción' }
-	] as const;
+	// Dynamic links based on user role
+	const getLinks = (user: typeof data.user) => {
+		const baseLinks = [{ href: '/feed', label: 'Inicio' }];
+
+		// Add Guardados for all authenticated users (after Inicio)
+		if (user) {
+			baseLinks.push({ href: '/perfil/guardados', label: 'Guardados' });
+		}
+
+		// Add Redacción
+		baseLinks.push({ href: '/redaccion', label: 'Redacción' });
+
+		if (!user) return baseLinks;
+
+		// Add Verificar for Admins and SuperAdmins
+		if (user.role === 'admin' || user.role === 'superadmin') {
+			baseLinks.push({ href: '/redaccion/verificar', label: 'Verificar' });
+		}
+
+		// Add Usuarios for SuperAdmins only
+		if (user.role === 'superadmin') {
+			baseLinks.push({ href: '/admin/users', label: 'Usuarios' });
+		}
+
+		return baseLinks;
+	};
+
+	const links = $derived(getLinks(data.user));
 
 	const isActive = (href: string) => {
 		const path = page.url.pathname;

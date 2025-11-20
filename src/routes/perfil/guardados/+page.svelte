@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { toast } from '$lib/toast';
 	let { data } = $props();
 </script>
 
@@ -173,7 +174,7 @@
 										navigator.clipboard.writeText(
 											window.location.origin + '/feed?id=' + article._id
 										);
-										alert('Enlace copiado!');
+										toast.success('Enlace copiado al portapapeles');
 									}}
 								>
 									<svg

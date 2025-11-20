@@ -1,6 +1,23 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	let { data } = $props();
+
+	let emailSearch = $state(data.emailFilter || '');
+
+	function handleSearch() {
+		const params = new URLSearchParams();
+		if (emailSearch) params.set('email', emailSearch);
+		params.set('page', '1');
+		goto(`/admin/users?${params.toString()}`);
+	}
+
+	function goToPage(page: number) {
+		const params = new URLSearchParams();
+		if (emailSearch) params.set('email', emailSearch);
+		params.set('page', page.toString());
+		goto(`/admin/users?${params.toString()}`);
+	}
 </script>
 
 <section class="space-y-8">
@@ -14,6 +31,41 @@
 			administradores y ayuden a verificar contenido.
 		</p>
 	</header>
+
+	<!-- Search Bar -->
+	<div class="flex items-center gap-3">
+		<div class="flex-1">
+			<input
+				type="text"
+				bind:value={emailSearch}
+				placeholder="Buscar por correo..."
+				class="w-full rounded-lg border border-slate-300 px-4 py-2 text-sm focus:border-indigo-500 focus:ring-2 focus:ring-indigo-500/20"
+				onkeydown={(e) => e.key === 'Enter' && handleSearch()}
+			/>
+		</div>
+		<button
+			onclick={handleSearch}
+			class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+		>
+			Buscar
+		</button>
+		{#if data.emailFilter}
+			<button
+				onclick={() => {
+					emailSearch = '';
+					handleSearch();
+				}}
+				class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+			>
+				Limpiar
+			</button>
+		{/if}
+	</div>
+
+	<!-- User Count -->
+	<p class="text-sm text-slate-600">
+		Mostrando {data.users.length} de {data.pagination.totalUsers} usuarios
+	</p>
 
 	<div class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 		<table class="min-w-full divide-y divide-slate-200">
@@ -97,4 +149,44 @@
 			</tbody>
 		</table>
 	</div>
+
+	<!-- Pagination -->
+	{#if data.pagination.totalPages > 1}
+		<div class="flex items-center justify-between border-t border-slate-200 pt-4">
+			<button
+				onclick={() => goToPage(data.pagination.currentPage - 1)}
+				disabled={!data.pagination.hasPrevPage}
+				class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				Anterior
+			</button>
+
+			<div class="flex items-center gap-2">
+				{#each Array(data.pagination.totalPages) as _, i}
+					{#if i + 1 === data.pagination.currentPage || i + 1 === 1 || i + 1 === data.pagination.totalPages || (i + 1 >= data.pagination.currentPage - 1 && i + 1 <= data.pagination.currentPage + 1)}
+						<button
+							onclick={() => goToPage(i + 1)}
+							class={`rounded-lg px-3 py-1.5 text-sm font-medium ${
+								i + 1 === data.pagination.currentPage
+									? 'bg-indigo-600 text-white'
+									: 'border border-slate-300 text-slate-700 hover:bg-slate-50'
+							}`}
+						>
+							{i + 1}
+						</button>
+					{:else if (i + 1 === data.pagination.currentPage - 2 && data.pagination.currentPage > 3) || (i + 1 === data.pagination.currentPage + 2 && data.pagination.currentPage < data.pagination.totalPages - 2)}
+						<span class="px-2 text-slate-400">...</span>
+					{/if}
+				{/each}
+			</div>
+
+			<button
+				onclick={() => goToPage(data.pagination.currentPage + 1)}
+				disabled={!data.pagination.hasNextPage}
+				class="rounded-lg border border-slate-300 px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+			>
+				Siguiente
+			</button>
+		</div>
+	{/if}
 </section>
