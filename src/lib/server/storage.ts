@@ -1,5 +1,6 @@
 import { put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
+import { env } from '$env/dynamic/private';
 
 // Maximum file size: 4.5 MB (Vercel Blob limit for Hobby plan)
 const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5 MB in bytes
@@ -25,7 +26,8 @@ export async function saveFile(file: File): Promise<string> {
         // Upload to Vercel Blob
         const blob = await put(filename, file, {
             access: 'public',
-            contentType: file.type || 'application/octet-stream'
+            contentType: file.type || 'application/octet-stream',
+            token: env.BLOB_READ_WRITE_TOKEN
         });
 
         // Return the public URL

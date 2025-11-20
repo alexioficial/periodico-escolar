@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import FileUploader from '$lib/components/FileUploader.svelte';
 	let { data, form } = $props();
 
 	let showForm = $state(false);
@@ -69,36 +70,19 @@
 					></textarea>
 				</div>
 
-				<div class="space-y-2">
-					<label for="media" class="text-sm font-medium text-slate-700">
-						Multimedia (Fotos y Videos)
-					</label>
-					<input
-						type="file"
-						name="media"
-						id="media"
-						multiple
-						accept="image/*,video/*"
-						class="w-full rounded-md border border-slate-300 p-2 text-sm shadow-sm focus:border-slate-500 focus:ring-slate-500"
-					/>
-					<p class="text-xs text-slate-500">
-						Selecciona múltiples archivos para crear un carrusel.
-					</p>
-				</div>
+				<FileUploader
+					accept="image/*,video/*"
+					label="Multimedia (Fotos y Videos)"
+					name="media"
+					maxSize={4.5}
+				/>
 
-				<div class="space-y-2">
-					<label for="attachments" class="text-sm font-medium text-slate-700">
-						Archivos Adjuntos (PDF, Word, Excel)
-					</label>
-					<input
-						type="file"
-						name="attachments"
-						id="attachments"
-						multiple
-						accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
-						class="w-full rounded-md border border-slate-300 p-2 text-sm shadow-sm focus:border-slate-500 focus:ring-slate-500"
-					/>
-				</div>
+				<FileUploader
+					accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
+					label="Archivos Adjuntos (PDF, Word, Excel)"
+					name="attachments"
+					maxSize={4.5}
+				/>
 
 				<div class="space-y-2">
 					<label for="content" class="text-sm font-medium text-slate-700">Contenido</label>
