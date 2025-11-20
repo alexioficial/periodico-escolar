@@ -4,6 +4,12 @@
 	let { data, form } = $props();
 
 	let showForm = $state(false);
+
+	// Definir límites según rol
+	const isStaff = ['admin', 'superadmin'].includes(data.user.role);
+	const maxImages = isStaff ? Infinity : 10;
+	const maxVideos = isStaff ? Infinity : 2;
+	const maxAttachments = isStaff ? Infinity : 3;
 </script>
 
 <section class="space-y-8">
@@ -75,6 +81,8 @@
 					label="Multimedia (Fotos y Videos)"
 					name="media"
 					maxSize={4.5}
+					{maxImages}
+					{maxVideos}
 				/>
 
 				<FileUploader
@@ -82,6 +90,7 @@
 					label="Archivos Adjuntos (PDF, Word, Excel)"
 					name="attachments"
 					maxSize={4.5}
+					maxItems={maxAttachments}
 				/>
 
 				<div class="space-y-2">

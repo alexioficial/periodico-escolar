@@ -6,12 +6,18 @@
 		accept = '*',
 		label = 'Archivos',
 		name,
-		maxSize = 4.5
+		maxSize = 4.5,
+		maxImages = Infinity,
+		maxVideos = Infinity,
+		maxItems = Infinity
 	} = $props<{
 		accept?: string;
 		label?: string;
 		name: string;
 		maxSize?: number;
+		maxImages?: number;
+		maxVideos?: number;
+		maxItems?: number;
 	}>();
 
 	let selectedFiles = $state<File[]>([]);
@@ -37,22 +43,48 @@
 	function addFiles(files: FileList | File[]) {
 		const fileArray = Array.from(files);
 
+		// Contadores actuales
+		let currentImages = selectedFiles.filter((f) => f.type.startsWith('image/')).length;
+		let currentVideos = selectedFiles.filter((f) => f.type.startsWith('video/')).length;
+		let currentTotal = selectedFiles.length;
+
 		for (const file of fileArray) {
 			// Validar tamaño
 			if (file.size > maxSizeBytes) {
-				toast(`El archivo ${file.name} es demasiado grande. Tamaño máximo: ${maxSize} MB`, 'error');
+				toast.error(`El archivo ${file.name} es demasiado grande. Tamaño máximo: ${maxSize} MB`);
 				continue;
 			}
 
 			// Validar tipo (si hay restricción)
 			if (accept !== '*' && !isFileTypeAccepted(file)) {
-				toast(`El tipo de archivo ${file.name} no es permitido`, 'error');
+				toast.error(`El tipo de archivo ${file.name} no es permitido`);
 				continue;
+			}
+
+			// Validar límites de cantidad
+			if (currentTotal >= maxItems) {
+				toast.error(`Has alcanzado el límite máximo de ${maxItems} archivos`);
+				break;
+			}
+
+			if (file.type.startsWith('image/')) {
+				if (currentImages >= maxImages) {
+					toast.error(`Has alcanzado el límite máximo de ${maxImages} imágenes`);
+					continue;
+				}
+				currentImages++;
+			} else if (file.type.startsWith('video/')) {
+				if (currentVideos >= maxVideos) {
+					toast.error(`Has alcanzado el límite máximo de ${maxVideos} videos`);
+					continue;
+				}
+				currentVideos++;
 			}
 
 			// Agregar archivo
 			selectedFiles.push(file);
 			createPreviewUrl(file);
+			currentTotal++;
 		}
 
 		selectedFiles = [...selectedFiles]; // Trigger reactivity
@@ -61,9 +93,9 @@
 
 	// Verificar si el tipo de archivo es aceptado
 	function isFileTypeAccepted(file: File): boolean {
-		const acceptTypes = accept.split(',').map((t) => t.trim());
+		const acceptTypes = accept.split(',').map((type: string) => type.trim());
 
-		return acceptTypes.some((type) => {
+		return acceptTypes.some((type: string) => {
 			if (type.startsWith('.')) {
 				return file.name.toLowerCase().endsWith(type.toLowerCase());
 			}
