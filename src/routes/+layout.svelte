@@ -3,6 +3,7 @@
 	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
 	import ToastHost from '$lib/components/ToastHost.svelte';
+	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
 	let { children, data } = $props();
 
@@ -27,6 +28,7 @@
 
 		// Add Usuarios for SuperAdmins only
 		if (user.role === 'superadmin') {
+			baseLinks.push({ href: '/admin/categories', label: 'Categorías' });
 			baseLinks.push({ href: '/admin/users', label: 'Usuarios' });
 		}
 
@@ -108,4 +110,5 @@
 	</main>
 
 	<ToastHost />
+	<ConfirmDialog />
 </div>

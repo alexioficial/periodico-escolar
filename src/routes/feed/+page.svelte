@@ -2,9 +2,26 @@
 	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast';
+	import { goto } from '$app/navigation';
+
 	let { data } = $props();
 
-	const categories = ['Noticias', 'Deportes', 'Cultura', 'Opinión', 'Entrevistas'];
+	let loadingMore = $state(false);
+
+	async function loadMore() {
+		if (loadingMore || !data.pagination.hasMore) return;
+		loadingMore = true;
+
+		const params = new URLSearchParams($page.url.searchParams);
+		params.set('page', (data.pagination.currentPage + 1).toString());
+
+		await goto(`/feed?${params.toString()}`, {
+			keepFocus: true,
+			noScroll: true
+		});
+
+		loadingMore = false;
+	}
 </script>
 
 <section class="space-y-8">
@@ -22,21 +39,21 @@
 		<a
 			href="/feed"
 			class="rounded-full px-4 py-1.5 text-sm font-medium transition-colors
-			{!data.currentCategory
+			{!data.currentCategoryId
 				? 'bg-slate-900 text-white'
 				: 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
 		>
 			Todas
 		</a>
-		{#each categories as category}
+		{#each data.categories as category}
 			<a
-				href="/feed?category={category}"
+				href="/feed?categoryId={category._id}"
 				class="rounded-full px-4 py-1.5 text-sm font-medium transition-colors
-				{data.currentCategory === category
+				{data.currentCategoryId === category._id
 					? 'bg-slate-900 text-white'
 					: 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
 			>
-				{category}
+				{category.name}
 			</a>
 		{/each}
 	</nav>
@@ -76,7 +93,7 @@
 						<span
 							class="rounded-full bg-slate-100 px-2.5 py-0.5 text-xs font-medium text-slate-600"
 						>
-							{article.category}
+							{article.categoryName}
 						</span>
 					</div>
 
@@ -250,5 +267,18 @@
 				</article>
 			{/each}
 		</div>
+
+		<!-- Load More Button -->
+		{#if data.pagination.hasMore}
+			<div class="flex justify-center pt-8">
+				<button
+					onclick={loadMore}
+					disabled={loadingMore}
+					class="rounded-lg bg-slate-900 px-6 py-3 text-sm font-medium text-white hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-50"
+				>
+					{loadingMore ? 'Cargando...' : 'Cargar más artículos'}
+				</button>
+			</div>
+		{/if}
 	{/if}
 </section>

@@ -43,18 +43,17 @@
 						/>
 					</div>
 					<div class="space-y-2">
-						<label for="category" class="text-sm font-medium text-slate-700">Categoría</label>
+						<label for="categoryId" class="text-sm font-medium text-slate-700">Categoría</label>
 						<select
-							name="category"
-							id="category"
+							name="categoryId"
+							id="categoryId"
 							required
 							class="w-full rounded-md border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500"
 						>
-							<option value="Noticias">Noticias</option>
-							<option value="Deportes">Deportes</option>
-							<option value="Cultura">Cultura</option>
-							<option value="Opinión">Opinión</option>
-							<option value="Entrevistas">Entrevistas</option>
+							<option value="">Selecciona una categoría</option>
+							{#each data.categories as category}
+								<option value={category._id}>{category.name}</option>
+							{/each}
 						</select>
 					</div>
 				</div>

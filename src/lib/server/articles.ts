@@ -8,7 +8,7 @@ export interface ArticleDoc {
     title: string;
     content: string;
     excerpt: string;
-    category: string;
+    categoryId: string; // Reference to Category _id
     authorId: string;
     authorEmail: string;
     status: 'draft' | 'pending' | 'published' | 'rejected';
@@ -53,14 +53,30 @@ export async function getPendingArticles() {
     return collection.find({ status: 'pending' }).sort({ createdAt: -1 }).toArray();
 }
 
-export async function getPublishedArticles(category?: string) {
+export async function getPublishedArticles(categoryId?: string, skip = 0, limit?: number) {
     const db: Db = await getDb();
     const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
     const query: any = { status: 'published' };
-    if (category) {
-        query.category = category;
+    if (categoryId) {
+        query.categoryId = categoryId;
     }
-    return collection.find(query).sort({ publishedAt: -1 }).toArray();
+
+    let cursor = collection.find(query).sort({ publishedAt: -1 }).skip(skip);
+    if (limit) {
+        cursor = cursor.limit(limit);
+    }
+
+    return cursor.toArray();
+}
+
+export async function countPublishedArticles(categoryId?: string) {
+    const db: Db = await getDb();
+    const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
+    const query: any = { status: 'published' };
+    if (categoryId) {
+        query.categoryId = categoryId;
+    }
+    return collection.countDocuments(query);
 }
 
 export async function getArticlesByAuthor(authorId: string) {

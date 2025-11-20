@@ -1,21 +1,28 @@
-import { fail, redirect } from '@sveltejs/kit';
+import { redirect, fail } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { createArticle, getArticlesByAuthor } from '$lib/server/articles';
+import { getCategories, ensureDefaultCategories } from '$lib/server/categories';
+import { saveFile } from '$lib/server/storage';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
 		throw redirect(303, '/auth/login');
 	}
 
-	const articles = await getArticlesByAuthor(locals.user._id);
+	// Ensure default categories exist
+	await ensureDefaultCategories();
+
+	const [articles, categories] = await Promise.all([
+		getArticlesByAuthor(locals.user._id),
+		getCategories()
+	]);
 
 	return {
 		user: locals.user,
-		articles: JSON.parse(JSON.stringify(articles)) // Serialize ObjectIds
+		articles: JSON.parse(JSON.stringify(articles)),
+		categories: JSON.parse(JSON.stringify(categories)) // Serialize ObjectIds
 	};
 };
-
-import { saveFile } from '$lib/server/storage';
 
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
@@ -26,7 +33,7 @@ export const actions: Actions = {
 		const formData = await request.formData();
 		const title = formData.get('title') as string;
 		const content = formData.get('content') as string;
-		const category = formData.get('category') as string;
+		const categoryId = formData.get('categoryId') as string;
 		const excerpt = formData.get('excerpt') as string;
 
 		// Handle Media Files
@@ -55,7 +62,7 @@ export const actions: Actions = {
 			}
 		}
 
-		if (!title || !content || !category || !excerpt) {
+		if (!title || !content || !categoryId || !excerpt) {
 			return fail(400, { message: 'Faltan campos requeridos' });
 		}
 
@@ -66,7 +73,7 @@ export const actions: Actions = {
 			await createArticle({
 				title,
 				content,
-				category,
+				categoryId,
 				excerpt,
 				authorId: locals.user._id,
 				authorEmail: locals.user.email,
