@@ -92,6 +92,9 @@ AUTH_TRUST_HOST=true
 # Google OAuth (opcional)
 GOOGLE_CLIENT_ID=tu_client_id.apps.googleusercontent.com
 GOOGLE_CLIENT_SECRET=tu_client_secret
+
+# Vercel Blob Storage (para subida de archivos)
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxx
 ```
 
 ### 4. Iniciar en modo desarrollo
@@ -195,6 +198,41 @@ npm run check:watch  # Modo watch para type checking
 
 ## 🌐 Despliegue
 
+### Configuración de Vercel Blob Storage
+
+Esta aplicación usa Vercel Blob para almacenar archivos (imágenes, videos, adjuntos). Sigue estos pasos:
+
+#### 1. Habilitar Vercel Blob en tu proyecto
+
+1. Ve a [Vercel Dashboard](https://vercel.com/dashboard)
+2. Selecciona tu proyecto (o créalo conectando tu repositorio)
+3. Ve a la pestaña **Storage**
+4. Haz clic en **Create Database** → **Blob**
+5. Dale un nombre (ej: "periodico-blob")
+6. Haz clic en **Create**
+
+#### 2. Obtener el token
+
+Después de crear el Blob storage:
+
+1. En la sección Storage, haz clic en tu Blob database
+2. Ve a la pestaña **.env.local**
+3. Copia el valor de `BLOB_READ_WRITE_TOKEN`
+
+#### 3. Configurar para desarrollo local
+
+Pega el token en tu archivo `.env` local:
+
+```bash
+BLOB_READ_WRITE_TOKEN=vercel_blob_rw_xxxxxxxxxxxxxxxxxx
+```
+
+> **Nota**: Los archivos se subirán directamente a Vercel Blob, incluso en desarrollo local.
+
+#### 4. Configurar para producción
+
+Vercel automáticamente inyectará `BLOB_READ_WRITE_TOKEN` en producción, **no necesitas configurarlo manualmente**.
+
 ### Vercel (Recomendado)
 
 1. Conecta tu repositorio a Vercel
@@ -214,7 +252,7 @@ Asegúrate de:
 - [ ] Establecer `AUTH_SECRET` seguro (32+ caracteres)
 - [ ] Configurar dominio para Google OAuth
 - [ ] Configurar SMTP para emails
-- [ ] Implementar almacenamiento de archivos (S3, Cloudflare R2, etc.)
+- [x] Vercel Blob Storage (ya implementado)
 
 ## 🔧 Configuración de Google OAuth
 

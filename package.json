@@ -42,6 +42,7 @@
 	"dependencies": {
 		"@auth/core": "^0.41.1",
 		"@auth/sveltekit": "^1.11.1",
+		"@vercel/blob": "^2.0.0",
 		"mongodb": "^7.0.0",
 		"nodemailer": "^7.0.10"
 	}

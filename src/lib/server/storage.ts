@@ -1,19 +1,37 @@
-import { writeFile, mkdir } from 'fs/promises';
-import { join, extname } from 'path';
+import { put } from '@vercel/blob';
 import { randomUUID } from 'crypto';
 
-const UPLOAD_DIR = 'static/uploads';
+// Maximum file size: 4.5 MB (Vercel Blob limit for Hobby plan)
+const MAX_FILE_SIZE = 4.5 * 1024 * 1024; // 4.5 MB in bytes
 
 export async function saveFile(file: File): Promise<string> {
-    // Ensure upload directory exists
-    await mkdir(UPLOAD_DIR, { recursive: true });
+    // Validate file size
+    if (file.size > MAX_FILE_SIZE) {
+        throw new Error(
+            `El archivo ${file.name} es demasiado grande. Tamaño máximo: 4.5 MB`
+        );
+    }
 
-    const buffer = Buffer.from(await file.arrayBuffer());
-    const extension = extname(file.name);
-    const filename = `${randomUUID()}${extension}`;
-    const filePath = join(UPLOAD_DIR, filename);
+    // Validate that file exists and has content
+    if (file.size === 0) {
+        throw new Error('El archivo está vacío');
+    }
 
-    await writeFile(filePath, buffer);
+    try {
+        // Generate unique filename preserving extension
+        const extension = file.name.split('.').pop() || '';
+        const filename = `${randomUUID()}.${extension}`;
 
-    return `/uploads/${filename}`;
+        // Upload to Vercel Blob
+        const blob = await put(filename, file, {
+            access: 'public',
+            contentType: file.type || 'application/octet-stream'
+        });
+
+        // Return the public URL
+        return blob.url;
+    } catch (error) {
+        console.error('Error uploading file to Vercel Blob:', error);
+        throw new Error('Error al subir el archivo. Por favor intenta de nuevo.');
+    }
 }
