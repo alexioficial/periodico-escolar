@@ -12,7 +12,7 @@
 		variant?: 'default' | 'danger' | 'success' | 'info' | 'warning';
 		message?: string;
 		class?: string;
-		// Event handlers
+
 		oninput?: (e: Event) => void;
 		onchange?: (e: Event) => void;
 		onblur?: (e: Event) => void;

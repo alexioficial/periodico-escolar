@@ -7,26 +7,21 @@
 
 	let { children, data } = $props();
 
-	// Dynamic links based on user role
 	const getLinks = (user: typeof data.user) => {
 		const baseLinks = [{ href: '/feed', label: 'Inicio' }];
 
-		// Add Guardados for all authenticated users (after Inicio)
 		if (user) {
 			baseLinks.push({ href: '/perfil/guardados', label: 'Guardados' });
 		}
 
-		// Add Redacción
 		baseLinks.push({ href: '/redaccion', label: 'Redacción' });
 
 		if (!user) return baseLinks;
 
-		// Add Verificar for Admins and SuperAdmins
 		if (user.role === 'admin' || user.role === 'superadmin') {
 			baseLinks.push({ href: '/redaccion/verificar', label: 'Verificar' });
 		}
 
-		// Add Usuarios for SuperAdmins only
 		if (user.role === 'superadmin') {
 			baseLinks.push({ href: '/admin/categories', label: 'Categorías' });
 			baseLinks.push({ href: '/admin/users', label: 'Usuarios' });

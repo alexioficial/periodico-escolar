@@ -23,45 +23,38 @@
 	let selectedFiles = $state<File[]>([]);
 	let previewUrls = $state<Map<File, string>>(new Map());
 	let isDragging = $state(false);
-	let fileInputRef: HTMLInputElement; // Para seleccionar archivos
-	let formInputRef: HTMLInputElement; // Para enviar en el formulario
+	let fileInputRef: HTMLInputElement;
+	let formInputRef: HTMLInputElement;
 
-	// Modal state
 	let modalFile = $state<File | null>(null);
 	let modalPreviewUrl = $state<string | null>(null);
 
 	const maxSizeBytes = maxSize * 1024 * 1024;
 
-	// Crear preview URL para un archivo
 	function createPreviewUrl(file: File): string {
 		const url = URL.createObjectURL(file);
 		previewUrls.set(file, url);
 		return url;
 	}
 
-	// Validar y agregar archivos
 	function addFiles(files: FileList | File[]) {
 		const fileArray = Array.from(files);
 
-		// Contadores actuales
 		let currentImages = selectedFiles.filter((f) => f.type.startsWith('image/')).length;
 		let currentVideos = selectedFiles.filter((f) => f.type.startsWith('video/')).length;
 		let currentTotal = selectedFiles.length;
 
 		for (const file of fileArray) {
-			// Validar tamaño
 			if (file.size > maxSizeBytes) {
 				toast.error(`El archivo ${file.name} es demasiado grande. Tamaño máximo: ${maxSize} MB`);
 				continue;
 			}
 
-			// Validar tipo (si hay restricción)
 			if (accept !== '*' && !isFileTypeAccepted(file)) {
 				toast.error(`El tipo de archivo ${file.name} no es permitido`);
 				continue;
 			}
 
-			// Validar límites de cantidad
 			if (currentTotal >= maxItems) {
 				toast.error(`Has alcanzado el límite máximo de ${maxItems} archivos`);
 				break;
@@ -81,17 +74,15 @@
 				currentVideos++;
 			}
 
-			// Agregar archivo
 			selectedFiles.push(file);
 			createPreviewUrl(file);
 			currentTotal++;
 		}
 
-		selectedFiles = [...selectedFiles]; // Trigger reactivity
-		syncFilesToInput(); // Sincronizar con input file oculto
+		selectedFiles = [...selectedFiles];
+		syncFilesToInput();
 	}
 
-	// Verificar si el tipo de archivo es aceptado
 	function isFileTypeAccepted(file: File): boolean {
 		const acceptTypes = accept.split(',').map((type: string) => type.trim());
 
@@ -107,61 +98,51 @@
 		});
 	}
 
-	// Manejar selección de archivos
 	function handleFileSelect(e: Event) {
 		const input = e.target as HTMLInputElement;
 		if (input.files && input.files.length > 0) {
 			addFiles(input.files);
-			input.value = ''; // Reset input
+			input.value = '';
 		}
 	}
 
-	// Eliminar archivo
 	function removeFile(file: File) {
 		const index = selectedFiles.indexOf(file);
 		if (index > -1) {
 			selectedFiles.splice(index, 1);
 			selectedFiles = [...selectedFiles];
 
-			// Limpiar preview URL
 			const url = previewUrls.get(file);
 			if (url) {
 				URL.revokeObjectURL(url);
 				previewUrls.delete(file);
 			}
 
-			// Sincronizar con input file
 			syncFilesToInput();
 		}
 	}
 
-	// Sincronizar archivos seleccionados con el input file oculto
 	function syncFilesToInput() {
 		if (!formInputRef) return;
 
-		// Crear un DataTransfer para poder asignar files al input
 		const dataTransfer = new DataTransfer();
 		selectedFiles.forEach((file) => {
 			dataTransfer.items.add(file);
 		});
 
-		// Asignar el FileList al input de formulario
 		formInputRef.files = dataTransfer.files;
 	}
 
-	// Abrir modal de preview
 	function openPreview(file: File) {
 		modalFile = file;
 		modalPreviewUrl = previewUrls.get(file) || null;
 	}
 
-	// Cerrar modal
 	function closePreview() {
 		modalFile = null;
 		modalPreviewUrl = null;
 	}
 
-	// Drag & Drop handlers
 	function handleDragEnter(e: DragEvent) {
 		e.preventDefault();
 		isDragging = true;
@@ -185,7 +166,6 @@
 		}
 	}
 
-	// Obtener icono según tipo de archivo
 	function getFileIcon(file: File) {
 		if (file.type.startsWith('image/')) return '🖼️';
 		if (file.type.startsWith('video/')) return '🎥';
@@ -207,7 +187,6 @@
 		return '📎';
 	}
 
-	// Limpiar URLs cuando el componente se destruye
 	$effect(() => {
 		return () => {
 			previewUrls.forEach((url) => URL.revokeObjectURL(url));

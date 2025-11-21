@@ -1,5 +1,9 @@
 <script lang="ts">
-	let { file = null, previewUrl = null, onClose } = $props<{
+	let {
+		file = null,
+		previewUrl = null,
+		onClose
+	} = $props<{
 		file: File | null;
 		previewUrl: string | null;
 		onClose: () => void;
@@ -7,7 +11,6 @@
 
 	let isVisible = $derived(file !== null);
 
-	// Determinar tipo de archivo
 	const getFileType = (f: File | null) => {
 		if (!f) return 'unknown';
 		if (f.type.startsWith('image/')) return 'image';
@@ -17,14 +20,12 @@
 
 	const fileType = $derived(getFileType(file));
 
-	// Formatear tamaño de archivo
 	const formatFileSize = (bytes: number) => {
 		if (bytes < 1024) return bytes + ' B';
 		if (bytes < 1024 * 1024) return (bytes / 1024).toFixed(2) + ' KB';
 		return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 	};
 
-	// Manejar tecla ESC
 	function handleKeydown(e: KeyboardEvent) {
 		if (e.key === 'Escape' && isVisible) {
 			onClose();
@@ -83,7 +84,9 @@
 					</video>
 				{:else}
 					<!-- Documento o archivo no visual -->
-					<div class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8">
+					<div
+						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
+					>
 						<div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
 							<svg
 								xmlns="http://www.w3.org/2000/svg"

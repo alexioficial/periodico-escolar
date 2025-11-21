@@ -9,7 +9,6 @@
 	});
 
 	$: if (toasts.length === 0) {
-		// no-op, just to ensure reactivity
 	}
 
 	const variantClasses = (variant: Toast['variant']) => {
@@ -28,7 +27,6 @@
 
 	const dismiss = (id: number) => toast.dismiss(id);
 
-	// Cleanup on destroy
 	import { onDestroy } from 'svelte';
 	onDestroy(unsubscribe);
 </script>

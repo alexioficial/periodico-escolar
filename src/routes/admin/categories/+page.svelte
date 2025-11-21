@@ -50,7 +50,6 @@
 			action="?/create"
 			novalidate
 			use:enhance={() => {
-				// Validate before submission
 				if (!validateNewCategory()) {
 					return ({ update }) => {
 						update({ reset: false });
@@ -187,7 +186,6 @@
 										use:enhance={async ({ formData }) => {
 											formData.set('id', category._id);
 
-											// Show custom confirm dialog
 											const confirmed = await confirmDialog.confirm({
 												title:
 													category.articlesCount > 0

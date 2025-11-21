@@ -11,7 +11,6 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	const code = url.searchParams.get('code');
 	const error = url.searchParams.get('error');
 
-	// Si el usuario canceló o hubo un error en Google, redirigir al login
 	if (!code || error) {
 		throw redirect(303, '/auth/login');
 	}

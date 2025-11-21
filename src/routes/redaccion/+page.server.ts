@@ -9,7 +9,6 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(303, '/auth/login');
 	}
 
-	// Ensure default categories exist
 	await ensureDefaultCategories();
 
 	const [articles, categories] = await Promise.all([
@@ -20,7 +19,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 	return {
 		user: locals.user,
 		articles: JSON.parse(JSON.stringify(articles)),
-		categories: JSON.parse(JSON.stringify(categories)) // Serialize ObjectIds
+		categories: JSON.parse(JSON.stringify(categories))
 	};
 };
 
@@ -36,7 +35,6 @@ export const actions: Actions = {
 		const categoryId = formData.get('categoryId') as string;
 		const excerpt = formData.get('excerpt') as string;
 
-		// Handle Media Files
 		const mediaFiles = formData.getAll('media') as File[];
 		const media = [];
 		for (const file of mediaFiles) {
@@ -47,7 +45,6 @@ export const actions: Actions = {
 			}
 		}
 
-		// Handle Attachments
 		const attachmentFiles = formData.getAll('attachments') as File[];
 		const attachments = [];
 		for (const file of attachmentFiles) {
@@ -66,7 +63,6 @@ export const actions: Actions = {
 			return fail(400, { message: 'Faltan campos requeridos' });
 		}
 
-		// Admins and SuperAdmins publish immediately, Users go to pending
 		const status = ['admin', 'superadmin'].includes(locals.user.role) ? 'published' : 'pending';
 
 		try {

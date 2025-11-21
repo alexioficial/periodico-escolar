@@ -12,18 +12,17 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
 
 			event.locals.user = user
 				? {
-					_id: user._id.toString(),
-					email: user.email,
-					provider: user.provider,
-					role: user.role || 'user'
-				}
+						_id: user._id.toString(),
+						email: user.email,
+						provider: user.provider,
+						role: user.role || 'user'
+					}
 				: null;
 		} catch (error) {
 			console.error('Error al recuperar usuario de la sesión:', error);
 			event.locals.user = null;
 		}
 	} else {
-		// If there is no custom session, try Auth.js session
 		if (typeof (event.locals as any).auth === 'function') {
 			try {
 				const session = await (event.locals as any).auth();

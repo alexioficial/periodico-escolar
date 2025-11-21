@@ -5,7 +5,6 @@
 
 	let showForm = $state(false);
 
-	// Definir límites según rol
 	const isStaff = ['admin', 'superadmin'].includes(data.user.role);
 	const maxImages = isStaff ? Infinity : 10;
 	const maxVideos = isStaff ? Infinity : 2;
