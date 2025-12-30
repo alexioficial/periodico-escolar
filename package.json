@@ -45,5 +45,8 @@
 		"@vercel/blob": "^2.0.0",
 		"mongodb": "^7.0.0",
 		"nodemailer": "^7.0.10"
+	},
+	"engines": {
+		"node": ">=22.12"
 	}
 }
