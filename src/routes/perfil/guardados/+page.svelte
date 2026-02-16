@@ -57,7 +57,14 @@
 										class="flex h-full w-full flex-shrink-0 snap-center items-center justify-center"
 									>
 										{#if item.type === 'video'}
-											<video src={item.url} controls class="max-h-full max-w-full"></video>
+											<video
+												src={item.url}
+												controls
+												class="max-h-full max-w-full"
+												aria-label="Video del artículo"
+											>
+												<track kind="captions" />
+											</video>
 										{:else}
 											<img src={item.url} alt="" class="h-full w-full object-contain" />
 										{/if}
@@ -170,6 +177,7 @@
 
 								<button
 									class="text-slate-400 transition-colors hover:text-indigo-500"
+									aria-label="Copiar enlace del artículo"
 									onclick={() => {
 										navigator.clipboard.writeText(
 											window.location.origin + '/feed?id=' + article._id
@@ -196,7 +204,11 @@
 
 							<form method="POST" action="/feed?/toggleSave" use:enhance>
 								<input type="hidden" name="id" value={article._id} />
-								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
+								<button
+									type="submit"
+									class="text-slate-400 transition-colors hover:text-amber-400"
+									aria-label={article.isSaved ? 'Quitar de guardados' : 'Guardar artículo'}
+								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"
 										viewBox="0 0 24 24"

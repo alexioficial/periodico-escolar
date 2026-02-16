@@ -3,7 +3,12 @@
 	import { goto } from '$app/navigation';
 	let { data } = $props();
 
+	// svelte-ignore state_referenced_locally
 	let emailSearch = $state(data.emailFilter || '');
+
+	$effect(() => {
+		emailSearch = data.emailFilter || '';
+	});
 
 	function handleSearch() {
 		const params = new URLSearchParams();

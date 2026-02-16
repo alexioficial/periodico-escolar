@@ -62,7 +62,7 @@
 						newCategoryName = '';
 						newCategoryError = '';
 					} else if (result.type === 'failure') {
-						newCategoryError = result.data?.message || 'No se pudo crear la categoría';
+						newCategoryError = (result.data?.message as string) || 'No se pudo crear la categoría';
 						toast.error('Error', newCategoryError);
 					}
 				};
@@ -153,7 +153,7 @@
 													toast.success('Categoría actualizada');
 													cancelEdit();
 												} else if (result.type === 'failure') {
-													toast.error('Error', result.data?.message);
+													toast.error('Error', (result.data?.message as string) || 'Error desconocido');
 												}
 											};
 										}}
@@ -210,7 +210,7 @@
 												if (result.type === 'success') {
 													toast.success('Categoría eliminada');
 												} else if (result.type === 'failure') {
-													toast.error('Error', result.data?.message);
+													toast.error('Error', (result.data?.message as string) || 'Error desconocido');
 												}
 											};
 										}}

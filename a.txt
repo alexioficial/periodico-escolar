@@ -1,0 +1,1671 @@
+
+> periodico-escolar@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /home/alexi/Desktop/_/Programacion/Widube/periodico-escolar
+Getting Svelte diagnostics...
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:1:31
+Error: Cannot find module '@auth/sveltekit' or its corresponding type declarations. 
+import { SvelteKitAuth } from '@auth/sveltekit';
+import Google from '@auth/core/providers/google';
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:2:20
+Error: Cannot find module '@auth/core/providers/google' or its corresponding type declarations. 
+import { SvelteKitAuth } from '@auth/sveltekit';
+import Google from '@auth/core/providers/google';
+import { env } from '$env/dynamic/private';
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:14:18
+Error: Binding element 'account' implicitly has an 'any' type. 
+	callbacks: {
+		async signIn({ account, profile }) {
+			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:14:27
+Error: Binding element 'profile' implicitly has an 'any' type. 
+	callbacks: {
+		async signIn({ account, profile }) {
+			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:39:2
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	<!-- Overlay -->
+	<div
+		class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+		onclick={confirmDialog.handleCancel}
+		role="button"
+		tabindex="-1"
+	></div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:49:3
+Warn: Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus (svelte)
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div
+			class="relative w-full max-w-md rounded-2xl border {styles.border} {styles.bg} bg-white shadow-2xl"
+			transition:scale={{ duration: 200, start: 0.95 }}
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Header -->
+			<div class="flex items-start gap-4 border-b border-slate-200 p-6">
+				<!-- Icon -->
+				<div
+					class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {styles.bg}"
+				>
+					{#if dialog.variant === 'danger'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<path
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					{:else if dialog.variant === 'warning'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="12" />
+							<line x1="12" y1="16" x2="12.01" y2="16" />
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					{/if}
+				</div>
+
+				<!-- Title -->
+				<div class="flex-1">
+					<h3 class="text-lg font-semibold text-slate-900">
+						{dialog.title}
+					</h3>
+				</div>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6">
+				<p class="text-sm text-slate-600">
+					{dialog.message}
+				</p>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex gap-3 border-t border-slate-200 p-6">
+				<button
+					onclick={confirmDialog.handleCancel}
+					class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+				>
+					{dialog.cancelText}
+				</button>
+				<button
+					onclick={confirmDialog.handleConfirm}
+					class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors {styles.confirmBtn}"
+				>
+					{dialog.confirmText}
+				</button>
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:49:3
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div
+			class="relative w-full max-w-md rounded-2xl border {styles.border} {styles.bg} bg-white shadow-2xl"
+			transition:scale={{ duration: 200, start: 0.95 }}
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Header -->
+			<div class="flex items-start gap-4 border-b border-slate-200 p-6">
+				<!-- Icon -->
+				<div
+					class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {styles.bg}"
+				>
+					{#if dialog.variant === 'danger'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<path
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					{:else if dialog.variant === 'warning'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="12" />
+							<line x1="12" y1="16" x2="12.01" y2="16" />
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					{/if}
+				</div>
+
+				<!-- Title -->
+				<div class="flex-1">
+					<h3 class="text-lg font-semibold text-slate-900">
+						{dialog.title}
+					</h3>
+				</div>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6">
+				<p class="text-sm text-slate-600">
+					{dialog.message}
+				</p>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex gap-3 border-t border-slate-200 p-6">
+				<button
+					onclick={confirmDialog.handleCancel}
+					class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+				>
+					{dialog.cancelText}
+				</button>
+				<button
+					onclick={confirmDialog.handleConfirm}
+					class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors {styles.confirmBtn}"
+				>
+					{dialog.confirmText}
+				</button>
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FilePreviewModal.svelte:44:3
+Warn: Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus (svelte)
+	>
+		<div
+			class="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Botón cerrar -->
+			<button
+				onclick={onClose}
+				class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/80 text-white transition-colors hover:bg-slate-900"
+				aria-label="Cerrar"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+					class="h-5 w-5"
+				>
+					<path
+						d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+					/>
+				</svg>
+			</button>
+
+			<!-- Contenido del modal -->
+			<div class="p-6">
+				{#if fileType === 'image' && previewUrl}
+					<img
+						src={previewUrl}
+						alt={file?.name || 'Preview'}
+						class="max-h-[80vh] w-auto rounded-lg object-contain"
+					/>
+				{:else if fileType === 'video' && previewUrl}
+					<video
+						src={previewUrl}
+						controls
+						class="max-h-[80vh] w-auto rounded-lg"
+						aria-label={file?.name || 'Video preview'}
+					>
+						<track kind="captions" />
+					</video>
+				{:else}
+					<!-- Documento o archivo no visual -->
+					<div
+						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
+					>
+						<div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								class="h-10 w-10 text-slate-500"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div class="text-center">
+							<p class="text-lg font-semibold text-slate-900">Vista previa no disponible</p>
+							<p class="mt-2 text-sm text-slate-600">{file?.name}</p>
+							{#if file}
+								<p class="mt-1 text-xs text-slate-500">{formatFileSize(file.size)}</p>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FilePreviewModal.svelte:44:3
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	>
+		<div
+			class="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Botón cerrar -->
+			<button
+				onclick={onClose}
+				class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/80 text-white transition-colors hover:bg-slate-900"
+				aria-label="Cerrar"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+					class="h-5 w-5"
+				>
+					<path
+						d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+					/>
+				</svg>
+			</button>
+
+			<!-- Contenido del modal -->
+			<div class="p-6">
+				{#if fileType === 'image' && previewUrl}
+					<img
+						src={previewUrl}
+						alt={file?.name || 'Preview'}
+						class="max-h-[80vh] w-auto rounded-lg object-contain"
+					/>
+				{:else if fileType === 'video' && previewUrl}
+					<video
+						src={previewUrl}
+						controls
+						class="max-h-[80vh] w-auto rounded-lg"
+						aria-label={file?.name || 'Video preview'}
+					>
+						<track kind="captions" />
+					</video>
+				{:else}
+					<!-- Documento o archivo no visual -->
+					<div
+						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
+					>
+						<div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								class="h-10 w-10 text-slate-500"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div class="text-center">
+							<p class="text-lg font-semibold text-slate-900">Vista previa no disponible</p>
+							<p class="mt-2 text-sm text-slate-600">{file?.name}</p>
+							{#if file}
+								<p class="mt-1 text-xs text-slate-500">{formatFileSize(file.size)}</p>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FileUploader.svelte:32:23
+Warn: This reference only captures the initial value of `maxSize`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	const maxSizeBytes = maxSize * 1024 * 1024;
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FileUploader.svelte:198:2
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+<div class="space-y-3">
+	<label class="text-sm font-medium text-slate-700">
+		{label}
+	</label>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:65:7
+Error: Type '{}' is not assignable to type 'string'. (ts)
+					} else if (result.type === 'failure') {
+						newCategoryError = result.data?.message || 'No se pudo crear la categoría';
+						toast.error('Error', newCategoryError);
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:156:35
+Error: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'. (ts)
+												} else if (result.type === 'failure') {
+													toast.error('Error', result.data?.message);
+												}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:213:35
+Error: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'. (ts)
+												} else if (result.type === 'failure') {
+													toast.error('Error', result.data?.message);
+												}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/users/+page.svelte:6:27
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	let emailSearch = $state(data.emailFilter || '');
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:109:12
+Warn: `<video>` elements must have a `<track kind="captions">`
+https://svelte.dev/e/a11y_media_has_caption (svelte)
+										{#if item.type === 'video'}
+											<video src={item.url} controls class="max-h-full max-w-full"></video>
+										{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:220:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+
+								<button
+									class="text-slate-400 transition-colors hover:text-indigo-500"
+									onclick={() => {
+										navigator.clipboard.writeText(
+											window.location.origin + '/feed?id=' + article._id
+										);
+										toast.success('Enlace copiado al portapapeles');
+									}}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+										/>
+									</svg>
+								</button>
+							</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:248:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+								<input type="hidden" name="id" value={article._id} />
+								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill={article.isSaved ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+										/>
+									</svg>
+								</button>
+							</form>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:65:15
+Error: Property 'currentCategory' does not exist on type '{ articles: any; categories: any; currentCategoryId: string | undefined; user: { _id: string; email: string; provider: "credentials" | "google"; role: "user" | "admin" | "superadmin"; } | null; pagination: { ...; }; }'. Did you mean 'currentCategoryId'? (ts)
+			<p class="mt-1 text-sm text-slate-500">
+				{#if data.currentCategory}
+					No hay artículos publicados en la categoría "{data.currentCategory}" todavía.
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:66:57
+Error: Property 'currentCategory' does not exist on type '{ articles: any; categories: any; currentCategoryId: string | undefined; user: { _id: string; email: string; provider: "credentials" | "google"; role: "user" | "admin" | "superadmin"; } | null; pagination: { ...; }; }'. Did you mean 'currentCategoryId'? (ts)
+				{#if data.currentCategory}
+					No hay artículos publicados en la categoría "{data.currentCategory}" todavía.
+				{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:60:12
+Warn: `<video>` elements must have a `<track kind="captions">`
+https://svelte.dev/e/a11y_media_has_caption (svelte)
+										{#if item.type === 'video'}
+											<video src={item.url} controls class="max-h-full max-w-full"></video>
+										{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:171:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+
+								<button
+									class="text-slate-400 transition-colors hover:text-indigo-500"
+									onclick={() => {
+										navigator.clipboard.writeText(
+											window.location.origin + '/feed?id=' + article._id
+										);
+										toast.success('Enlace copiado al portapapeles');
+									}}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+										/>
+									</svg>
+								</button>
+							</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:199:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+								<input type="hidden" name="id" value={article._id} />
+								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill={article.isSaved ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+										/>
+									</svg>
+								</button>
+							</form>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/redaccion/+page.svelte:8:51
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	const isStaff = ['admin', 'superadmin'].includes(data.user.role);
+	const maxImages = isStaff ? Infinity : 10;
+
+====================================
+svelte-check found 9 errors and 15 warnings in 9 files
+
+> periodico-escolar@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /home/alexi/Desktop/_/Programacion/Widube/periodico-escolar
+Getting Svelte diagnostics...
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:1:31
+Error: Cannot find module '@auth/sveltekit' or its corresponding type declarations. 
+import { SvelteKitAuth } from '@auth/sveltekit';
+import Google from '@auth/core/providers/google';
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:2:20
+Error: Cannot find module '@auth/core/providers/google' or its corresponding type declarations. 
+import { SvelteKitAuth } from '@auth/sveltekit';
+import Google from '@auth/core/providers/google';
+import { env } from '$env/dynamic/private';
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:14:18
+Error: Binding element 'account' implicitly has an 'any' type. 
+	callbacks: {
+		async signIn({ account, profile }) {
+			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:14:27
+Error: Binding element 'profile' implicitly has an 'any' type. 
+	callbacks: {
+		async signIn({ account, profile }) {
+			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:39:2
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	<!-- Overlay -->
+	<div
+		class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+		onclick={confirmDialog.handleCancel}
+		role="button"
+		tabindex="-1"
+	></div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:49:3
+Warn: Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus (svelte)
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div
+			class="relative w-full max-w-md rounded-2xl border {styles.border} {styles.bg} bg-white shadow-2xl"
+			transition:scale={{ duration: 200, start: 0.95 }}
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Header -->
+			<div class="flex items-start gap-4 border-b border-slate-200 p-6">
+				<!-- Icon -->
+				<div
+					class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {styles.bg}"
+				>
+					{#if dialog.variant === 'danger'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<path
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					{:else if dialog.variant === 'warning'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="12" />
+							<line x1="12" y1="16" x2="12.01" y2="16" />
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					{/if}
+				</div>
+
+				<!-- Title -->
+				<div class="flex-1">
+					<h3 class="text-lg font-semibold text-slate-900">
+						{dialog.title}
+					</h3>
+				</div>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6">
+				<p class="text-sm text-slate-600">
+					{dialog.message}
+				</p>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex gap-3 border-t border-slate-200 p-6">
+				<button
+					onclick={confirmDialog.handleCancel}
+					class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+				>
+					{dialog.cancelText}
+				</button>
+				<button
+					onclick={confirmDialog.handleConfirm}
+					class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors {styles.confirmBtn}"
+				>
+					{dialog.confirmText}
+				</button>
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:49:3
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div
+			class="relative w-full max-w-md rounded-2xl border {styles.border} {styles.bg} bg-white shadow-2xl"
+			transition:scale={{ duration: 200, start: 0.95 }}
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Header -->
+			<div class="flex items-start gap-4 border-b border-slate-200 p-6">
+				<!-- Icon -->
+				<div
+					class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {styles.bg}"
+				>
+					{#if dialog.variant === 'danger'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<path
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					{:else if dialog.variant === 'warning'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="12" />
+							<line x1="12" y1="16" x2="12.01" y2="16" />
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					{/if}
+				</div>
+
+				<!-- Title -->
+				<div class="flex-1">
+					<h3 class="text-lg font-semibold text-slate-900">
+						{dialog.title}
+					</h3>
+				</div>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6">
+				<p class="text-sm text-slate-600">
+					{dialog.message}
+				</p>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex gap-3 border-t border-slate-200 p-6">
+				<button
+					onclick={confirmDialog.handleCancel}
+					class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+				>
+					{dialog.cancelText}
+				</button>
+				<button
+					onclick={confirmDialog.handleConfirm}
+					class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors {styles.confirmBtn}"
+				>
+					{dialog.confirmText}
+				</button>
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FilePreviewModal.svelte:44:3
+Warn: Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus (svelte)
+	>
+		<div
+			class="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Botón cerrar -->
+			<button
+				onclick={onClose}
+				class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/80 text-white transition-colors hover:bg-slate-900"
+				aria-label="Cerrar"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+					class="h-5 w-5"
+				>
+					<path
+						d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+					/>
+				</svg>
+			</button>
+
+			<!-- Contenido del modal -->
+			<div class="p-6">
+				{#if fileType === 'image' && previewUrl}
+					<img
+						src={previewUrl}
+						alt={file?.name || 'Preview'}
+						class="max-h-[80vh] w-auto rounded-lg object-contain"
+					/>
+				{:else if fileType === 'video' && previewUrl}
+					<video
+						src={previewUrl}
+						controls
+						class="max-h-[80vh] w-auto rounded-lg"
+						aria-label={file?.name || 'Video preview'}
+					>
+						<track kind="captions" />
+					</video>
+				{:else}
+					<!-- Documento o archivo no visual -->
+					<div
+						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
+					>
+						<div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								class="h-10 w-10 text-slate-500"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div class="text-center">
+							<p class="text-lg font-semibold text-slate-900">Vista previa no disponible</p>
+							<p class="mt-2 text-sm text-slate-600">{file?.name}</p>
+							{#if file}
+								<p class="mt-1 text-xs text-slate-500">{formatFileSize(file.size)}</p>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FilePreviewModal.svelte:44:3
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	>
+		<div
+			class="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Botón cerrar -->
+			<button
+				onclick={onClose}
+				class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/80 text-white transition-colors hover:bg-slate-900"
+				aria-label="Cerrar"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+					class="h-5 w-5"
+				>
+					<path
+						d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+					/>
+				</svg>
+			</button>
+
+			<!-- Contenido del modal -->
+			<div class="p-6">
+				{#if fileType === 'image' && previewUrl}
+					<img
+						src={previewUrl}
+						alt={file?.name || 'Preview'}
+						class="max-h-[80vh] w-auto rounded-lg object-contain"
+					/>
+				{:else if fileType === 'video' && previewUrl}
+					<video
+						src={previewUrl}
+						controls
+						class="max-h-[80vh] w-auto rounded-lg"
+						aria-label={file?.name || 'Video preview'}
+					>
+						<track kind="captions" />
+					</video>
+				{:else}
+					<!-- Documento o archivo no visual -->
+					<div
+						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
+					>
+						<div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								class="h-10 w-10 text-slate-500"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div class="text-center">
+							<p class="text-lg font-semibold text-slate-900">Vista previa no disponible</p>
+							<p class="mt-2 text-sm text-slate-600">{file?.name}</p>
+							{#if file}
+								<p class="mt-1 text-xs text-slate-500">{formatFileSize(file.size)}</p>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FileUploader.svelte:32:23
+Warn: This reference only captures the initial value of `maxSize`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	const maxSizeBytes = maxSize * 1024 * 1024;
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FileUploader.svelte:198:2
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+<div class="space-y-3">
+	<label class="text-sm font-medium text-slate-700">
+		{label}
+	</label>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:65:7
+Error: Type '{}' is not assignable to type 'string'. (ts)
+					} else if (result.type === 'failure') {
+						newCategoryError = result.data?.message || 'No se pudo crear la categoría';
+						toast.error('Error', newCategoryError);
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:156:35
+Error: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'. (ts)
+												} else if (result.type === 'failure') {
+													toast.error('Error', result.data?.message);
+												}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:213:35
+Error: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'. (ts)
+												} else if (result.type === 'failure') {
+													toast.error('Error', result.data?.message);
+												}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/users/+page.svelte:6:27
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	let emailSearch = $state(data.emailFilter || '');
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:109:12
+Warn: `<video>` elements must have a `<track kind="captions">`
+https://svelte.dev/e/a11y_media_has_caption (svelte)
+										{#if item.type === 'video'}
+											<video src={item.url} controls class="max-h-full max-w-full"></video>
+										{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:220:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+
+								<button
+									class="text-slate-400 transition-colors hover:text-indigo-500"
+									onclick={() => {
+										navigator.clipboard.writeText(
+											window.location.origin + '/feed?id=' + article._id
+										);
+										toast.success('Enlace copiado al portapapeles');
+									}}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+										/>
+									</svg>
+								</button>
+							</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:248:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+								<input type="hidden" name="id" value={article._id} />
+								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill={article.isSaved ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+										/>
+									</svg>
+								</button>
+							</form>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:65:15
+Error: Property 'currentCategory' does not exist on type '{ articles: any; categories: any; currentCategoryId: string | undefined; user: { _id: string; email: string; provider: "credentials" | "google"; role: "user" | "admin" | "superadmin"; } | null; pagination: { ...; }; }'. Did you mean 'currentCategoryId'? (ts)
+			<p class="mt-1 text-sm text-slate-500">
+				{#if data.currentCategory}
+					No hay artículos publicados en la categoría "{data.currentCategory}" todavía.
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:66:57
+Error: Property 'currentCategory' does not exist on type '{ articles: any; categories: any; currentCategoryId: string | undefined; user: { _id: string; email: string; provider: "credentials" | "google"; role: "user" | "admin" | "superadmin"; } | null; pagination: { ...; }; }'. Did you mean 'currentCategoryId'? (ts)
+				{#if data.currentCategory}
+					No hay artículos publicados en la categoría "{data.currentCategory}" todavía.
+				{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:60:12
+Warn: `<video>` elements must have a `<track kind="captions">`
+https://svelte.dev/e/a11y_media_has_caption (svelte)
+										{#if item.type === 'video'}
+											<video src={item.url} controls class="max-h-full max-w-full"></video>
+										{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:171:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+
+								<button
+									class="text-slate-400 transition-colors hover:text-indigo-500"
+									onclick={() => {
+										navigator.clipboard.writeText(
+											window.location.origin + '/feed?id=' + article._id
+										);
+										toast.success('Enlace copiado al portapapeles');
+									}}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+										/>
+									</svg>
+								</button>
+							</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:199:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+								<input type="hidden" name="id" value={article._id} />
+								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill={article.isSaved ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+										/>
+									</svg>
+								</button>
+							</form>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/redaccion/+page.svelte:8:51
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	const isStaff = ['admin', 'superadmin'].includes(data.user.role);
+	const maxImages = isStaff ? Infinity : 10;
+
+====================================
+svelte-check found 9 errors and 15 warnings in 9 files
+
+> periodico-escolar@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /home/alexi/Desktop/_/Programacion/Widube/periodico-escolar
+Getting Svelte diagnostics...
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:1:31
+Error: Cannot find module '@auth/sveltekit' or its corresponding type declarations. 
+import { SvelteKitAuth } from '@auth/sveltekit';
+import Google from '@auth/core/providers/google';
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:2:20
+Error: Cannot find module '@auth/core/providers/google' or its corresponding type declarations. 
+import { SvelteKitAuth } from '@auth/sveltekit';
+import Google from '@auth/core/providers/google';
+import { env } from '$env/dynamic/private';
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:14:18
+Error: Binding element 'account' implicitly has an 'any' type. 
+	callbacks: {
+		async signIn({ account, profile }) {
+			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/auth.ts:14:27
+Error: Binding element 'profile' implicitly has an 'any' type. 
+	callbacks: {
+		async signIn({ account, profile }) {
+			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:39:2
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	<!-- Overlay -->
+	<div
+		class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+		onclick={confirmDialog.handleCancel}
+		role="button"
+		tabindex="-1"
+	></div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:49:3
+Warn: Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus (svelte)
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div
+			class="relative w-full max-w-md rounded-2xl border {styles.border} {styles.bg} bg-white shadow-2xl"
+			transition:scale={{ duration: 200, start: 0.95 }}
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Header -->
+			<div class="flex items-start gap-4 border-b border-slate-200 p-6">
+				<!-- Icon -->
+				<div
+					class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {styles.bg}"
+				>
+					{#if dialog.variant === 'danger'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<path
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					{:else if dialog.variant === 'warning'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="12" />
+							<line x1="12" y1="16" x2="12.01" y2="16" />
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					{/if}
+				</div>
+
+				<!-- Title -->
+				<div class="flex-1">
+					<h3 class="text-lg font-semibold text-slate-900">
+						{dialog.title}
+					</h3>
+				</div>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6">
+				<p class="text-sm text-slate-600">
+					{dialog.message}
+				</p>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex gap-3 border-t border-slate-200 p-6">
+				<button
+					onclick={confirmDialog.handleCancel}
+					class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+				>
+					{dialog.cancelText}
+				</button>
+				<button
+					onclick={confirmDialog.handleConfirm}
+					class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors {styles.confirmBtn}"
+				>
+					{dialog.confirmText}
+				</button>
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/ConfirmDialog.svelte:49:3
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	<div class="fixed inset-0 z-50 flex items-center justify-center p-4">
+		<div
+			class="relative w-full max-w-md rounded-2xl border {styles.border} {styles.bg} bg-white shadow-2xl"
+			transition:scale={{ duration: 200, start: 0.95 }}
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Header -->
+			<div class="flex items-start gap-4 border-b border-slate-200 p-6">
+				<!-- Icon -->
+				<div
+					class="flex h-12 w-12 flex-shrink-0 items-center justify-center rounded-full {styles.bg}"
+				>
+					{#if dialog.variant === 'danger'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<path
+								d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"
+							/>
+						</svg>
+					{:else if dialog.variant === 'warning'}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="8" x2="12" y2="12" />
+							<line x1="12" y1="16" x2="12.01" y2="16" />
+						</svg>
+					{:else}
+						<svg
+							xmlns="http://www.w3.org/2000/svg"
+							viewBox="0 0 24 24"
+							fill="none"
+							stroke="currentColor"
+							stroke-width="2"
+							class="h-6 w-6 {styles.icon}"
+						>
+							<circle cx="12" cy="12" r="10" />
+							<line x1="12" y1="16" x2="12" y2="12" />
+							<line x1="12" y1="8" x2="12.01" y2="8" />
+						</svg>
+					{/if}
+				</div>
+
+				<!-- Title -->
+				<div class="flex-1">
+					<h3 class="text-lg font-semibold text-slate-900">
+						{dialog.title}
+					</h3>
+				</div>
+			</div>
+
+			<!-- Content -->
+			<div class="p-6">
+				<p class="text-sm text-slate-600">
+					{dialog.message}
+				</p>
+			</div>
+
+			<!-- Actions -->
+			<div class="flex gap-3 border-t border-slate-200 p-6">
+				<button
+					onclick={confirmDialog.handleCancel}
+					class="flex-1 rounded-lg border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
+				>
+					{dialog.cancelText}
+				</button>
+				<button
+					onclick={confirmDialog.handleConfirm}
+					class="flex-1 rounded-lg px-4 py-2.5 text-sm font-medium text-white transition-colors {styles.confirmBtn}"
+				>
+					{dialog.confirmText}
+				</button>
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FilePreviewModal.svelte:44:3
+Warn: Elements with the 'dialog' interactive role must have a tabindex value
+https://svelte.dev/e/a11y_interactive_supports_focus (svelte)
+	>
+		<div
+			class="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Botón cerrar -->
+			<button
+				onclick={onClose}
+				class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/80 text-white transition-colors hover:bg-slate-900"
+				aria-label="Cerrar"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+					class="h-5 w-5"
+				>
+					<path
+						d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+					/>
+				</svg>
+			</button>
+
+			<!-- Contenido del modal -->
+			<div class="p-6">
+				{#if fileType === 'image' && previewUrl}
+					<img
+						src={previewUrl}
+						alt={file?.name || 'Preview'}
+						class="max-h-[80vh] w-auto rounded-lg object-contain"
+					/>
+				{:else if fileType === 'video' && previewUrl}
+					<video
+						src={previewUrl}
+						controls
+						class="max-h-[80vh] w-auto rounded-lg"
+						aria-label={file?.name || 'Video preview'}
+					>
+						<track kind="captions" />
+					</video>
+				{:else}
+					<!-- Documento o archivo no visual -->
+					<div
+						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
+					>
+						<div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								class="h-10 w-10 text-slate-500"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div class="text-center">
+							<p class="text-lg font-semibold text-slate-900">Vista previa no disponible</p>
+							<p class="mt-2 text-sm text-slate-600">{file?.name}</p>
+							{#if file}
+								<p class="mt-1 text-xs text-slate-500">{formatFileSize(file.size)}</p>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FilePreviewModal.svelte:44:3
+Warn: Visible, non-interactive elements with a click event must be accompanied by a keyboard event handler. Consider whether an interactive element such as `<button type="button">` or `<a>` might be more appropriate
+https://svelte.dev/e/a11y_click_events_have_key_events (svelte)
+	>
+		<div
+			class="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
+			onclick={(e) => e.stopPropagation()}
+			role="dialog"
+			aria-modal="true"
+		>
+			<!-- Botón cerrar -->
+			<button
+				onclick={onClose}
+				class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/80 text-white transition-colors hover:bg-slate-900"
+				aria-label="Cerrar"
+			>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 20 20"
+					fill="currentColor"
+					class="h-5 w-5"
+				>
+					<path
+						d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
+					/>
+				</svg>
+			</button>
+
+			<!-- Contenido del modal -->
+			<div class="p-6">
+				{#if fileType === 'image' && previewUrl}
+					<img
+						src={previewUrl}
+						alt={file?.name || 'Preview'}
+						class="max-h-[80vh] w-auto rounded-lg object-contain"
+					/>
+				{:else if fileType === 'video' && previewUrl}
+					<video
+						src={previewUrl}
+						controls
+						class="max-h-[80vh] w-auto rounded-lg"
+						aria-label={file?.name || 'Video preview'}
+					>
+						<track kind="captions" />
+					</video>
+				{:else}
+					<!-- Documento o archivo no visual -->
+					<div
+						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
+					>
+						<div class="flex h-20 w-20 items-center justify-center rounded-2xl bg-slate-100">
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 20 20"
+								fill="currentColor"
+								class="h-10 w-10 text-slate-500"
+							>
+								<path
+									fill-rule="evenodd"
+									d="M4.5 2A1.5 1.5 0 003 3.5v13A1.5 1.5 0 004.5 18h11a1.5 1.5 0 001.5-1.5V7.621a1.5 1.5 0 00-.44-1.06l-4.12-4.122A1.5 1.5 0 0011.378 2H4.5zm2.25 8.5a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5zm0 3a.75.75 0 000 1.5h6.5a.75.75 0 000-1.5h-6.5z"
+									clip-rule="evenodd"
+								/>
+							</svg>
+						</div>
+						<div class="text-center">
+							<p class="text-lg font-semibold text-slate-900">Vista previa no disponible</p>
+							<p class="mt-2 text-sm text-slate-600">{file?.name}</p>
+							{#if file}
+								<p class="mt-1 text-xs text-slate-500">{formatFileSize(file.size)}</p>
+							{/if}
+						</div>
+					</div>
+				{/if}
+			</div>
+		</div>
+	</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FileUploader.svelte:32:23
+Warn: This reference only captures the initial value of `maxSize`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	const maxSizeBytes = maxSize * 1024 * 1024;
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/lib/components/FileUploader.svelte:198:2
+Warn: A form label must be associated with a control
+https://svelte.dev/e/a11y_label_has_associated_control (svelte)
+<div class="space-y-3">
+	<label class="text-sm font-medium text-slate-700">
+		{label}
+	</label>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:65:7
+Error: Type '{}' is not assignable to type 'string'. (ts)
+					} else if (result.type === 'failure') {
+						newCategoryError = result.data?.message || 'No se pudo crear la categoría';
+						toast.error('Error', newCategoryError);
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:156:35
+Error: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'. (ts)
+												} else if (result.type === 'failure') {
+													toast.error('Error', result.data?.message);
+												}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/categories/+page.svelte:213:35
+Error: Argument of type 'unknown' is not assignable to parameter of type 'string | undefined'. (ts)
+												} else if (result.type === 'failure') {
+													toast.error('Error', result.data?.message);
+												}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/users/+page.svelte:6:27
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	let emailSearch = $state(data.emailFilter || '');
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:109:12
+Warn: `<video>` elements must have a `<track kind="captions">`
+https://svelte.dev/e/a11y_media_has_caption (svelte)
+										{#if item.type === 'video'}
+											<video src={item.url} controls class="max-h-full max-w-full"></video>
+										{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:220:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+
+								<button
+									class="text-slate-400 transition-colors hover:text-indigo-500"
+									onclick={() => {
+										navigator.clipboard.writeText(
+											window.location.origin + '/feed?id=' + article._id
+										);
+										toast.success('Enlace copiado al portapapeles');
+									}}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+										/>
+									</svg>
+								</button>
+							</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:248:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+								<input type="hidden" name="id" value={article._id} />
+								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill={article.isSaved ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+										/>
+									</svg>
+								</button>
+							</form>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:65:15
+Error: Property 'currentCategory' does not exist on type '{ articles: any; categories: any; currentCategoryId: string | undefined; user: { _id: string; email: string; provider: "credentials" | "google"; role: "user" | "admin" | "superadmin"; } | null; pagination: { ...; }; }'. Did you mean 'currentCategoryId'? (ts)
+			<p class="mt-1 text-sm text-slate-500">
+				{#if data.currentCategory}
+					No hay artículos publicados en la categoría "{data.currentCategory}" todavía.
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/feed/+page.svelte:66:57
+Error: Property 'currentCategory' does not exist on type '{ articles: any; categories: any; currentCategoryId: string | undefined; user: { _id: string; email: string; provider: "credentials" | "google"; role: "user" | "admin" | "superadmin"; } | null; pagination: { ...; }; }'. Did you mean 'currentCategoryId'? (ts)
+				{#if data.currentCategory}
+					No hay artículos publicados en la categoría "{data.currentCategory}" todavía.
+				{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:60:12
+Warn: `<video>` elements must have a `<track kind="captions">`
+https://svelte.dev/e/a11y_media_has_caption (svelte)
+										{#if item.type === 'video'}
+											<video src={item.url} controls class="max-h-full max-w-full"></video>
+										{:else}
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:171:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+
+								<button
+									class="text-slate-400 transition-colors hover:text-indigo-500"
+									onclick={() => {
+										navigator.clipboard.writeText(
+											window.location.origin + '/feed?id=' + article._id
+										);
+										toast.success('Enlace copiado al portapapeles');
+									}}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill="none"
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M7.217 10.907a2.25 2.25 0 100 2.186m0-2.186c.18.324.283.696.283 1.093s-.103.77-.283 1.093m0-2.186l9.566-5.314m-9.566 7.5l9.566 5.314m0 0a2.25 2.25 0 103.935 2.186 2.25 2.25 0 00-3.935-2.186zm0-12.814a2.25 2.25 0 103.933-2.185 2.25 2.25 0 00-3.933 2.185z"
+										/>
+									</svg>
+								</button>
+							</div>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/perfil/guardados/+page.svelte:199:9
+Warn: Buttons and links should either contain text or have an `aria-label`, `aria-labelledby` or `title` attribute
+https://svelte.dev/e/a11y_consider_explicit_label (svelte)
+								<input type="hidden" name="id" value={article._id} />
+								<button type="submit" class="text-slate-400 transition-colors hover:text-amber-400">
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill={article.isSaved ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+										/>
+									</svg>
+								</button>
+							</form>
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/redaccion/+page.svelte:8:51
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a closure instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	const isStaff = ['admin', 'superadmin'].includes(data.user.role);
+	const maxImages = isStaff ? Infinity : 10;
+
+====================================
+svelte-check found 9 errors and 15 warnings in 9 files

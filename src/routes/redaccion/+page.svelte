@@ -5,10 +5,10 @@
 
 	let showForm = $state(false);
 
-	const isStaff = ['admin', 'superadmin'].includes(data.user.role);
-	const maxImages = isStaff ? Infinity : 10;
-	const maxVideos = isStaff ? Infinity : 2;
-	const maxAttachments = isStaff ? Infinity : 3;
+	const isStaff = $derived(['admin', 'superadmin'].includes(data.user.role));
+	const maxImages = $derived(isStaff ? Infinity : 10);
+	const maxVideos = $derived(isStaff ? Infinity : 2);
+	const maxAttachments = $derived(isStaff ? Infinity : 3);
 </script>
 
 <section class="space-y-8">

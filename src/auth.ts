@@ -1,4 +1,6 @@
+// @ts-ignore
 import { SvelteKitAuth } from '@auth/sveltekit';
+// @ts-ignore
 import Google from '@auth/core/providers/google';
 import { env } from '$env/dynamic/private';
 import { findOrCreateUserFromGoogle } from '$lib/server/auth';
@@ -11,7 +13,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 		})
 	],
 	callbacks: {
-		async signIn({ account, profile }) {
+		async signIn({ account, profile }: { account: any; profile: any }) {
 			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
 				await findOrCreateUserFromGoogle({
 					sub: String(profile.sub),

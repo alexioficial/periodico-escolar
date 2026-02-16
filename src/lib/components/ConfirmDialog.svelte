@@ -40,8 +40,9 @@
 		class="fixed inset-0 z-50 bg-black/50 backdrop-blur-sm"
 		transition:fade={{ duration: 150 }}
 		onclick={confirmDialog.handleCancel}
+		onkeydown={(e) => e.key === 'Escape' && confirmDialog.handleCancel()}
 		role="button"
-		tabindex="-1"
+		tabindex="0"
 	></div>
 
 	<!-- Modal -->
@@ -50,8 +51,10 @@
 			class="relative w-full max-w-md rounded-2xl border {styles.border} {styles.bg} bg-white shadow-2xl"
 			transition:scale={{ duration: 200, start: 0.95 }}
 			onclick={(e) => e.stopPropagation()}
+			onkeydown={(e) => e.stopPropagation()}
 			role="dialog"
 			aria-modal="true"
+			tabindex="-1"
 		>
 			<!-- Header -->
 			<div class="flex items-start gap-4 border-b border-slate-200 p-6">

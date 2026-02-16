@@ -1,0 +1,15 @@
+
+> periodico-escolar@0.0.1 check
+> svelte-kit sync && svelte-check --tsconfig ./tsconfig.json
+
+Loading svelte-check in workspace: /home/alexi/Desktop/_/Programacion/Widube/periodico-escolar
+Getting Svelte diagnostics...
+
+/home/alexi/Desktop/_/Programacion/Widube/periodico-escolar/src/routes/admin/users/+page.svelte:6:27
+Warn: This reference only captures the initial value of `data`. Did you mean to reference it inside a derived instead?
+https://svelte.dev/e/state_referenced_locally (svelte)
+
+	let emailSearch = $state(data.emailFilter || '');
+
+====================================
+svelte-check found 0 errors and 1 warning in 1 file

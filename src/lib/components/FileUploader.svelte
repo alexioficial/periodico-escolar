@@ -29,7 +29,7 @@
 	let modalFile = $state<File | null>(null);
 	let modalPreviewUrl = $state<string | null>(null);
 
-	const maxSizeBytes = maxSize * 1024 * 1024;
+	const maxSizeBytes = $derived(maxSize * 1024 * 1024);
 
 	function createPreviewUrl(file: File): string {
 		const url = URL.createObjectURL(file);
@@ -195,9 +195,9 @@
 </script>
 
 <div class="space-y-3">
-	<label class="text-sm font-medium text-slate-700">
+	<p class="text-sm font-medium text-slate-700">
 		{label}
-	</label>
+	</p>
 
 	<!-- Drag & Drop Zone + Grid de archivos -->
 	<div
