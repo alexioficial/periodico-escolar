@@ -8,23 +8,26 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     openssl \
     && rm -rf /var/lib/apt/lists/*
 
+# Habilitar pnpm mediante corepack
+RUN corepack enable && corepack prepare pnpm@latest --activate
+
 # Set working directory
 WORKDIR /app
 
-# Copy package files
-COPY package.json package-lock.json* ./
+# Copy package files (updated to include pnpm-lock.yaml)
+COPY package.json pnpm-lock.yaml* ./
 
-# Install all dependencies (including devDependencies required for build)
-RUN npm ci
+# Install all dependencies using pnpm
+RUN pnpm install --frozen-lockfile
 
 # Copy the rest of the application
 COPY . .
 
 # Build the SvelteKit app
-RUN npm run build
+RUN pnpm run build
 
 # Prune devDependencies to keep the image small
-RUN npm prune --omit=dev
+RUN pnpm prune --prod
 
 # Expose the port the app runs on (SvelteKit node-adapter defaults to 3000)
 EXPOSE 3000
