@@ -13,7 +13,7 @@ export const { handle, signIn, signOut } = SvelteKitAuth({
 		})
 	],
 	callbacks: {
-		async signIn({ account, profile }: { account: any; profile: any }) {
+		async signIn({ account, profile }) {
 			if (account?.provider === 'google' && profile && 'sub' in profile && 'email' in profile) {
 				await findOrCreateUserFromGoogle({
 					sub: String(profile.sub),

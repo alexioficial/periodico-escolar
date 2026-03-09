@@ -153,7 +153,10 @@
 													toast.success('Categoría actualizada');
 													cancelEdit();
 												} else if (result.type === 'failure') {
-													toast.error('Error', (result.data?.message as string) || 'Error desconocido');
+													toast.error(
+														'Error',
+														(result.data?.message as string) || 'Error desconocido'
+													);
 												}
 											};
 										}}
@@ -210,7 +213,10 @@
 												if (result.type === 'success') {
 													toast.success('Categoría eliminada');
 												} else if (result.type === 'failure') {
-													toast.error('Error', (result.data?.message as string) || 'Error desconocido');
+													toast.error(
+														'Error',
+														(result.data?.message as string) || 'Error desconocido'
+													);
 												}
 											};
 										}}
