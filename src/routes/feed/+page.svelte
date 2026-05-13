@@ -1,26 +1,42 @@
 <script lang="ts">
-	import { page } from '$app/stores';
 	import { enhance } from '$app/forms';
 	import { toast } from '$lib/toast';
-	import { goto } from '$app/navigation';
 
 	let { data } = $props();
 
+	type Article = (typeof data.articles)[number];
+
+	// svelte-ignore state_referenced_locally
+	let articles = $state<Article[]>([...data.articles]);
+	// svelte-ignore state_referenced_locally
+	let pagination = $state({ ...data.pagination });
 	let loadingMore = $state(false);
 
+	$effect(() => {
+		articles = [...data.articles];
+		pagination = { ...data.pagination };
+	});
+
 	async function loadMore() {
-		if (loadingMore || !data.pagination.hasMore) return;
+		if (loadingMore || !pagination.hasMore) return;
 		loadingMore = true;
 
-		const params = new URLSearchParams($page.url.searchParams);
-		params.set('page', (data.pagination.currentPage + 1).toString());
+		try {
+			const params = new URLSearchParams();
+			if (data.currentCategoryId) params.set('categoryId', data.currentCategoryId);
+			params.set('page', String(pagination.currentPage + 1));
 
-		await goto(`/feed?${params.toString()}`, {
-			keepFocus: true,
-			noScroll: true
-		});
+			const res = await fetch(`/api/feed?${params.toString()}`);
+			if (!res.ok) throw new Error('No se pudieron cargar más artículos');
+			const json = (await res.json()) as { articles: Article[]; pagination: typeof pagination };
 
-		loadingMore = false;
+			articles = [...articles, ...json.articles];
+			pagination = json.pagination;
+		} catch (e) {
+			toast.error('Error', e instanceof Error ? e.message : 'Intenta de nuevo');
+		} finally {
+			loadingMore = false;
+		}
 	}
 </script>
 
@@ -45,11 +61,11 @@
 		>
 			Todas
 		</a>
-		{#each data.categories as category}
+		{#each data.categories as category (category._id)}
 			<a
 				href="/feed?categoryId={category._id}"
 				class="rounded-full px-4 py-1.5 text-sm font-medium transition-colors
-				{data.currentCategoryId === category._id
+				{data.currentCategoryId === String(category._id)
 					? 'bg-slate-900 text-white'
 					: 'bg-slate-100 text-slate-600 hover:bg-slate-200'}"
 			>
@@ -58,13 +74,13 @@
 		{/each}
 	</nav>
 
-	{#if data.articles.length === 0}
+	{#if articles.length === 0}
 		<div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
 			<p class="text-lg font-medium text-slate-900">No hay noticias</p>
 			<p class="mt-1 text-sm text-slate-500">
 				{#if data.currentCategoryId}
 					No hay artículos publicados en la categoría "{data.categories.find(
-						(c: any) => c._id === data.currentCategoryId
+						(c) => String(c._id) === data.currentCategoryId
 					)?.name || 'Seleccionada'}" todavía.
 				{:else}
 					Aún no se han publicado artículos en el periódico.
@@ -73,7 +89,7 @@
 		</div>
 	{:else}
 		<div class="mx-auto grid max-w-2xl gap-8">
-			{#each data.articles as article}
+			{#each articles as article (article._id)}
 				<article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 					<!-- Header -->
 					<div class="flex items-center justify-between border-b border-slate-50 p-4">
@@ -88,7 +104,7 @@
 									{article.authorEmail.split('@')[0]}
 								</p>
 								<p class="text-xs text-slate-500">
-									{new Date(article.publishedAt).toLocaleDateString()}
+									{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : ''}
 								</p>
 							</div>
 						</div>
@@ -103,7 +119,7 @@
 					{#if article.media && article.media.length > 0}
 						<div class="group relative aspect-video bg-black">
 							<div class="scrollbar-hide flex h-full w-full snap-x snap-mandatory overflow-x-auto">
-								{#each article.media as item}
+								{#each article.media as item (item.url)}
 									<div
 										class="flex h-full w-full flex-shrink-0 snap-center items-center justify-center"
 									>
@@ -124,7 +140,7 @@
 							</div>
 							{#if article.media.length > 1}
 								<div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-									{#each article.media as _, i}
+									{#each article.media, i (i)}
 										<div class="h-1.5 w-1.5 rounded-full bg-white/50"></div>
 									{/each}
 								</div>
@@ -150,7 +166,7 @@
 						{#if article.attachments && article.attachments.length > 0}
 							<div class="mb-6 space-y-2">
 								<p class="text-xs font-medium tracking-wider text-slate-500 uppercase">Adjuntos</p>
-								{#each article.attachments as file}
+								{#each article.attachments as file (file.url)}
 									<a
 										href={file.url}
 										download
@@ -283,7 +299,7 @@
 		</div>
 
 		<!-- Load More Button -->
-		{#if data.pagination.hasMore}
+		{#if pagination.hasMore}
 			<div class="flex justify-center pt-8">
 				<button
 					onclick={loadMore}

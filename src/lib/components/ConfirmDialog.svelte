@@ -2,11 +2,7 @@
 	import { confirmDialog } from '$lib/confirmDialog';
 	import { fade, scale } from 'svelte/transition';
 
-	let dialog = $state($confirmDialog);
-
-	$effect(() => {
-		dialog = $confirmDialog;
-	});
+	const dialog = $derived($confirmDialog);
 
 	const variantStyles = (variant: typeof dialog.variant) => {
 		if (variant === 'danger')

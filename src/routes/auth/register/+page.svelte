@@ -1,41 +1,9 @@
 <script lang="ts">
-	let email = '';
-	let username = '';
-	let password = '';
-	let confirmPassword = '';
-	let error: string | null = null;
-	let success: string | null = null;
-	let loading = false;
+	import { enhance } from '$app/forms';
 
-	const handleSubmit = async (event: SubmitEvent) => {
-		loading = true;
-		error = null;
-		success = null;
+	let { form } = $props();
 
-		if (password !== confirmPassword) {
-			loading = false;
-			error = 'Las contraseñas no coinciden';
-			return;
-		}
-
-		const form = event.target as HTMLFormElement;
-		const res = await fetch('/auth/register', {
-			method: 'POST',
-			body: new FormData(form)
-		});
-
-		const data = await res.json().catch(() => ({}));
-
-		if (!res.ok) {
-			error = data?.message ?? 'Error al registrarse';
-		} else {
-			success = 'Cuenta creada. Revisa tu correo y verifica con el código de 6 dígitos.';
-			password = '';
-			confirmPassword = '';
-		}
-
-		loading = false;
-	};
+	let loading = $state(false);
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-slate-50 text-slate-900">
@@ -76,21 +44,23 @@
 			<div class="h-px flex-1 bg-slate-200"></div>
 		</div>
 
-		{#if error}
+		{#if form?.message}
 			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-				{error}
+				{form.message}
 			</div>
 		{/if}
 
-		{#if success}
-			<div
-				class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700"
-			>
-				{success}
-			</div>
-		{/if}
-
-		<form class="space-y-4" method="POST" on:submit|preventDefault={handleSubmit}>
+		<form
+			class="space-y-4"
+			method="POST"
+			use:enhance={() => {
+				loading = true;
+				return async ({ update }) => {
+					await update();
+					loading = false;
+				};
+			}}
+		>
 			<div class="space-y-2">
 				<label class="block text-xs font-medium text-slate-700" for="username"
 					>Nombre de usuario</label
@@ -99,7 +69,7 @@
 					id="username"
 					name="username"
 					type="text"
-					bind:value={username}
+					value={form?.username ?? ''}
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
 				/>
@@ -112,7 +82,7 @@
 					id="email"
 					name="email"
 					type="email"
-					bind:value={email}
+					value={form?.email ?? ''}
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
 				/>
@@ -124,7 +94,6 @@
 					id="password"
 					name="password"
 					type="password"
-					bind:value={password}
 					minlength="6"
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
@@ -139,7 +108,6 @@
 					id="confirmPassword"
 					name="confirmPassword"
 					type="password"
-					bind:value={confirmPassword}
 					minlength="6"
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
@@ -151,11 +119,7 @@
 				class="w-full rounded-full bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition-colors hover:bg-sky-400 disabled:opacity-60"
 				disabled={loading}
 			>
-				{#if loading}
-					Creando cuenta...
-				{:else}
-					Registrarse
-				{/if}
+				{loading ? 'Creando cuenta...' : 'Registrarse'}
 			</button>
 		</form>
 

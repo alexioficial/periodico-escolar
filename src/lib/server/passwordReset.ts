@@ -1,9 +1,10 @@
 import { ObjectId, type Db } from 'mongodb';
 import { randomInt } from 'crypto';
 import { getDb } from './db';
-import { sendVerificationEmail } from './mailer';
+import { sendPasswordResetEmail } from './mailer';
+import { setUserPassword } from './auth';
 
-const CODES_COLLECTION = 'email_verification_codes';
+const CODES_COLLECTION = 'password_reset_codes';
 const USERS_COLLECTION = 'users';
 const CODE_TTL_MINUTES = 15;
 const MAX_ATTEMPTS = 5;
@@ -18,7 +19,7 @@ function expiryDate(minutes = CODE_TTL_MINUTES) {
 	return d;
 }
 
-export interface VerificationCodeDoc {
+export interface PasswordResetCodeDoc {
 	_id: ObjectId;
 	email: string;
 	userId: ObjectId;
@@ -28,13 +29,16 @@ export interface VerificationCodeDoc {
 	attempts: number;
 }
 
-export async function createAndSendVerificationCode(email: string) {
+export async function createAndSendResetCode(email: string) {
 	const db: Db = await getDb();
 	const users = db.collection(USERS_COLLECTION);
-	const codes = db.collection<VerificationCodeDoc>(CODES_COLLECTION);
+	const codes = db.collection<PasswordResetCodeDoc>(CODES_COLLECTION);
 
-	const user = await users.findOne({ email });
-	if (!user) throw new Error('Usuario no encontrado');
+	const user = await users.findOne({ email, provider: 'credentials' });
+	if (!user) {
+		// No revelamos si el email existe o no — comportamiento silencioso.
+		return;
+	}
 
 	const code = generate6DigitCode();
 
@@ -46,15 +50,14 @@ export async function createAndSendVerificationCode(email: string) {
 		createdAt: new Date(),
 		expiresAt: expiryDate(),
 		attempts: 0
-	} as VerificationCodeDoc);
+	} as PasswordResetCodeDoc);
 
-	await sendVerificationEmail(email, code);
+	await sendPasswordResetEmail(email, code);
 }
 
-export async function verifyEmailCode(email: string, code: string) {
+export async function verifyResetCode(email: string, code: string, newPassword: string) {
 	const db: Db = await getDb();
-	const users = db.collection(USERS_COLLECTION);
-	const codes = db.collection<VerificationCodeDoc>(CODES_COLLECTION);
+	const codes = db.collection<PasswordResetCodeDoc>(CODES_COLLECTION);
 
 	const doc = await codes.findOne({ email });
 	if (!doc) return { ok: false, reason: 'not_found' as const };
@@ -74,7 +77,7 @@ export async function verifyEmailCode(email: string, code: string) {
 		return { ok: false, reason: 'invalid_code' as const };
 	}
 
-	await users.updateOne({ _id: doc.userId }, { $set: { emailVerified: true } });
+	await setUserPassword(doc.userId, newPassword);
 	await codes.deleteOne({ _id: doc._id });
 	return { ok: true as const };
 }

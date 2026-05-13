@@ -20,7 +20,7 @@
 	const showDetails = import.meta.env.DEV;
 
 	const statusCode = page.status;
-	const pageError = page.error as any;
+	const pageError = page.error;
 
 	const isClientError = statusCode >= 400 && statusCode < 500;
 	const title = titles[statusCode] ?? `Error ${statusCode}`;
@@ -50,7 +50,7 @@
 			</a>
 			<button
 				type="button"
-				on:click={() => history.back()}
+				onclick={() => history.back()}
 				class="inline-flex items-center justify-center rounded-full border border-slate-300 bg-white px-4 py-2 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-50"
 			>
 				Volver atrás

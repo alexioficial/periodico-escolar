@@ -1,7 +1,6 @@
 import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { getUserBySessionToken } from '$lib/server/session';
-import { handle as authHandle } from './auth';
 
 const sessionHandle: Handle = async ({ event, resolve }) => {
 	const sessionToken = event.cookies.get('session');
@@ -23,28 +22,28 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
 			event.locals.user = null;
 		}
 	} else {
-		if (typeof (event.locals as any).auth === 'function') {
-			try {
-				const session = await (event.locals as any).auth();
-				if (session?.user?.email) {
-					event.locals.user = {
-						_id: undefined as unknown as string,
-						email: session.user.email,
-						provider: 'google',
-						role: 'user'
-					} as any;
-				} else {
-					event.locals.user = null;
-				}
-			} catch {
-				event.locals.user = null;
-			}
-		} else {
-			event.locals.user = null;
-		}
+		event.locals.user = null;
 	}
 
 	return resolve(event);
 };
 
-export const handle: Handle = sequence(authHandle, sessionHandle);
+const securityHeadersHandle: Handle = async ({ event, resolve }) => {
+	const response = await resolve(event);
+
+	response.headers.set('X-Content-Type-Options', 'nosniff');
+	response.headers.set('X-Frame-Options', 'DENY');
+	response.headers.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+	response.headers.set(
+		'Permissions-Policy',
+		'camera=(), microphone=(), geolocation=(), payment=()'
+	);
+
+	if (process.env.NODE_ENV === 'production') {
+		response.headers.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains');
+	}
+
+	return response;
+};
+
+export const handle: Handle = sequence(sessionHandle, securityHeadersHandle);

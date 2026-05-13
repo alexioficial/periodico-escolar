@@ -1,5 +1,3 @@
-import type { ObjectId } from 'mongodb';
-
 declare global {
 	namespace App {
 		interface Locals {

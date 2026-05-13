@@ -9,3 +9,22 @@ yarn-debug.log*
 yarn-error.log*
 pnpm-debug.log*
 .DS_Store
+Thumbs.db
+
+# VCS y editores
+.git
+.gitignore
+.gitattributes
+.vscode
+.idea
+.claude
+
+# Documentación y test
+README.md
+*.md
+docs
+
+# Configs locales
+.prettierrc
+.prettierignore
+eslint.config.js

@@ -1,7 +1,7 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import FileUploader from '$lib/components/FileUploader.svelte';
-	let { data, form } = $props();
+	let { data } = $props();
 
 	let showForm = $state(false);
 
@@ -57,7 +57,7 @@
 							class="w-full rounded-md border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500"
 						>
 							<option value="">Selecciona una categoría</option>
-							{#each data.categories as category}
+							{#each data.categories as category (category._id)}
 								<option value={category._id}>{category.name}</option>
 							{/each}
 						</select>
@@ -124,7 +124,7 @@
 			</div>
 		{:else}
 			<div class="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-				{#each data.articles as article}
+				{#each data.articles as article (article._id)}
 					<article
 						class="flex flex-col justify-between rounded-2xl border border-slate-200 bg-white p-5 shadow-sm transition hover:shadow-md"
 					>

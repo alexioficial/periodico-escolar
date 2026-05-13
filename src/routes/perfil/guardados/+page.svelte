@@ -22,7 +22,7 @@
 		</div>
 	{:else}
 		<div class="mx-auto grid max-w-2xl gap-8">
-			{#each data.articles as article}
+			{#each data.articles as article (article._id)}
 				<article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 					<!-- Header -->
 					<div class="flex items-center justify-between border-b border-slate-50 p-4">
@@ -37,7 +37,7 @@
 									{article.authorEmail.split('@')[0]}
 								</p>
 								<p class="text-xs text-slate-500">
-									{new Date(article.publishedAt).toLocaleDateString()}
+									{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : ''}
 								</p>
 							</div>
 						</div>
@@ -52,7 +52,7 @@
 					{#if article.media && article.media.length > 0}
 						<div class="group relative aspect-video bg-black">
 							<div class="scrollbar-hide flex h-full w-full snap-x snap-mandatory overflow-x-auto">
-								{#each article.media as item}
+								{#each article.media as item (item.url)}
 									<div
 										class="flex h-full w-full flex-shrink-0 snap-center items-center justify-center"
 									>
@@ -73,7 +73,7 @@
 							</div>
 							{#if article.media.length > 1}
 								<div class="absolute bottom-4 left-1/2 flex -translate-x-1/2 gap-1.5">
-									{#each article.media as _, i}
+									{#each article.media, i (i)}
 										<div class="h-1.5 w-1.5 rounded-full bg-white/50"></div>
 									{/each}
 								</div>
@@ -99,7 +99,7 @@
 						{#if article.attachments && article.attachments.length > 0}
 							<div class="mb-6 space-y-2">
 								<p class="text-xs font-medium tracking-wider text-slate-500 uppercase">Adjuntos</p>
-								{#each article.attachments as file}
+								{#each article.attachments as file (file.url)}
 									<a
 										href={file.url}
 										download

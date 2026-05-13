@@ -2,6 +2,7 @@ import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { ObjectId } from 'mongodb';
+import { serialize } from '$lib/server/serialize';
 
 const USERS_PER_PAGE = 10;
 
@@ -18,7 +19,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const emailFilter = url.searchParams.get('email') || '';
 	const page = parseInt(url.searchParams.get('page') || '1');
 
-	const query = emailFilter ? { email: { $regex: emailFilter, $options: 'i' } } : {};
+	const escapedFilter = emailFilter.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+	const query = emailFilter ? { email: { $regex: escapedFilter, $options: 'i' } } : {};
 
 	const totalUsers = await db.collection('users').countDocuments(query);
 	const totalPages = Math.ceil(totalUsers / USERS_PER_PAGE);
@@ -32,7 +34,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	return {
 		user: locals.user,
-		users: JSON.parse(JSON.stringify(users)),
+		users: serialize(users),
 		pagination: {
 			currentPage: page,
 			totalPages,
@@ -44,35 +46,55 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	};
 };
 
+type Role = 'user' | 'admin' | 'superadmin';
+
+async function setRole(targetId: string, currentUserId: string, newRole: Role) {
+	if (targetId === currentUserId) {
+		return fail(400, { message: 'No puedes modificar tu propio rol' });
+	}
+
+	const db = await getDb();
+	const users = db.collection('users');
+	const target = await users.findOne({ _id: new ObjectId(targetId) });
+	if (!target) return fail(404, { message: 'Usuario no encontrado' });
+
+	if (target.role === 'superadmin' && newRole !== 'superadmin') {
+		const remainingSuperadmins = await users.countDocuments({
+			role: 'superadmin',
+			_id: { $ne: target._id }
+		});
+		if (remainingSuperadmins === 0) {
+			return fail(400, { message: 'No puedes quitar al último superadmin' });
+		}
+	}
+
+	await users.updateOne({ _id: target._id }, { $set: { role: newRole } });
+	return { success: true };
+}
+
 export const actions: Actions = {
-	promote: async ({ request, locals }) => {
-		if (locals.user?.role !== 'superadmin') {
-			return fail(401, { message: 'No autorizado' });
-		}
-
-		const formData = await request.formData();
-		const id = formData.get('id') as string;
-
+	promoteToAdmin: async ({ request, locals }) => {
+		if (locals.user?.role !== 'superadmin') return fail(401, { message: 'No autorizado' });
+		const id = (await request.formData()).get('id') as string;
 		if (!id) return fail(400, { message: 'ID requerido' });
-
-		const db = await getDb();
-		await db.collection('users').updateOne({ _id: new ObjectId(id) }, { $set: { role: 'admin' } });
-
-		return { success: true };
+		return setRole(id, locals.user._id, 'admin');
 	},
-	demote: async ({ request, locals }) => {
-		if (locals.user?.role !== 'superadmin') {
-			return fail(401, { message: 'No autorizado' });
-		}
-
-		const formData = await request.formData();
-		const id = formData.get('id') as string;
-
+	promoteToSuperadmin: async ({ request, locals }) => {
+		if (locals.user?.role !== 'superadmin') return fail(401, { message: 'No autorizado' });
+		const id = (await request.formData()).get('id') as string;
 		if (!id) return fail(400, { message: 'ID requerido' });
-
-		const db = await getDb();
-		await db.collection('users').updateOne({ _id: new ObjectId(id) }, { $set: { role: 'user' } });
-
-		return { success: true };
+		return setRole(id, locals.user._id, 'superadmin');
+	},
+	demoteToAdmin: async ({ request, locals }) => {
+		if (locals.user?.role !== 'superadmin') return fail(401, { message: 'No autorizado' });
+		const id = (await request.formData()).get('id') as string;
+		if (!id) return fail(400, { message: 'ID requerido' });
+		return setRole(id, locals.user._id, 'admin');
+	},
+	demoteToUser: async ({ request, locals }) => {
+		if (locals.user?.role !== 'superadmin') return fail(401, { message: 'No autorizado' });
+		const id = (await request.formData()).get('id') as string;
+		if (!id) return fail(400, { message: 'ID requerido' });
+		return setRole(id, locals.user._id, 'user');
 	}
 };

@@ -8,6 +8,7 @@ import {
 	countArticlesByCategory,
 	ensureDefaultCategories
 } from '$lib/server/categories';
+import { serialize } from '$lib/server/serialize';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
@@ -32,7 +33,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	return {
 		user: locals.user,
-		categories: JSON.parse(JSON.stringify(categoriesWithCount))
+		categories: serialize(categoriesWithCount)
 	};
 };
 
@@ -52,8 +53,10 @@ export const actions: Actions = {
 		try {
 			await createCategory(name.trim());
 			return { success: true };
-		} catch (error: any) {
-			return fail(400, { message: error.message });
+		} catch (error) {
+			return fail(400, {
+				message: error instanceof Error ? error.message : 'Error desconocido'
+			});
 		}
 	},
 
@@ -73,8 +76,10 @@ export const actions: Actions = {
 		try {
 			await updateCategory(id, name.trim());
 			return { success: true };
-		} catch (error: any) {
-			return fail(400, { message: error.message });
+		} catch (error) {
+			return fail(400, {
+				message: error instanceof Error ? error.message : 'Error desconocido'
+			});
 		}
 	},
 
@@ -93,8 +98,10 @@ export const actions: Actions = {
 		try {
 			await deleteCategory(id);
 			return { success: true };
-		} catch (error: any) {
-			return fail(400, { message: error.message });
+		} catch (error) {
+			return fail(400, {
+				message: error instanceof Error ? error.message : 'Error desconocido'
+			});
 		}
 	}
 };

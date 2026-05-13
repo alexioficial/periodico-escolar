@@ -1,4 +1,4 @@
-import { type Db, ObjectId } from 'mongodb';
+import { ObjectId } from 'mongodb';
 import { getDb } from './db';
 
 const CATEGORIES_COLLECTION = 'categories';

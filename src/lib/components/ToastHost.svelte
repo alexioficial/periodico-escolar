@@ -1,15 +1,15 @@
 <script lang="ts">
 	import { toast, type Toast } from '$lib/toast';
 	import { fly, fade } from 'svelte/transition';
+	import { onDestroy } from 'svelte';
 
-	let toasts: Toast[] = [];
+	let toasts = $state<Toast[]>([]);
 
 	const unsubscribe = toast.subscribe((value) => {
 		toasts = value;
 	});
 
-	$: if (toasts.length === 0) {
-	}
+	onDestroy(unsubscribe);
 
 	const variantClasses = (variant: Toast['variant']) => {
 		if (variant === 'success') return 'border-emerald-300 bg-emerald-50 text-emerald-900';
@@ -18,17 +18,14 @@
 		return 'border-sky-300 bg-sky-50 text-sky-900';
 	};
 
-	const iconClass = (variant: Toast['variant']) => {
-		if (variant === 'success') return 'i-[mdi--check-circle] text-emerald-500';
-		if (variant === 'error') return 'i-[mdi--alert-circle] text-red-500';
-		if (variant === 'warning') return 'i-[mdi--alert] text-amber-500';
-		return 'i-[mdi--information] text-sky-500';
+	const iconColor = (variant: Toast['variant']) => {
+		if (variant === 'success') return 'text-emerald-500';
+		if (variant === 'error') return 'text-red-500';
+		if (variant === 'warning') return 'text-amber-500';
+		return 'text-sky-500';
 	};
 
 	const dismiss = (id: number) => toast.dismiss(id);
-
-	import { onDestroy } from 'svelte';
-	onDestroy(unsubscribe);
 </script>
 
 <div class="pointer-events-none fixed inset-0 z-50 flex items-start justify-end px-4 py-4">
@@ -39,7 +36,36 @@
 				out:fade={{ duration: 150 }}
 				class={`pointer-events-auto flex items-start gap-3 rounded-xl border px-3 py-2 shadow-lg shadow-slate-900/10 ${variantClasses(t.variant)}`}
 			>
-				<div class={`mt-0.5 h-5 w-5 flex-shrink-0 ${iconClass(t.variant)}`}></div>
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class={`mt-0.5 h-5 w-5 flex-shrink-0 ${iconColor(t.variant)}`}
+					aria-hidden="true"
+				>
+					{#if t.variant === 'success'}
+						<circle cx="12" cy="12" r="10" />
+						<path d="m9 12 2 2 4-4" />
+					{:else if t.variant === 'error'}
+						<circle cx="12" cy="12" r="10" />
+						<line x1="12" y1="8" x2="12" y2="12" />
+						<line x1="12" y1="16" x2="12.01" y2="16" />
+					{:else if t.variant === 'warning'}
+						<path
+							d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
+						/>
+						<line x1="12" y1="9" x2="12" y2="13" />
+						<line x1="12" y1="17" x2="12.01" y2="17" />
+					{:else}
+						<circle cx="12" cy="12" r="10" />
+						<line x1="12" y1="16" x2="12" y2="12" />
+						<line x1="12" y1="8" x2="12.01" y2="8" />
+					{/if}
+				</svg>
 				<div class="flex-1 text-xs">
 					<div class="leading-snug font-semibold">{t.message}</div>
 					{#if t.description}
@@ -49,7 +75,7 @@
 				<button
 					type="button"
 					class="ml-1 rounded-full px-1.5 text-[10px] font-medium opacity-60 transition hover:bg-black/5 hover:opacity-100"
-					on:click={() => dismiss(t.id)}
+					onclick={() => dismiss(t.id)}
 				>
 					Cerrar
 				</button>

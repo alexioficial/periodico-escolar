@@ -22,7 +22,7 @@
 		</div>
 	{:else}
 		<div class="grid gap-6">
-			{#each data.articles as article}
+			{#each data.articles as article (article._id)}
 				<article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 					<div class="p-6">
 						<div class="mb-4 flex items-center justify-between">

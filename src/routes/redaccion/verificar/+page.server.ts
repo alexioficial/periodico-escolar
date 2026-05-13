@@ -1,6 +1,8 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
 import { getPendingArticles, updateArticleStatus } from '$lib/server/articles';
+import { getCategories } from '$lib/server/categories';
+import { serialize } from '$lib/server/serialize';
 
 export const load: PageServerLoad = async ({ locals }) => {
 	if (!locals.user) {
@@ -11,11 +13,18 @@ export const load: PageServerLoad = async ({ locals }) => {
 		throw redirect(303, '/redaccion');
 	}
 
-	const pendingArticles = await getPendingArticles();
+	const [pendingArticles, categories] = await Promise.all([getPendingArticles(), getCategories()]);
+
+	const categoryMap = new Map(categories.map((c) => [c._id!.toString(), c.name]));
+
+	const enrichedArticles = pendingArticles.map((article) => ({
+		...article,
+		category: categoryMap.get(article.categoryId) ?? 'Sin categoría'
+	}));
 
 	return {
 		user: locals.user,
-		articles: JSON.parse(JSON.stringify(pendingArticles))
+		articles: serialize(enrichedArticles)
 	};
 };
 

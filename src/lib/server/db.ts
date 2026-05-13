@@ -3,9 +3,37 @@ import { env } from '$env/dynamic/private';
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
+let indexesPromise: Promise<void> | null = null;
 
 if (!env.MONGODB_URI) {
 	console.warn('MONGODB_URI no está definida. Configúrala en tu entorno.');
+}
+
+async function ensureIndexes(db: Db) {
+	await Promise.all([
+		db.collection('users').createIndex({ email: 1 }, { unique: true }),
+		db.collection('users').createIndex({ username: 1 }, { unique: true, sparse: true }),
+		db.collection('users').createIndex({ provider: 1, googleId: 1 }, { sparse: true }),
+
+		db.collection('sessions').createIndex({ token: 1 }, { unique: true }),
+		db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+
+		db.collection('email_verification_codes').createIndex({ email: 1 }),
+		db
+			.collection('email_verification_codes')
+			.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+
+		db.collection('password_reset_codes').createIndex({ email: 1 }),
+		db.collection('password_reset_codes').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+
+		db.collection('articles').createIndex({ status: 1, publishedAt: -1 }),
+		db.collection('articles').createIndex({ authorId: 1, createdAt: -1 }),
+		db.collection('articles').createIndex({ savedBy: 1 }),
+		db.collection('articles').createIndex({ categoryId: 1 }),
+
+		db.collection('categories').createIndex({ slug: 1 }, { unique: true }),
+		db.collection('categories').createIndex({ name: 1 }, { unique: true })
+	]);
 }
 
 export async function getDb(): Promise<Db> {
@@ -18,8 +46,19 @@ export async function getDb(): Promise<Db> {
 
 	if (db && client) return db;
 
-	client = new MongoClient(uri);
+	client = new MongoClient(uri, {
+		serverSelectionTimeoutMS: 5_000,
+		connectTimeoutMS: 10_000,
+		socketTimeoutMS: 30_000
+	});
 	await client.connect();
 	db = client.db(dbName);
+
+	if (!indexesPromise) {
+		indexesPromise = ensureIndexes(db).catch((err) => {
+			console.error('Error al crear índices:', err);
+		});
+	}
+
 	return db;
 }

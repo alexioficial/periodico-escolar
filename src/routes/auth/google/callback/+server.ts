@@ -1,6 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { redirect } from '@sveltejs/kit';
-import { findOrCreateUserFromGoogle } from '$lib/server/auth';
+import { findOrCreateUserFromGoogle, EmailAccountConflictError } from '$lib/server/auth';
 import { createSession } from '$lib/server/session';
 import { env } from '$env/dynamic/private';
 
@@ -10,9 +10,18 @@ const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	const code = url.searchParams.get('code');
 	const error = url.searchParams.get('error');
+	const state = url.searchParams.get('state');
 
 	if (!code || error) {
 		throw redirect(303, '/auth/login');
+	}
+
+	const storedState = cookies.get('oauth_state');
+	cookies.delete('oauth_state', { path: '/' });
+
+	if (!storedState || !state || storedState !== state) {
+		console.error('OAuth state mismatch — posible CSRF');
+		throw redirect(303, '/auth/login?error=csrf');
 	}
 
 	if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
@@ -77,7 +86,15 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 		return new Response('Google no devolvió un email válido', { status: 500 });
 	}
 
-	const user = await findOrCreateUserFromGoogle(profile);
+	let user;
+	try {
+		user = await findOrCreateUserFromGoogle(profile);
+	} catch (err) {
+		if (err instanceof EmailAccountConflictError) {
+			throw redirect(303, '/auth/login?error=account_conflict');
+		}
+		throw err;
+	}
 	if (!user) {
 		return new Response('No se pudo crear o encontrar el usuario de Google', { status: 500 });
 	}

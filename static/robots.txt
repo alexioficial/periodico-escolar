@@ -1,3 +1,10 @@
-# allow crawling everything by default
+# Periódico Escolar — política de crawling
 User-agent: *
-Disallow:
+Disallow: /admin/
+Disallow: /auth/
+Disallow: /perfil/
+Disallow: /redaccion/
+Disallow: /api/
+
+Allow: /feed
+Allow: /

@@ -120,7 +120,7 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-200 bg-white">
-				{#each data.categories as category}
+				{#each data.categories as category (category._id)}
 					<tr class="hover:bg-slate-50">
 						<td class="px-6 py-4">
 							{#if editingId === category._id}

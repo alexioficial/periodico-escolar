@@ -3,8 +3,7 @@
 	import { goto } from '$app/navigation';
 	let { data } = $props();
 
-	// svelte-ignore state_referenced_locally
-	let emailSearch = $state(data.emailFilter || '');
+	let emailSearch = $state('');
 
 	$effect(() => {
 		emailSearch = data.emailFilter || '';
@@ -99,7 +98,7 @@
 				</tr>
 			</thead>
 			<tbody class="divide-y divide-slate-200 bg-white">
-				{#each data.users as user}
+				{#each data.users as user (user._id)}
 					<tr>
 						<td class="px-6 py-4 whitespace-nowrap">
 							<div class="flex items-center">
@@ -131,22 +130,37 @@
 							</span>
 						</td>
 						<td class="px-6 py-4 text-right text-sm font-medium whitespace-nowrap">
-							{#if user.role !== 'superadmin'}
-								{#if user.role === 'admin'}
-									<form method="POST" action="?/demote" use:enhance class="inline">
+							{#if String(user._id) === data.user._id}
+								<span class="text-xs text-slate-400">(tú)</span>
+							{:else if user.role === 'user'}
+								<form method="POST" action="?/promoteToAdmin" use:enhance class="inline">
+									<input type="hidden" name="id" value={user._id} />
+									<button type="submit" class="text-indigo-600 hover:text-indigo-900">
+										Ascender a Admin
+									</button>
+								</form>
+							{:else if user.role === 'admin'}
+								<div class="flex justify-end gap-3">
+									<form method="POST" action="?/promoteToSuperadmin" use:enhance class="inline">
 										<input type="hidden" name="id" value={user._id} />
-										<button type="submit" class="text-amber-600 hover:text-amber-900"
-											>Degradar a Usuario</button
-										>
+										<button type="submit" class="text-purple-600 hover:text-purple-900">
+											Ascender a Superadmin
+										</button>
 									</form>
-								{:else}
-									<form method="POST" action="?/promote" use:enhance class="inline">
+									<form method="POST" action="?/demoteToUser" use:enhance class="inline">
 										<input type="hidden" name="id" value={user._id} />
-										<button type="submit" class="text-indigo-600 hover:text-indigo-900"
-											>Ascender a Admin</button
-										>
+										<button type="submit" class="text-amber-600 hover:text-amber-900">
+											Degradar a Usuario
+										</button>
 									</form>
-								{/if}
+								</div>
+							{:else if user.role === 'superadmin'}
+								<form method="POST" action="?/demoteToAdmin" use:enhance class="inline">
+									<input type="hidden" name="id" value={user._id} />
+									<button type="submit" class="text-amber-600 hover:text-amber-900">
+										Degradar a Admin
+									</button>
+								</form>
 							{/if}
 						</td>
 					</tr>
@@ -167,7 +181,7 @@
 			</button>
 
 			<div class="flex items-center gap-2">
-				{#each Array(data.pagination.totalPages) as _, i}
+				{#each Array(data.pagination.totalPages), i (i)}
 					{#if i + 1 === data.pagination.currentPage || i + 1 === 1 || i + 1 === data.pagination.totalPages || (i + 1 >= data.pagination.currentPage - 1 && i + 1 <= data.pagination.currentPage + 1)}
 						<button
 							onclick={() => goToPage(i + 1)}

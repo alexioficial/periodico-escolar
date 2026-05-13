@@ -1,0 +1,5 @@
+{
+	"permissions": {
+		"allow": ["PowerShell(Get-Job *)", "PowerShell(pnpm audit *)", "PowerShell(pnpm update *)"]
+	}
+}

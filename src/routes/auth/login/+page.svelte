@@ -1,29 +1,9 @@
 <script lang="ts">
-	let email = '';
-	let password = '';
-	let error: string | null = null;
-	let loading = false;
+	import { enhance } from '$app/forms';
 
-	const handleSubmit = async (event: SubmitEvent) => {
-		loading = true;
-		error = null;
+	let { data, form } = $props();
 
-		const form = event.target as HTMLFormElement;
-		const res = await fetch('/auth/login', {
-			method: 'POST',
-			body: new FormData(form)
-		});
-
-		const data = await res.json().catch(() => ({}));
-
-		if (!res.ok) {
-			error = data?.message ?? 'Error al iniciar sesión';
-		} else if (data?.redirectTo) {
-			window.location.href = data.redirectTo;
-		}
-
-		loading = false;
-	};
+	let loading = $state(false);
 </script>
 
 <div class="flex min-h-screen items-center justify-center bg-slate-50 text-slate-900">
@@ -64,13 +44,36 @@
 			<div class="h-px flex-1 bg-slate-200"></div>
 		</div>
 
-		{#if error}
-			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-				{error}
+		{#if data.csrfError}
+			<div class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+				La sesión OAuth expiró o fue manipulada. Inténtalo de nuevo.
 			</div>
 		{/if}
 
-		<form class="space-y-4" method="POST" on:submit|preventDefault={handleSubmit}>
+		{#if data.accountConflict}
+			<div class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
+				Ya existe una cuenta con este correo registrada con contraseña. Inicia sesión con tu
+				contraseña o restablece tu contraseña.
+			</div>
+		{/if}
+
+		{#if form?.message}
+			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
+				{form.message}
+			</div>
+		{/if}
+
+		<form
+			class="space-y-4"
+			method="POST"
+			use:enhance={() => {
+				loading = true;
+				return async ({ update }) => {
+					await update();
+					loading = false;
+				};
+			}}
+		>
 			<div class="space-y-2">
 				<label class="block text-xs font-medium text-slate-700" for="email"
 					>Correo electrónico</label
@@ -79,7 +82,7 @@
 					id="email"
 					name="email"
 					type="email"
-					bind:value={email}
+					value={form?.email ?? ''}
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
 				/>
@@ -91,7 +94,6 @@
 					id="password"
 					name="password"
 					type="password"
-					bind:value={password}
 					minlength="6"
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
@@ -103,17 +105,15 @@
 				class="w-full rounded-full bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition-colors hover:bg-sky-400 disabled:opacity-60"
 				disabled={loading}
 			>
-				{#if loading}
-					Iniciando sesión...
-				{:else}
-					Entrar
-				{/if}
+				{loading ? 'Iniciando sesión...' : 'Entrar'}
 			</button>
 		</form>
 
-		<p class="text-center text-xs text-slate-500">
-			¿No tienes cuenta?
+		<div class="flex justify-between text-xs text-slate-500">
+			<a href="/auth/forgot-password" class="text-sky-600 hover:underline">
+				¿Olvidaste tu contraseña?
+			</a>
 			<a href="/auth/register" class="text-sky-600 hover:underline">Regístrate</a>
-		</p>
+		</div>
 	</div>
 </div>

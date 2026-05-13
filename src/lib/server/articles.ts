@@ -1,7 +1,21 @@
 import { type Db, ObjectId } from 'mongodb';
 import { getDb } from './db';
+import { getViewUrl, getDownloadUrl } from './storage';
 
 const ARTICLES_COLLECTION = 'articles';
+
+export interface ArticleMedia {
+	type: 'image' | 'video';
+	key: string;
+	mimeType: string;
+}
+
+export interface ArticleAttachment {
+	name: string;
+	key: string;
+	size: number;
+	mimeType: string;
+}
 
 export interface ArticleDoc {
 	_id?: ObjectId;
@@ -15,20 +29,53 @@ export interface ArticleDoc {
 	createdAt: Date;
 	publishedAt?: Date;
 
-	media?: {
-		type: 'image' | 'video';
-		url: string;
-		mimeType: string;
-	}[];
-	attachments?: {
-		name: string;
-		url: string;
-		size: number;
-		mimeType: string;
-	}[];
+	media?: ArticleMedia[];
+	attachments?: ArticleAttachment[];
 
 	likes?: string[];
 	savedBy?: string[];
+}
+
+/**
+ * Tipo del artículo tal como se expone al cliente:
+ * `media[].key` y `attachments[].key` se reemplazan por `url` firmada.
+ */
+export type ArticleWithUrls<T extends ArticleDoc = ArticleDoc> = Omit<
+	T,
+	'media' | 'attachments'
+> & {
+	media?: { type: 'image' | 'video'; url: string; mimeType: string }[];
+	attachments?: { name: string; url: string; size: number; mimeType: string }[];
+};
+
+export async function enrichArticleWithUrls<T extends ArticleDoc>(
+	article: T
+): Promise<ArticleWithUrls<T>> {
+	const [media, attachments] = await Promise.all([
+		Promise.all(
+			(article.media ?? []).map(async (m) => ({
+				type: m.type,
+				url: await getViewUrl(m.key),
+				mimeType: m.mimeType
+			}))
+		),
+		Promise.all(
+			(article.attachments ?? []).map(async (a) => ({
+				name: a.name,
+				url: await getDownloadUrl(a.key, a.name),
+				size: a.size,
+				mimeType: a.mimeType
+			}))
+		)
+	]);
+
+	return { ...article, media, attachments };
+}
+
+export async function enrichArticlesWithUrls<T extends ArticleDoc>(
+	articles: T[]
+): Promise<ArticleWithUrls<T>[]> {
+	return Promise.all(articles.map(enrichArticleWithUrls));
 }
 
 export async function createArticle(article: Omit<ArticleDoc, '_id' | 'createdAt'>) {
@@ -54,7 +101,7 @@ export async function getPendingArticles() {
 export async function getPublishedArticles(categoryId?: string, skip = 0, limit?: number) {
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
-	const query: any = { status: 'published' };
+	const query: { status: ArticleDoc['status']; categoryId?: string } = { status: 'published' };
 	if (categoryId) {
 		query.categoryId = categoryId;
 	}
@@ -70,7 +117,7 @@ export async function getPublishedArticles(categoryId?: string, skip = 0, limit?
 export async function countPublishedArticles(categoryId?: string) {
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
-	const query: any = { status: 'published' };
+	const query: { status: ArticleDoc['status']; categoryId?: string } = { status: 'published' };
 	if (categoryId) {
 		query.categoryId = categoryId;
 	}
@@ -87,7 +134,7 @@ export async function updateArticleStatus(id: string, status: ArticleDoc['status
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
 
-	const update: any = { status };
+	const update: { status: ArticleDoc['status']; publishedAt?: Date } = { status };
 	if (status === 'published') {
 		update.publishedAt = new Date();
 	}
