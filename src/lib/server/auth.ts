@@ -50,8 +50,36 @@ export class EmailAccountConflictError extends Error {
 	}
 }
 
+// Parámetros explícitos de argon2 alineados con la guía OWASP 2024 (argon2id).
+// Fijarlos previene cambios silenciosos entre versiones de la lib y deja claros
+// los trade-offs CPU/memoria.
+const ARGON2_OPTIONS = {
+	type: argon2.argon2id,
+	memoryCost: 19_456, // 19 MiB
+	timeCost: 2,
+	parallelism: 1
+} as const;
+
+export const PASSWORD_MIN = 8;
+export const PASSWORD_MAX = 128;
+
+// Hash dummy para que `validateUser` corra argon2.verify aún cuando el usuario
+// no existe, evitando enumerar emails por timing. Se genera lazy en la primera
+// llamada y se cachea — así garantizamos un hash con los mismos parámetros que
+// usamos en producción.
+let dummyHashPromise: Promise<string> | null = null;
+function getDummyHash(): Promise<string> {
+	if (!dummyHashPromise) {
+		dummyHashPromise = argon2.hash('dummy-password-for-timing', ARGON2_OPTIONS);
+	}
+	return dummyHashPromise;
+}
+
 export async function hashPassword(password: string) {
-	return argon2.hash(password, { type: argon2.argon2id });
+	if (typeof password !== 'string' || password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+		throw new Error(`La contraseña debe tener entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres`);
+	}
+	return argon2.hash(password, ARGON2_OPTIONS);
 }
 
 export async function verifyPassword(hash: string, password: string) {
@@ -70,10 +98,14 @@ function isDuplicateKeyError(error: unknown, field: string): boolean {
 }
 
 export async function createUser(email: string, username: string, password: string) {
+	if (typeof email !== 'string' || typeof username !== 'string' || typeof password !== 'string') {
+		throw new Error('Datos de registro inválidos');
+	}
+
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
 
-	const passwordHash = await hashPassword(password);
+	const passwordHash = await hashPassword(password); // valida longitud
 
 	try {
 		const result = await users.insertOne({
@@ -95,15 +127,20 @@ export async function createUser(email: string, username: string, password: stri
 }
 
 export async function validateUser(email: string, password: string) {
+	if (typeof email !== 'string' || typeof password !== 'string') return null;
+
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
 
 	const user = await users.findOne({ email, provider: 'credentials' });
-	if (!user || !user.passwordHash) return null;
 
-	const ok = await verifyPassword(user.passwordHash, password);
-	if (!ok) return null;
+	// Para no enumerar emails por timing, corremos `verify` aún cuando el
+	// usuario no existe (o no tiene passwordHash). El verify contra el dummy
+	// devuelve false; descartamos la rama del usuario válido sólo después.
+	const hashToCheck = user?.passwordHash || (await getDummyHash());
+	const ok = await verifyPassword(hashToCheck, password);
 
+	if (!user || !user.passwordHash || !ok) return null;
 	return user;
 }
 
@@ -152,8 +189,18 @@ export async function updateUserProfile(
 		if (update.picture === null) {
 			$unset.picture = '';
 		} else {
+			// Sólo aceptamos keys internas (subidas vía storage.saveFile, que
+			// devuelve `uploads/<uuid>[.ext]`). Esto evita que un caller arme
+			// el form con una URL externa o una key apuntando a otro recurso.
+			if (typeof update.picture !== 'string' || !/^uploads\/[a-z0-9-]+(?:\.[a-z0-9]+)?$/.test(update.picture)) {
+				throw new Error('La referencia de la foto de perfil no es válida');
+			}
 			$set.picture = update.picture;
 		}
+	}
+
+	if (update.name !== undefined && typeof update.name === 'string' && update.name.length > 100) {
+		throw new Error('El nombre es demasiado largo');
 	}
 
 	const updateOps: Record<string, unknown> = {};
@@ -178,11 +225,18 @@ export async function updateUserProfile(
 export async function setUserPassword(userId: ObjectId, newPassword: string) {
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
-	const passwordHash = await hashPassword(newPassword);
-	await users.updateOne({ _id: userId }, { $set: { passwordHash } });
+	const passwordHash = await hashPassword(newPassword); // valida longitud
+	const res = await users.updateOne({ _id: userId }, { $set: { passwordHash } });
+	if (res.matchedCount !== 1) {
+		throw new Error('No se encontró el usuario al actualizar la contraseña');
+	}
 }
 
 export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
+	if (typeof profile?.sub !== 'string' || typeof profile?.email !== 'string') {
+		throw new Error('Perfil de Google inválido');
+	}
+
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
 
@@ -202,18 +256,35 @@ export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
 	}
 
 	if (!user) {
-		const result = await users.insertOne({
-			email,
-			provider: 'google',
-			googleId: profile.sub,
-			name: profile.name,
-			picture: profile.picture,
-			emailVerified: profile.email_verified,
-			role: 'user',
-			createdAt: new Date()
-		} as UserDoc);
-
-		user = await users.findOne({ _id: result.insertedId });
+		// Atómico: si dos requests OAuth llegan al mismo tiempo, sólo uno
+		// inserta y ambos terminan apuntando al mismo doc (insertedId vía
+		// upsert). Sin esto, podían crearse cuentas duplicadas.
+		try {
+			await users.updateOne(
+				{ provider: 'google', googleId: profile.sub },
+				{
+					$setOnInsert: {
+						email,
+						provider: 'google',
+						googleId: profile.sub,
+						name: profile.name,
+						picture: profile.picture,
+						emailVerified: profile.email_verified,
+						role: 'user',
+						createdAt: new Date()
+					}
+				},
+				{ upsert: true }
+			);
+		} catch (error) {
+			if (isDuplicateKeyError(error, 'email')) {
+				// Otra request creó la cuenta credentials entre nuestro check y
+				// el upsert. Tratamos igual que existing credentials.
+				throw new EmailAccountConflictError();
+			}
+			throw error;
+		}
+		user = await users.findOne({ provider: 'google', googleId: profile.sub });
 	}
 
 	return user;

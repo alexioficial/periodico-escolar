@@ -4,6 +4,9 @@ import { env } from '$env/dynamic/private';
 let client: MongoClient | null = null;
 let db: Db | null = null;
 let indexesPromise: Promise<void> | null = null;
+// Reusamos la promesa de conexión: sin esto, dos requests que entren
+// antes de que `connect()` resuelva crean dos MongoClient en paralelo.
+let connectPromise: Promise<Db> | null = null;
 
 if (!env.MONGODB_URI) {
 	console.warn('MONGODB_URI no está definida. Configúrala en tu entorno.');
@@ -67,28 +70,41 @@ async function ensureIndexes(db: Db) {
 }
 
 export async function getDb(): Promise<Db> {
-	const uri = env.MONGODB_URI;
-	const dbName = env.MONGODB_DB ?? 'periodico_escolar';
-
-	if (!uri) {
-		throw new Error('MONGODB_URI no está definida');
-	}
-
 	if (db && client) return db;
 
-	client = new MongoClient(uri, {
-		serverSelectionTimeoutMS: 5_000,
-		connectTimeoutMS: 10_000,
-		socketTimeoutMS: 30_000
-	});
-	await client.connect();
-	db = client.db(dbName);
+	if (!connectPromise) {
+		const uri = env.MONGODB_URI;
+		const dbName = env.MONGODB_DB ?? 'periodico_escolar';
+		if (!uri) {
+			throw new Error('MONGODB_URI no está definida');
+		}
 
-	if (!indexesPromise) {
-		indexesPromise = ensureIndexes(db).catch((err) => {
-			console.error('Error al crear índices:', err);
-		});
+		connectPromise = (async () => {
+			const c = new MongoClient(uri, {
+				serverSelectionTimeoutMS: 5_000,
+				connectTimeoutMS: 10_000,
+				socketTimeoutMS: 30_000
+			});
+			try {
+				await c.connect();
+			} catch (err) {
+				// Permitimos reintento en la próxima llamada en vez de quedar
+				// con una promesa rechazada cacheada para siempre.
+				connectPromise = null;
+				throw err;
+			}
+			client = c;
+			db = c.db(dbName);
+
+			if (!indexesPromise) {
+				indexesPromise = ensureIndexes(db).catch((err) => {
+					console.error('Error al crear índices:', err);
+				});
+			}
+
+			return db;
+		})();
 	}
 
-	return db;
+	return connectPromise;
 }
