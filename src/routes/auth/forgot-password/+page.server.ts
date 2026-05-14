@@ -11,7 +11,7 @@ export const load: PageServerLoad = async ({ url }) => {
 
 export const actions: Actions = {
 	default: async ({ request, getClientAddress }) => {
-		const rl = checkRateLimit({
+		const rl = await checkRateLimit({
 			key: `forgot:${getClientAddress()}`,
 			limit: 3,
 			windowMs: 60 * 60_000

@@ -42,7 +42,10 @@ export const actions: Actions = {
 		}
 
 		try {
-			await updateArticleStatus(id, 'published');
+			const ok = await updateArticleStatus(id, 'published');
+			if (!ok) {
+				return fail(409, { message: 'El artículo ya no está pendiente de revisión' });
+			}
 			return { success: true };
 		} catch (error) {
 			console.error(error);
@@ -62,7 +65,10 @@ export const actions: Actions = {
 		}
 
 		try {
-			await updateArticleStatus(id, 'rejected');
+			const ok = await updateArticleStatus(id, 'rejected');
+			if (!ok) {
+				return fail(409, { message: 'El artículo ya no está pendiente de revisión' });
+			}
 			return { success: true };
 		} catch (error) {
 			console.error(error);

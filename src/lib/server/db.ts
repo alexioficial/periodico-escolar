@@ -9,10 +9,37 @@ if (!env.MONGODB_URI) {
 	console.warn('MONGODB_URI no está definida. Configúrala en tu entorno.');
 }
 
+const CI_COLLATION = { locale: 'en', strength: 2 };
+
+async function ensureCollatedUniqueIndex(
+	db: Db,
+	collection: string,
+	field: string,
+	options: { sparse?: boolean } = {}
+) {
+	const coll = db.collection(collection);
+	const indexes = await coll.indexes();
+	const existing = indexes.find((i) => i.name === `${field}_1`);
+	const collationOk =
+		!!existing?.collation &&
+		existing.collation.locale?.startsWith('en') &&
+		existing.collation.strength === 2;
+
+	if (existing && !collationOk) {
+		await coll.dropIndex(`${field}_1`);
+	}
+
+	await coll.createIndex({ [field]: 1 }, { unique: true, collation: CI_COLLATION, ...options });
+}
+
 async function ensureIndexes(db: Db) {
+	// users.email y users.username deben ser únicos case-insensitive para
+	// que "Pepe" y "pepe" sean el mismo usuario. Si los índices viejos están
+	// sin collation, los recreamos con collation.
+	await ensureCollatedUniqueIndex(db, 'users', 'email');
+	await ensureCollatedUniqueIndex(db, 'users', 'username', { sparse: true });
+
 	await Promise.all([
-		db.collection('users').createIndex({ email: 1 }, { unique: true }),
-		db.collection('users').createIndex({ username: 1 }, { unique: true, sparse: true }),
 		db.collection('users').createIndex({ provider: 1, googleId: 1 }, { sparse: true }),
 
 		db.collection('sessions').createIndex({ token: 1 }, { unique: true }),
@@ -32,7 +59,10 @@ async function ensureIndexes(db: Db) {
 		db.collection('articles').createIndex({ categoryId: 1 }),
 
 		db.collection('categories').createIndex({ slug: 1 }, { unique: true }),
-		db.collection('categories').createIndex({ name: 1 }, { unique: true })
+		db.collection('categories').createIndex({ name: 1 }, { unique: true }),
+
+		db.collection('rate_limit_buckets').createIndex({ key: 1 }, { unique: true }),
+		db.collection('rate_limit_buckets').createIndex({ resetAt: 1 }, { expireAfterSeconds: 0 })
 	]);
 }
 

@@ -10,15 +10,17 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 const reasonMessage = {
-	not_found: 'No hay un código activo para este correo',
+	// Mensaje uniforme para not_found/invalid_code para no permitir enumerar
+	// si un correo tiene un código activo (= si la cuenta existe).
+	not_found: 'Código inválido o expirado. Solicita uno nuevo.',
 	expired: 'El código expiró. Solicita uno nuevo.',
 	too_many_attempts: 'Demasiados intentos. Solicita un nuevo código.',
-	invalid_code: 'Código inválido'
+	invalid_code: 'Código inválido o expirado. Solicita uno nuevo.'
 } as const;
 
 export const actions: Actions = {
-	verify: async ({ request, getClientAddress }) => {
-		const rl = checkRateLimit({
+	verify: async ({ request, getClientAddress, locals }) => {
+		const rl = await checkRateLimit({
 			key: `verify:${getClientAddress()}`,
 			limit: 10,
 			windowMs: 5 * 60_000
@@ -30,10 +32,15 @@ export const actions: Actions = {
 		}
 
 		const form = await request.formData();
-		const email = String(form.get('email') ?? '')
+		const formEmail = String(form.get('email') ?? '')
 			.trim()
 			.toLowerCase();
 		const code = String(form.get('code') ?? '').trim();
+
+		// Si hay sesión, ignoramos el email del form y forzamos el del usuario
+		// logueado: evita que un atacante con sesión verifique el correo de
+		// otra cuenta enviando un email distinto.
+		const email = locals.user ? locals.user.email.toLowerCase() : formEmail;
 
 		if (!email || !code) return fail(400, { message: 'Faltan datos', email });
 
@@ -44,10 +51,13 @@ export const actions: Actions = {
 			return fail(status, { message: reasonMessage[result.reason], email });
 		}
 
+		if (locals.user) {
+			throw redirect(303, '/perfil?verified=1');
+		}
 		throw redirect(303, '/auth/login?verified=1');
 	},
-	resend: async ({ request, getClientAddress }) => {
-		const rl = checkRateLimit({
+	resend: async ({ request, getClientAddress, locals }) => {
+		const rl = await checkRateLimit({
 			key: `resend:${getClientAddress()}`,
 			limit: 3,
 			windowMs: 60 * 60_000
@@ -59,16 +69,18 @@ export const actions: Actions = {
 		}
 
 		const form = await request.formData();
-		const email = String(form.get('email') ?? '')
+		const formEmail = String(form.get('email') ?? '')
 			.trim()
 			.toLowerCase();
+		const email = locals.user ? locals.user.email.toLowerCase() : formEmail;
+
 		if (!email) return fail(400, { message: 'Correo requerido', email });
 
 		try {
 			await createAndSendVerificationCode(email);
-			return { success: true, message: 'Código reenviado. Revisa tu correo.', email };
 		} catch {
-			return fail(400, { message: 'No se pudo reenviar el código', email });
+			// Silencioso para no revelar si el correo existe.
 		}
+		return { success: true, message: 'Si el correo es válido, te enviamos un código.', email };
 	}
 };

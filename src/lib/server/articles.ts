@@ -130,7 +130,17 @@ export async function getArticlesByAuthor(authorId: string) {
 	return collection.find({ authorId }).sort({ createdAt: -1 }).toArray();
 }
 
-export async function updateArticleStatus(id: string, status: ArticleDoc['status']) {
+/**
+ * Cambia el status de un artículo. Solo aplica si el artículo está en
+ * `status: 'pending'`. Retorna true si la transición se aplicó.
+ *
+ * Esto evita que un admin re-apruebe artículos ya rechazados o re-rechace
+ * publicados pasando IDs arbitrarios.
+ */
+export async function updateArticleStatus(
+	id: string,
+	status: ArticleDoc['status']
+): Promise<boolean> {
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
 
@@ -139,7 +149,11 @@ export async function updateArticleStatus(id: string, status: ArticleDoc['status
 		update.publishedAt = new Date();
 	}
 
-	await collection.updateOne({ _id: new ObjectId(id) }, { $set: update });
+	const result = await collection.updateOne(
+		{ _id: new ObjectId(id), status: 'pending' },
+		{ $set: update }
+	);
+	return result.matchedCount === 1;
 }
 
 export async function getArticleById(id: string) {

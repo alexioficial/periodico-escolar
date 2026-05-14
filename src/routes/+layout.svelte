@@ -78,7 +78,27 @@
 
 				<div class="flex items-center gap-3 text-xs text-slate-600">
 					{#if data.user}
-						<span class="hidden text-slate-500 sm:inline">{data.user.email}</span>
+						{@const displayName =
+							data.user.username || data.user.name || data.user.email.split('@')[0]}
+						{@const initials = (data.user.name || data.user.username || data.user.email)
+							.slice(0, 2)
+							.toUpperCase()}
+						<a
+							href="/perfil"
+							aria-current={isActive('/perfil') ? 'page' : undefined}
+							class="flex items-center gap-2 rounded-full border border-transparent px-2 py-1 text-slate-700 transition-colors hover:border-slate-200 hover:bg-slate-50"
+						>
+							<span
+								class="flex h-7 w-7 items-center justify-center overflow-hidden rounded-full border border-slate-200 bg-slate-100 text-[10px] font-semibold text-slate-600"
+							>
+								{#if data.user.picture}
+									<img src={data.user.picture} alt="Tu foto" class="h-full w-full object-cover" />
+								{:else}
+									{initials}
+								{/if}
+							</span>
+							<span class="hidden text-xs font-medium sm:inline">{displayName}</span>
+						</a>
 						<form method="POST" action="/auth/logout">
 							<button
 								type="submit"

@@ -126,6 +126,7 @@
 
 	function syncFilesToInput() {
 		if (!formInputRef) return;
+		if (typeof DataTransfer === 'undefined') return; // iOS Safari < 14.5
 
 		const dataTransfer = new DataTransfer();
 		selectedFiles.forEach((file) => {
@@ -193,8 +194,13 @@
 		previewUrls.forEach((url) => URL.revokeObjectURL(url));
 		previewUrls = new Map();
 		selectedFiles = [];
-		if (formInputRef) {
+		// Resetear el input visible permite re-seleccionar el mismo archivo
+		// después de un clear (los browsers ignoran `change` con mismo value).
+		if (fileInputRef) fileInputRef.value = '';
+		if (formInputRef && typeof DataTransfer !== 'undefined') {
 			formInputRef.files = new DataTransfer().files;
+		} else if (formInputRef) {
+			formInputRef.value = '';
 		}
 	}
 

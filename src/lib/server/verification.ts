@@ -5,7 +5,7 @@ import { sendVerificationEmail } from './mailer';
 
 const CODES_COLLECTION = 'email_verification_codes';
 const USERS_COLLECTION = 'users';
-const CODE_TTL_MINUTES = 15;
+const CODE_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 
 function generate6DigitCode() {

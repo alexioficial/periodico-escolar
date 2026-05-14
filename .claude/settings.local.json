@@ -5,7 +5,10 @@
       "PowerShell(pnpm audit *)",
       "PowerShell(pnpm update *)",
       "PowerShell(pnpm run *)",
-      "PowerShell(pnpm exec *)"
+      "PowerShell(pnpm exec *)",
+      "Bash(pnpm run *)",
+      "Bash(pnpm exec *)",
+      "Bash(pnpm add *)"
     ]
   }
 }

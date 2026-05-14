@@ -10,15 +10,16 @@ export const load: PageServerLoad = async ({ url }) => {
 };
 
 const reasonMessage = {
-	not_found: 'No hay un código activo para este correo. Solicita uno nuevo.',
-	expired: 'El código expiró. Solicita uno nuevo.',
+	// Uniformamos not_found/invalid_code/expired para no enumerar correos.
+	not_found: 'Código inválido o expirado. Solicita uno nuevo.',
+	expired: 'Código inválido o expirado. Solicita uno nuevo.',
 	too_many_attempts: 'Demasiados intentos. Solicita un nuevo código.',
-	invalid_code: 'Código inválido'
+	invalid_code: 'Código inválido o expirado. Solicita uno nuevo.'
 } as const;
 
 export const actions: Actions = {
 	default: async ({ request, getClientAddress }) => {
-		const rl = checkRateLimit({
+		const rl = await checkRateLimit({
 			key: `reset:${getClientAddress()}`,
 			limit: 10,
 			windowMs: 5 * 60_000

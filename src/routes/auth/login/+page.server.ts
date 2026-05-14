@@ -18,7 +18,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 export const actions: Actions = {
 	default: async ({ request, cookies, getClientAddress }) => {
-		const rl = checkRateLimit({
+		const rl = await checkRateLimit({
 			key: `login:${getClientAddress()}`,
 			limit: 5,
 			windowMs: 5 * 60_000

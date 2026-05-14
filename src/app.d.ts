@@ -6,6 +6,9 @@ declare global {
 				email: string;
 				provider: 'credentials' | 'google';
 				role: 'user' | 'admin' | 'superadmin';
+				username?: string;
+				name?: string;
+				picture?: string;
 			} | null;
 		}
 	}

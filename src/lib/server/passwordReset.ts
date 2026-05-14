@@ -6,7 +6,7 @@ import { setUserPassword } from './auth';
 
 const CODES_COLLECTION = 'password_reset_codes';
 const USERS_COLLECTION = 'users';
-const CODE_TTL_MINUTES = 15;
+const CODE_TTL_MINUTES = 10;
 const MAX_ATTEMPTS = 5;
 
 function generate6DigitCode() {
@@ -35,8 +35,9 @@ export async function createAndSendResetCode(email: string) {
 	const codes = db.collection<PasswordResetCodeDoc>(CODES_COLLECTION);
 
 	const user = await users.findOne({ email, provider: 'credentials' });
-	if (!user) {
-		// No revelamos si el email existe o no — comportamiento silencioso.
+	if (!user || user.emailVerified !== true) {
+		// Silencioso — mismo comportamiento que email inexistente, para no
+		// revelar si una cuenta existe o si está verificada.
 		return;
 	}
 
