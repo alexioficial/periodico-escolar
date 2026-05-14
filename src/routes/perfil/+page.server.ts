@@ -84,7 +84,8 @@ export const actions: Actions = {
 			}
 			try {
 				newPictureKey = await saveFile(file, {
-					allowedMimes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp']
+					allowedMimes: ['image/jpeg', 'image/png', 'image/gif', 'image/webp'],
+					maxFileSize: MAX_AVATAR_MB * 1024 * 1024
 				});
 				uploadedKeyForRollback = newPictureKey;
 			} catch (error) {

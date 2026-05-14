@@ -76,12 +76,17 @@ export const actions: Actions = {
 			return fail(400, { message: 'La categoría seleccionada no es válida' });
 		}
 
+		const isSuperadmin = locals.user.role === 'superadmin';
 		const isStaff = ['admin', 'superadmin'].includes(locals.user.role);
 		const limits = {
 			images: isStaff ? Infinity : 10,
 			videos: isStaff ? Infinity : 2,
 			attachments: isStaff ? Infinity : 3
 		};
+		const maxFileSizeMb = isSuperadmin ? Infinity : isStaff ? 150 : 50;
+		const maxFileSizeBytes = Number.isFinite(maxFileSizeMb)
+			? maxFileSizeMb * 1024 * 1024
+			: Infinity;
 
 		const mediaFiles = (formData.getAll('media') as File[]).filter(
 			(f) => f.size > 0 && f.name !== 'undefined'
@@ -118,19 +123,29 @@ export const actions: Actions = {
 			}
 		}
 
+		if (Number.isFinite(maxFileSizeBytes)) {
+			for (const file of [...mediaFiles, ...attachmentFiles]) {
+				if (file.size > maxFileSizeBytes) {
+					return fail(400, {
+						message: `El archivo "${file.name}" supera el límite de ${maxFileSizeMb} MB`
+					});
+				}
+			}
+		}
+
 		const media: ArticleMedia[] = [];
 		const attachments: ArticleAttachment[] = [];
 		const uploadedKeys: string[] = [];
 
 		try {
 			for (const file of mediaFiles) {
-				const key = await saveFile(file);
+				const key = await saveFile(file, { maxFileSize: maxFileSizeBytes });
 				uploadedKeys.push(key);
 				const type = file.type.startsWith('video/') ? 'video' : 'image';
 				media.push({ type, key, mimeType: file.type });
 			}
 			for (const file of attachmentFiles) {
-				const key = await saveFile(file);
+				const key = await saveFile(file, { maxFileSize: maxFileSizeBytes });
 				uploadedKeys.push(key);
 				attachments.push({
 					name: file.name,

@@ -4,12 +4,15 @@
 	import { goto, invalidateAll } from '$app/navigation';
 	import { page } from '$app/state';
 	import { toast } from '$lib/toast';
+	import AvatarCropper from '$lib/components/AvatarCropper.svelte';
 
 	let { data } = $props();
 
 	let isSaving = $state(false);
 	let isSendingVerification = $state(false);
 	let verifiedToastShown = $state(false);
+	let cropperOpen = $state(false);
+	let cropperSource = $state<File | null>(null);
 
 	$effect(() => {
 		if (
@@ -44,40 +47,59 @@
 		const input = e.target as HTMLInputElement;
 		const file = input.files?.[0] ?? null;
 
-		if (previewUrl) URL.revokeObjectURL(previewUrl);
-
-		if (!file) {
-			selectedFile = null;
-			previewUrl = null;
-			return;
-		}
+		if (!file) return;
 
 		if (!file.type.startsWith('image/')) {
 			toast.error('La foto de perfil debe ser una imagen');
 			input.value = '';
-			selectedFile = null;
-			previewUrl = null;
 			return;
 		}
 
 		if (file.size > 4.5 * 1024 * 1024) {
 			toast.error('La imagen supera el máximo de 4.5 MB');
 			input.value = '';
-			selectedFile = null;
-			previewUrl = null;
 			return;
 		}
 
+		cropperSource = file;
+		cropperOpen = true;
+		input.value = '';
+	}
+
+	function setCroppedFile(file: File) {
+		if (previewUrl) URL.revokeObjectURL(previewUrl);
 		selectedFile = file;
 		previewUrl = URL.createObjectURL(file);
 		removePicture = false;
+
+		if (fileInput && typeof DataTransfer !== 'undefined') {
+			const dt = new DataTransfer();
+			dt.items.add(file);
+			fileInput.files = dt.files;
+		}
+	}
+
+	function onCropConfirm(file: File) {
+		setCroppedFile(file);
+		cropperOpen = false;
+		cropperSource = null;
+	}
+
+	function onCropCancel() {
+		cropperOpen = false;
+		cropperSource = null;
 	}
 
 	function clearSelection() {
 		if (previewUrl) URL.revokeObjectURL(previewUrl);
 		previewUrl = null;
 		selectedFile = null;
-		if (fileInput) fileInput.value = '';
+		if (fileInput) {
+			fileInput.value = '';
+			if (typeof DataTransfer !== 'undefined') {
+				fileInput.files = new DataTransfer().files;
+			}
+		}
 	}
 
 	function toggleRemove() {
@@ -362,3 +384,10 @@
 		</form>
 	{/if}
 </section>
+
+<AvatarCropper
+	bind:open={cropperOpen}
+	file={cropperSource}
+	onConfirm={onCropConfirm}
+	onCancel={onCropCancel}
+/>

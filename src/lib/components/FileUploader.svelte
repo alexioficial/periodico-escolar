@@ -31,7 +31,8 @@
 	let modalFile = $state<File | null>(null);
 	let modalPreviewUrl = $state<string | null>(null);
 
-	const maxSizeBytes = $derived(maxSize * 1024 * 1024);
+	const hasSizeLimit = $derived(Number.isFinite(maxSize));
+	const maxSizeBytes = $derived(hasSizeLimit ? maxSize * 1024 * 1024 : Infinity);
 
 	function createPreviewUrl(file: File): string {
 		const url = URL.createObjectURL(file);
@@ -47,7 +48,7 @@
 		let currentTotal = selectedFiles.length;
 
 		for (const file of fileArray) {
-			if (file.size > maxSizeBytes) {
+			if (hasSizeLimit && file.size > maxSizeBytes) {
 				toast.error(`El archivo ${file.name} es demasiado grande. Tamaño máximo: ${maxSize} MB`);
 				continue;
 			}
@@ -320,10 +321,11 @@
 	<!-- Input file OCULTO para ENVIAR en el formulario (mantiene todos los archivos) -->
 	<input type="file" {name} {accept} multiple class="hidden" bind:this={formInputRef} />
 
-	<!-- Información adicional -->
-	<p class="text-xs text-slate-500">
-		Tamaño máximo por archivo: {maxSize} MB
-	</p>
+	{#if hasSizeLimit}
+		<p class="text-xs text-slate-500">
+			Tamaño máximo por archivo: {maxSize} MB
+		</p>
+	{/if}
 </div>
 
 <!-- Modal de preview -->

@@ -36,9 +36,14 @@ export interface SaveFileOptions {
 	 * tengan magic bytes que lo confirmen.
 	 */
 	strictMediaSignature?: boolean;
+	/**
+	 * Tamaño máximo en bytes para este archivo. Si no se pasa, no se aplica
+	 * límite (el caller es responsable de validar según el contexto/rol).
+	 * Pasá `Infinity` explícitamente también desactiva el límite.
+	 */
+	maxFileSize?: number;
 }
 
-const DEFAULT_MAX_FILE_SIZE_MB = 10;
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hora — alineado con la cache.
 const SIGNED_URL_CACHE_BUFFER_MS = 5 * 60_000; // refrescamos 5 min antes de expirar
 const SIGNED_URL_CACHE_MAX_ENTRIES = 5000;
@@ -49,11 +54,6 @@ interface CachedSignedUrl {
 }
 
 const signedUrlCache = new Map<string, CachedSignedUrl>();
-
-function getMaxFileSize() {
-	const mb = Number(env.MAX_FILE_SIZE_MB) || DEFAULT_MAX_FILE_SIZE_MB;
-	return mb * 1024 * 1024;
-}
 
 let client: S3Client | null = null;
 
@@ -100,10 +100,9 @@ function sanitizeExtension(name: string) {
  * (SVG/HTML/XML/JS) que podrían ejecutar JS desde el dominio del bucket.
  */
 export async function saveFile(file: File, options: SaveFileOptions = {}): Promise<string> {
-	const { allowedMimes, strictMediaSignature = true } = options;
+	const { allowedMimes, strictMediaSignature = true, maxFileSize } = options;
 
-	const maxFileSize = getMaxFileSize();
-	if (file.size > maxFileSize) {
+	if (maxFileSize !== undefined && Number.isFinite(maxFileSize) && file.size > maxFileSize) {
 		throw new Error(
 			`El archivo ${file.name} es demasiado grande. Tamaño máximo: ${maxFileSize / 1024 / 1024} MB`
 		);

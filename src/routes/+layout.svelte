@@ -52,7 +52,7 @@
 				<img src={LOGO_URL} alt="Logo" class="h-8 w-8" />
 				<div class="flex flex-col">
 					<span class="text-sm font-semibold tracking-tight">Periódico escolar</span>
-					<span class="text-[11px] leading-tight text-slate-500">Tu escuela</span>
+					<!-- <span class="text-[11px] leading-tight text-slate-500"></span> -->
 				</div>
 			</a>
 

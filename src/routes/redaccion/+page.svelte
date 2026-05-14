@@ -10,10 +10,12 @@
 	let mediaApi = $state<{ clear: () => void } | null>(null);
 	let attachmentsApi = $state<{ clear: () => void } | null>(null);
 
+	const isSuperadmin = $derived(data.user.role === 'superadmin');
 	const isStaff = $derived(['admin', 'superadmin'].includes(data.user.role));
 	const maxImages = $derived(isStaff ? Infinity : 10);
 	const maxVideos = $derived(isStaff ? Infinity : 2);
 	const maxAttachments = $derived(isStaff ? Infinity : 3);
+	const maxFileSizeMb = $derived(isSuperadmin ? Infinity : isStaff ? 150 : 50);
 
 	const handleSubmit: SubmitFunction = () => {
 		isSaving = true;
@@ -118,7 +120,7 @@
 					accept="image/*,video/*"
 					label="Multimedia (Fotos y Videos)"
 					name="media"
-					maxSize={4.5}
+					maxSize={maxFileSizeMb}
 					{maxImages}
 					{maxVideos}
 					bind:api={mediaApi}
@@ -128,7 +130,7 @@
 					accept=".pdf,.doc,.docx,.ppt,.pptx,.xls,.xlsx"
 					label="Archivos Adjuntos (PDF, Word, Excel)"
 					name="attachments"
-					maxSize={4.5}
+					maxSize={maxFileSizeMb}
 					maxItems={maxAttachments}
 					bind:api={attachmentsApi}
 				/>
