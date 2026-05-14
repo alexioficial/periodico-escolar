@@ -1,9 +1,11 @@
 {
-	"permissions": {
-		"allow": [
-			"PowerShell(Get-Job *)",
-			"PowerShell(pnpm audit *)",
-			"PowerShell(pnpm update *)"
-		]
-	}
+  "permissions": {
+    "allow": [
+      "PowerShell(Get-Job *)",
+      "PowerShell(pnpm audit *)",
+      "PowerShell(pnpm update *)",
+      "PowerShell(pnpm run *)",
+      "PowerShell(pnpm exec *)"
+    ]
+  }
 }

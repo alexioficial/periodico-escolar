@@ -1,14 +1,40 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
+	import { toast } from '$lib/toast';
 	import FileUploader from '$lib/components/FileUploader.svelte';
 	let { data } = $props();
 
 	let showForm = $state(false);
+	let isSaving = $state(false);
 
 	const isStaff = $derived(['admin', 'superadmin'].includes(data.user.role));
 	const maxImages = $derived(isStaff ? Infinity : 10);
 	const maxVideos = $derived(isStaff ? Infinity : 2);
 	const maxAttachments = $derived(isStaff ? Infinity : 3);
+
+	const handleSubmit: SubmitFunction = () => {
+		isSaving = true;
+		return async ({ result, update }) => {
+			isSaving = false;
+
+			if (result.type === 'success') {
+				toast.success(isStaff ? 'Artículo publicado correctamente' : 'Artículo enviado a revisión');
+				await update({ reset: true });
+				showForm = false;
+			} else if (result.type === 'failure') {
+				const msg =
+					(result.data as { message?: string } | undefined)?.message ??
+					'No se pudo guardar el artículo';
+				toast.error(msg);
+				await update({ reset: false });
+			} else if (result.type === 'redirect') {
+				await update();
+			} else {
+				toast.error('Error inesperado al guardar el artículo. Intenta de nuevo.');
+			}
+		};
+	};
 </script>
 
 <section class="space-y-8">
@@ -21,7 +47,8 @@
 		</div>
 		<button
 			onclick={() => (showForm = !showForm)}
-			class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white hover:bg-slate-800"
+			disabled={isSaving}
+			class="rounded-lg bg-slate-900 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60"
 		>
 			{showForm ? 'Cancelar' : 'Nuevo Artículo'}
 		</button>
@@ -33,7 +60,7 @@
 			<form
 				method="POST"
 				action="?/create"
-				use:enhance
+				use:enhance={handleSubmit}
 				enctype="multipart/form-data"
 				class="space-y-4"
 			>
@@ -106,9 +133,27 @@
 				<div class="flex justify-end">
 					<button
 						type="submit"
-						class="rounded-lg bg-indigo-600 px-6 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+						disabled={isSaving}
+						class="inline-flex items-center gap-2 rounded-lg bg-indigo-600 px-6 py-2 text-sm font-medium text-white transition-colors hover:bg-indigo-700 disabled:cursor-not-allowed disabled:opacity-70"
 					>
-						Guardar Artículo
+						{#if isSaving}
+							<svg
+								xmlns="http://www.w3.org/2000/svg"
+								viewBox="0 0 24 24"
+								fill="none"
+								stroke="currentColor"
+								stroke-width="2.5"
+								stroke-linecap="round"
+								stroke-linejoin="round"
+								class="h-4 w-4 animate-spin"
+								aria-hidden="true"
+							>
+								<path d="M21 12a9 9 0 1 1-6.219-8.56" />
+							</svg>
+							Guardando...
+						{:else}
+							Guardar Artículo
+						{/if}
 					</button>
 				</div>
 			</form>
