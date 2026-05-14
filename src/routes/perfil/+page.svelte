@@ -386,7 +386,7 @@
 </section>
 
 <AvatarCropper
-	bind:open={cropperOpen}
+	open={cropperOpen}
 	file={cropperSource}
 	onConfirm={onCropConfirm}
 	onCancel={onCropCancel}

@@ -1,6 +1,18 @@
 <script lang="ts">
 	import { toast } from '$lib/toast';
 	import FilePreviewModal from './FilePreviewModal.svelte';
+	import { untrack } from 'svelte';
+
+	type Props = {
+		accept?: string;
+		label?: string;
+		name: string;
+		maxSize?: number;
+		maxImages?: number;
+		maxVideos?: number;
+		maxItems?: number;
+		api?: { clear: () => void } | null;
+	};
 
 	let {
 		accept = '*',
@@ -11,22 +23,19 @@
 		maxVideos = Infinity,
 		maxItems = Infinity,
 		api = $bindable<{ clear: () => void } | null>(null)
-	} = $props<{
-		accept?: string;
-		label?: string;
-		name: string;
-		maxSize?: number;
-		maxImages?: number;
-		maxVideos?: number;
-		maxItems?: number;
-		api?: { clear: () => void } | null;
-	}>();
+	}: Props = $props();
 
 	let selectedFiles = $state<File[]>([]);
 	let previewUrls = $state<Map<File, string>>(new Map());
 	let isDragging = $state(false);
-	let fileInputRef: HTMLInputElement;
-	let formInputRef: HTMLInputElement;
+	// Contador para no apagar el estado dragging cuando el cursor cruza un
+	// hijo durante el drag (dragleave dispara aunque el cursor siga adentro).
+	let dragDepth = 0;
+	let fileInputRef: HTMLInputElement | undefined;
+	let formInputRef: HTMLInputElement | undefined;
+
+	// Identifica un archivo por (name, size, lastModified) para deduplicar.
+	const fileKey = (f: File) => `${f.name}|${f.size}|${f.lastModified}`;
 
 	let modalFile = $state<File | null>(null);
 	let modalPreviewUrl = $state<string | null>(null);
@@ -46,8 +55,15 @@
 		let currentImages = selectedFiles.filter((f) => f.type.startsWith('image/')).length;
 		let currentVideos = selectedFiles.filter((f) => f.type.startsWith('video/')).length;
 		let currentTotal = selectedFiles.length;
+		const existingKeys = new Set(selectedFiles.map(fileKey));
 
 		for (const file of fileArray) {
+			// Dedup: si arrastran el mismo archivo dos veces, lo ignoramos en vez
+			// de duplicarlo.
+			if (existingKeys.has(fileKey(file))) {
+				continue;
+			}
+
 			if (hasSizeLimit && file.size > maxSizeBytes) {
 				toast.error(`El archivo ${file.name} es demasiado grande. Tamaño máximo: ${maxSize} MB`);
 				continue;
@@ -78,6 +94,7 @@
 			}
 
 			selectedFiles.push(file);
+			existingKeys.add(fileKey(file));
 			createPreviewUrl(file);
 			currentTotal++;
 		}
@@ -149,12 +166,16 @@
 
 	function handleDragEnter(e: DragEvent) {
 		e.preventDefault();
+		dragDepth++;
 		isDragging = true;
 	}
 
 	function handleDragLeave(e: DragEvent) {
 		e.preventDefault();
-		isDragging = false;
+		dragDepth = Math.max(0, dragDepth - 1);
+		// Sólo apagamos el estado cuando salimos del wrapper de verdad, no al
+		// cruzar a un hijo durante el drag (eso disparaba flicker).
+		if (dragDepth === 0) isDragging = false;
 	}
 
 	function handleDragOver(e: DragEvent) {
@@ -163,6 +184,7 @@
 
 	function handleDrop(e: DragEvent) {
 		e.preventDefault();
+		dragDepth = 0;
 		isDragging = false;
 
 		if (e.dataTransfer?.files) {
@@ -205,8 +227,13 @@
 		}
 	}
 
+	// Sólo exponemos `api` una vez al montar. `untrack` evita que la reactividad
+	// de `api` reentre y bucle: antes el effect podía dispararse en cada render
+	// reasignando la prop.
 	$effect(() => {
-		api = { clear };
+		untrack(() => {
+			api = { clear };
+		});
 	});
 
 	$effect(() => {
@@ -221,7 +248,9 @@
 		{label}
 	</p>
 
-	<!-- Drag & Drop Zone + Grid de archivos -->
+	<!-- Drag & Drop Zone + Grid de archivos. No es un botón: el botón "Agregar"
+	dentro cumple el rol focuseable; este wrapper sólo capta drag events. -->
+	<!-- svelte-ignore a11y_no_static_element_interactions -->
 	<div
 		class="rounded-lg border-2 border-dashed p-4 transition-colors {isDragging
 			? 'border-indigo-500 bg-indigo-50'
@@ -230,8 +259,6 @@
 		ondragleave={handleDragLeave}
 		ondragover={handleDragOver}
 		ondrop={handleDrop}
-		role="button"
-		tabindex="0"
 	>
 		<div class="grid grid-cols-3 gap-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6">
 			<!-- Archivos existentes -->
@@ -259,12 +286,13 @@
 						{/if}
 					</button>
 
-					<!-- Botón eliminar -->
+					<!-- Botón eliminar: en mobile no hay hover, lo mostramos siempre.
+					En desktop mantenemos el patrón de aparecer en hover. -->
 					<button
 						type="button"
 						onclick={() => removeFile(file)}
-						class="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-0 shadow-lg transition-opacity group-hover:opacity-100 hover:bg-red-600"
-						aria-label="Eliminar archivo"
+						class="absolute -top-2 -right-2 flex h-6 w-6 items-center justify-center rounded-full bg-red-500 text-white opacity-100 shadow-lg transition-opacity hover:bg-red-600 sm:opacity-0 sm:group-hover:opacity-100"
+						aria-label="Eliminar archivo {file.name}"
 					>
 						<svg
 							xmlns="http://www.w3.org/2000/svg"
@@ -283,7 +311,7 @@
 			<!-- Botón agregar más archivos -->
 			<button
 				type="button"
-				onclick={() => fileInputRef.click()}
+				onclick={() => fileInputRef?.click()}
 				class="flex aspect-square w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white text-slate-400 transition-all hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600"
 			>
 				<svg

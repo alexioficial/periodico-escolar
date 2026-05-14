@@ -25,28 +25,36 @@ function createConfirmDialog() {
 
 	function confirm(options: ConfirmDialogOptions): Promise<boolean> {
 		return new Promise((resolve) => {
-			update(() => ({
-				...options,
-				confirmText: options.confirmText || 'Confirmar',
-				cancelText: options.cancelText || 'Cancelar',
-				variant: options.variant || 'info',
-				isOpen: true,
-				resolve
-			}));
+			update((state) => {
+				// Si quedó una llamada previa sin resolver (alguien lanzó dos
+				// confirms seguidos), resolvemos esa Promise con false antes de
+				// sobreescribir — sino el caller original queda colgado para
+				// siempre esperando un resolve que nunca llega.
+				state.resolve?.(false);
+
+				return {
+					...options,
+					confirmText: options.confirmText || 'Confirmar',
+					cancelText: options.cancelText || 'Cancelar',
+					variant: options.variant || 'info',
+					isOpen: true,
+					resolve
+				};
+			});
 		});
 	}
 
 	function handleConfirm() {
 		update((state) => {
 			state.resolve?.(true);
-			return { ...state, isOpen: false };
+			return { ...state, isOpen: false, resolve: undefined };
 		});
 	}
 
 	function handleCancel() {
 		update((state) => {
 			state.resolve?.(false);
-			return { ...state, isOpen: false };
+			return { ...state, isOpen: false, resolve: undefined };
 		});
 	}
 

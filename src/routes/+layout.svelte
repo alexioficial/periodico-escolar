@@ -158,7 +158,7 @@
 	<ToastHost />
 	<ConfirmDialog />
 	<MobileMenu
-		bind:open={mobileMenuOpen}
+		open={mobileMenuOpen}
 		user={data.user}
 		{links}
 		logoUrl={LOGO_URL}

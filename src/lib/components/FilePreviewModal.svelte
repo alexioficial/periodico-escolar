@@ -1,13 +1,13 @@
 <script lang="ts">
-	let {
-		file = null,
-		previewUrl = null,
-		onClose
-	} = $props<{
+	import { lockBodyScroll, unlockBodyScroll } from '$lib/scrollLock';
+
+	type Props = {
 		file: File | null;
 		previewUrl: string | null;
 		onClose: () => void;
-	}>();
+	};
+
+	let { file, previewUrl, onClose }: Props = $props();
 
 	let isVisible = $derived(file !== null);
 
@@ -26,31 +26,42 @@
 		return (bytes / (1024 * 1024)).toFixed(2) + ' MB';
 	};
 
-	function handleKeydown(e: KeyboardEvent) {
-		if (e.key === 'Escape' && isVisible) {
-			onClose();
-		}
-	}
+	// Lock + Escape sólo mientras está visible. Antes el listener vivía siempre
+	// y respondía Escape aunque el modal estuviera cerrado.
+	$effect(() => {
+		if (!isVisible) return;
+		lockBodyScroll();
+		const previouslyFocused = document.activeElement as HTMLElement | null;
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') onClose();
+		};
+		window.addEventListener('keydown', onKey);
+		return () => {
+			window.removeEventListener('keydown', onKey);
+			unlockBodyScroll();
+			previouslyFocused?.focus?.();
+		};
+	});
 </script>
 
-<svelte:window onkeydown={handleKeydown} />
-
 {#if isVisible}
-	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-black/80 p-4 backdrop-blur-sm"
+	<button
+		type="button"
+		aria-label="Cerrar vista previa"
 		onclick={onClose}
-		role="presentation"
-	>
+		class="fixed inset-0 z-[60] cursor-default bg-black/80 backdrop-blur-sm"
+	></button>
+
+	<div class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center p-4">
 		<div
-			class="relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
-			onclick={(e) => e.stopPropagation()}
-			onkeydown={(e) => e.stopPropagation()}
+			class="pointer-events-auto relative max-h-[90vh] max-w-[90vw] overflow-auto rounded-2xl bg-white shadow-2xl"
 			role="dialog"
 			aria-modal="true"
+			aria-label={file?.name ?? 'Vista previa'}
 			tabindex="-1"
 		>
-			<!-- Botón cerrar -->
 			<button
+				type="button"
 				onclick={onClose}
 				class="absolute top-4 right-4 z-10 flex h-10 w-10 items-center justify-center rounded-full bg-slate-900/80 text-white transition-colors hover:bg-slate-900"
 				aria-label="Cerrar"
@@ -60,6 +71,7 @@
 					viewBox="0 0 20 20"
 					fill="currentColor"
 					class="h-5 w-5"
+					aria-hidden="true"
 				>
 					<path
 						d="M6.28 5.22a.75.75 0 00-1.06 1.06L8.94 10l-3.72 3.72a.75.75 0 101.06 1.06L10 11.06l3.72 3.72a.75.75 0 101.06-1.06L11.06 10l3.72-3.72a.75.75 0 00-1.06-1.06L10 8.94 6.28 5.22z"
@@ -67,7 +79,6 @@
 				</svg>
 			</button>
 
-			<!-- Contenido del modal -->
 			<div class="p-6">
 				{#if fileType === 'image' && previewUrl}
 					<img
@@ -76,16 +87,16 @@
 						class="max-h-[80vh] w-auto rounded-lg object-contain"
 					/>
 				{:else if fileType === 'video' && previewUrl}
+					<!-- svelte-ignore a11y_media_has_caption -->
 					<video
 						src={previewUrl}
 						controls
+						playsinline
+						preload="metadata"
 						class="max-h-[80vh] w-auto rounded-lg"
 						aria-label={file?.name || 'Video preview'}
-					>
-						<track kind="captions" />
-					</video>
+					></video>
 				{:else}
-					<!-- Documento o archivo no visual -->
 					<div
 						class="flex min-h-[40vh] min-w-[40vw] flex-col items-center justify-center space-y-4 p-8"
 					>
@@ -95,6 +106,7 @@
 								viewBox="0 0 20 20"
 								fill="currentColor"
 								class="h-10 w-10 text-slate-500"
+								aria-hidden="true"
 							>
 								<path
 									fill-rule="evenodd"

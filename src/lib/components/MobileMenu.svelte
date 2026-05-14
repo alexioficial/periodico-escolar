@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
+	import { lockBodyScroll, unlockBodyScroll } from '$lib/scrollLock';
 
 	type MobileUser = {
 		email: string;
@@ -20,38 +21,40 @@
 		onClose: () => void;
 	};
 
-	let { open = $bindable(), user, links, logoUrl, isActive, onClose }: Props = $props();
+	let { open, user, links, logoUrl, isActive, onClose }: Props = $props();
 
 	const displayName = $derived(user ? user.username || user.name || user.email.split('@')[0] : '');
 	const initials = $derived(
 		user ? (user.name || user.username || user.email).slice(0, 2).toUpperCase() : ''
 	);
 
+	// Scroll lock con contador (compartido) y Escape global mientras el menú
+	// esté abierto. Sin contador, dos componentes que lockean concurrentemente
+	// podían dejar el body bloqueado al cerrar uno.
 	$effect(() => {
 		if (!open) return;
-		const prev = document.body.style.overflow;
-		document.body.style.overflow = 'hidden';
+		lockBodyScroll();
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') onClose();
 		};
 		window.addEventListener('keydown', onKey);
 		return () => {
-			document.body.style.overflow = prev;
+			unlockBodyScroll();
 			window.removeEventListener('keydown', onKey);
 		};
 	});
 </script>
 
 {#if open}
-	<div
-		class="fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-sm"
-		transition:fade={{ duration: 150 }}
-		onclick={onClose}
-		onkeydown={(e) => e.key === 'Escape' && onClose()}
-		role="button"
-		tabindex="-1"
+	<!-- Backdrop como <button> nativo: tiene click + keyboard a11y gratis y
+	evita el anti-patrón role="button" sobre un <div>. -->
+	<button
+		type="button"
 		aria-label="Cerrar menú"
-	></div>
+		onclick={onClose}
+		class="fixed inset-0 z-40 cursor-default bg-slate-900/40 backdrop-blur-sm"
+		transition:fade={{ duration: 150 }}
+	></button>
 
 	<div
 		class="fixed inset-0 z-50 flex flex-col bg-white"

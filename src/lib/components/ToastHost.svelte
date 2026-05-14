@@ -28,12 +28,19 @@
 	const dismiss = (id: number) => toast.dismiss(id);
 </script>
 
-<div class="pointer-events-none fixed inset-0 z-50 flex items-start justify-end px-4 py-4">
+<!-- z-[70]: por encima de cualquier modal (z-60). Sin esto, un toast podía
+quedar tapado por un dialog abierto al mismo tiempo. -->
+<div
+	class="pointer-events-none fixed inset-0 z-[70] flex items-start justify-end px-4 py-4"
+	aria-live="polite"
+	aria-atomic="false"
+>
 	<div class="flex w-full max-w-md flex-col gap-3">
 		{#each toasts as t (t.id)}
 			<div
 				in:fly={{ x: 32, duration: 180 }}
 				out:fade={{ duration: 150 }}
+				role={t.variant === 'error' || t.variant === 'warning' ? 'alert' : 'status'}
 				class={`pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 shadow-xl shadow-slate-900/15 ${variantClasses(t.variant)}`}
 			>
 				<svg

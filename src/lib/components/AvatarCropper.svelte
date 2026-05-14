@@ -1,4 +1,7 @@
 <script lang="ts">
+	import { lockBodyScroll, unlockBodyScroll } from '$lib/scrollLock';
+	import { toast } from '$lib/toast';
+
 	type Props = {
 		open: boolean;
 		file: File | null;
@@ -6,7 +9,10 @@
 		onCancel: () => void;
 	};
 
-	let { open = $bindable(), file, onConfirm, onCancel }: Props = $props();
+	// Sin $bindable: el componente nunca asigna `open`. El cierre es por
+	// callback (onCancel/onConfirm) — así dejamos clara la dirección del
+	// estado.
+	let { open, file, onConfirm, onCancel }: Props = $props();
 
 	const CROP_SIZE = 288;
 	const OUTPUT_SIZE = 512;
@@ -29,10 +35,16 @@
 	let pinchStartScale = 1;
 
 	$effect(() => {
-		if (!file) {
+		// Sólo creamos el objectURL cuando vamos a renderizar (open && file):
+		// antes se creaba aunque el modal estuviera cerrado.
+		if (!file || !open) {
 			imgUrl = null;
 			return;
 		}
+		// Reset al cambiar de archivo, por si el onload no llega a tiempo.
+		scale = 1;
+		offsetX = 0;
+		offsetY = 0;
 		const url = URL.createObjectURL(file);
 		imgUrl = url;
 		return () => URL.revokeObjectURL(url);
@@ -43,14 +55,28 @@
 			activePointers.clear();
 			return;
 		}
+		lockBodyScroll();
+		const previouslyFocused = document.activeElement as HTMLElement | null;
 		const onKey = (e: KeyboardEvent) => {
 			if (e.key === 'Escape') {
 				onCancel();
 			}
 		};
 		window.addEventListener('keydown', onKey);
-		return () => window.removeEventListener('keydown', onKey);
+		return () => {
+			window.removeEventListener('keydown', onKey);
+			unlockBodyScroll();
+			previouslyFocused?.focus?.();
+		};
 	});
+
+	function onImgError() {
+		toast.error(
+			'No se pudo cargar la imagen',
+			'El formato no es compatible con tu navegador (HEIC, etc.).'
+		);
+		onCancel();
+	}
 
 	function onImgLoad() {
 		if (!imgEl) return;
@@ -121,6 +147,9 @@
 			const remaining = Array.from(activePointers.values())[0];
 			dragStartOffsetX = offsetX - remaining.x;
 			dragStartOffsetY = offsetY - remaining.y;
+			// Reclamp tras el pinch: el zoom cambió pero el offset quedó con
+			// los límites del scale anterior; sin esto la imagen "saltaba".
+			clampOffsets();
 		}
 	}
 
@@ -182,15 +211,21 @@
 </script>
 
 {#if open && imgUrl}
+	<button
+		type="button"
+		aria-label="Cancelar"
+		onclick={onCancel}
+		class="fixed inset-0 z-[60] cursor-default bg-slate-900/70 backdrop-blur-sm"
+	></button>
 	<div
-		class="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/70 px-4 py-6 backdrop-blur-sm"
+		class="pointer-events-none fixed inset-0 z-[60] flex items-center justify-center px-4 py-6"
 		role="dialog"
 		aria-modal="true"
-		aria-label="Ajustar foto de perfil"
+		aria-labelledby="avatar-cropper-title"
 	>
-		<div class="w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+		<div class="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
 			<header class="border-b border-slate-200 px-5 py-3">
-				<h2 class="text-base font-semibold text-slate-900">Ajustar foto de perfil</h2>
+				<h2 id="avatar-cropper-title" class="text-base font-semibold text-slate-900">Ajustar foto de perfil</h2>
 				<p class="text-xs text-slate-500">
 					Arrastrá para mover y usá el control de zoom para encuadrar.
 				</p>
@@ -214,6 +249,7 @@
 						src={imgUrl}
 						alt=""
 						onload={onImgLoad}
+						onerror={onImgError}
 						draggable="false"
 						class="pointer-events-none absolute top-1/2 left-1/2 max-w-none origin-center"
 						style:width="{naturalWidth * scale}px"
