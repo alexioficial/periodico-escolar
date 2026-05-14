@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/toast';
 
@@ -31,11 +32,54 @@
 		articles = articles.map((a) => incoming.get(a._id) ?? a);
 	});
 
-	function requireLogin(e: Event) {
-		if (data.user) return;
-		e.preventDefault();
-		toast.info('Inicia sesión', 'Necesitas una cuenta para interactuar con los artículos.');
-		goto('/auth/login');
+	// Optimistic UI: aplicamos el cambio al instante y rollback si falla.
+	// No llamamos a update() para no invalidar y perder el state de "Cargar más".
+	function optimisticLike(article: Article): SubmitFunction {
+		return ({ cancel }) => {
+			if (!data.user) {
+				cancel();
+				toast.info('Inicia sesión', 'Necesitas una cuenta para interactuar con los artículos.');
+				goto('/auth/login');
+				return;
+			}
+			const wasLiked = article.isLiked;
+			article.isLiked = !wasLiked;
+			article.likesCount += wasLiked ? -1 : 1;
+
+			return async ({ result }) => {
+				if (result.type === 'failure' || result.type === 'error') {
+					article.isLiked = wasLiked;
+					article.likesCount += wasLiked ? 1 : -1;
+					const msg =
+						(result.type === 'failure' && (result.data as { message?: string })?.message) ||
+						'No se pudo actualizar el me gusta';
+					toast.error(msg);
+				}
+			};
+		};
+	}
+
+	function optimisticSave(article: Article): SubmitFunction {
+		return ({ cancel }) => {
+			if (!data.user) {
+				cancel();
+				toast.info('Inicia sesión', 'Necesitas una cuenta para interactuar con los artículos.');
+				goto('/auth/login');
+				return;
+			}
+			const wasSaved = article.isSaved;
+			article.isSaved = !wasSaved;
+
+			return async ({ result }) => {
+				if (result.type === 'failure' || result.type === 'error') {
+					article.isSaved = wasSaved;
+					const msg =
+						(result.type === 'failure' && (result.data as { message?: string })?.message) ||
+						'No se pudo guardar el artículo';
+					toast.error(msg);
+				}
+			};
+		};
 	}
 
 	async function loadMore() {
@@ -241,7 +285,7 @@
 						<!-- Actions -->
 						<div class="flex items-center justify-between pt-2">
 							<div class="flex items-center gap-4">
-								<form method="POST" action="?/toggleLike" use:enhance onsubmit={requireLogin}>
+								<form method="POST" action="?/toggleLike" use:enhance={optimisticLike(article)}>
 									<input type="hidden" name="id" value={article._id} />
 									<button
 										type="submit"
@@ -299,7 +343,7 @@
 								</button>
 							</div>
 
-							<form method="POST" action="?/toggleSave" use:enhance onsubmit={requireLogin}>
+							<form method="POST" action="?/toggleSave" use:enhance={optimisticSave(article)}>
 								<input type="hidden" name="id" value={article._id} />
 								<button
 									type="submit"

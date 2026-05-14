@@ -1,7 +1,58 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import type { SubmitFunction } from '@sveltejs/kit';
 	import { toast } from '$lib/toast';
 	let { data } = $props();
+
+	type Article = (typeof data.articles)[number];
+
+	// svelte-ignore state_referenced_locally
+	let articles = $state<Article[]>([...data.articles]);
+	// svelte-ignore state_referenced_locally
+	let trackedPage = $state(data.pagination.currentPage);
+
+	// Cuando la página cambia (paginación o invalidación), resincronizar.
+	$effect(() => {
+		if (data.pagination.currentPage !== trackedPage) {
+			trackedPage = data.pagination.currentPage;
+			articles = [...data.articles];
+			return;
+		}
+		const incoming = new Map(data.articles.map((a) => [a._id, a]));
+		articles = articles.map((a) => incoming.get(a._id) ?? a);
+	});
+
+	function optimisticLike(article: Article): SubmitFunction {
+		return () => {
+			const wasLiked = article.isLiked;
+			article.isLiked = !wasLiked;
+			article.likesCount += wasLiked ? -1 : 1;
+
+			return async ({ result }) => {
+				if (result.type === 'failure' || result.type === 'error') {
+					article.isLiked = wasLiked;
+					article.likesCount += wasLiked ? 1 : -1;
+					toast.error('No se pudo actualizar el me gusta');
+				}
+			};
+		};
+	}
+
+	function optimisticUnsave(article: Article): SubmitFunction {
+		return () => {
+			const idx = articles.findIndex((a) => a._id === article._id);
+			if (idx === -1) return;
+			const removed = articles[idx];
+			articles.splice(idx, 1);
+
+			return async ({ result }) => {
+				if (result.type === 'failure' || result.type === 'error') {
+					articles.splice(idx, 0, removed);
+					toast.error('No se pudo quitar de guardados');
+				}
+			};
+		};
+	}
 </script>
 
 <svelte:head>
@@ -19,14 +70,14 @@
 		</p>
 	</header>
 
-	{#if data.articles.length === 0}
+	{#if articles.length === 0}
 		<div class="rounded-2xl border border-dashed border-slate-200 bg-slate-50/50 p-12 text-center">
 			<p class="text-lg font-medium text-slate-900">No tienes guardados</p>
 			<p class="mt-1 text-sm text-slate-500">Marca artículos con la estrella para verlos aquí.</p>
 		</div>
 	{:else}
 		<div class="mx-auto grid max-w-2xl gap-8">
-			{#each data.articles as article (article._id)}
+			{#each articles as article (article._id)}
 				<article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
 					<!-- Header -->
 					<div class="flex items-center justify-between border-b border-slate-50 p-4">
@@ -152,7 +203,7 @@
 						<!-- Actions (Reusing actions from feed, pointing to feed actions) -->
 						<div class="flex items-center justify-between pt-2">
 							<div class="flex items-center gap-4">
-								<form method="POST" action="/feed?/toggleLike" use:enhance>
+								<form method="POST" action="/feed?/toggleLike" use:enhance={optimisticLike(article)}>
 									<input type="hidden" name="id" value={article._id} />
 									<button type="submit" class="group flex items-center gap-1.5">
 										<svg
@@ -206,7 +257,7 @@
 								</button>
 							</div>
 
-							<form method="POST" action="/feed?/toggleSave" use:enhance>
+							<form method="POST" action="/feed?/toggleSave" use:enhance={optimisticUnsave(article)}>
 								<input type="hidden" name="id" value={article._id} />
 								<button
 									type="submit"
