@@ -4,6 +4,10 @@
 	let { data } = $props();
 </script>
 
+<svelte:head>
+	<title>Guardados · Periódico escolar</title>
+</svelte:head>
+
 <section class="space-y-8">
 	<header class="space-y-3">
 		<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Tu Perfil</p>

@@ -6,6 +6,10 @@
 	let loading = $state(false);
 </script>
 
+<svelte:head>
+	<title>Crear cuenta · Periódico escolar</title>
+</svelte:head>
+
 <div class="flex min-h-screen items-center justify-center bg-slate-50 text-slate-900">
 	<div class="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
 		<header class="space-y-2 text-center">

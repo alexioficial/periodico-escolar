@@ -45,6 +45,10 @@
 	};
 </script>
 
+<svelte:head>
+	<title>Redacción · Periódico escolar</title>
+</svelte:head>
+
 <section class="space-y-8">
 	<header class="flex items-center justify-between">
 		<div class="space-y-1">

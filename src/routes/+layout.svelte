@@ -39,6 +39,7 @@
 </script>
 
 <svelte:head>
+	<title>Periódico escolar</title>
 	<link rel="icon" href={favicon} />
 </svelte:head>
 
