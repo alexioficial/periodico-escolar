@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 	import { toast } from '$lib/toast';
 
 	let { data } = $props();
@@ -10,12 +11,32 @@
 	let articles = $state<Article[]>([...data.articles]);
 	// svelte-ignore state_referenced_locally
 	let pagination = $state({ ...data.pagination });
+	// svelte-ignore state_referenced_locally
+	let trackedCategory = $state(data.currentCategoryId);
 	let loadingMore = $state(false);
 
+	// El bug previo: este effect pisaba `articles` con `data.articles` cada
+	// vez que la página se invalidaba (p. ej. tras un like). Si el usuario
+	// había hecho "Cargar más", los artículos extra desaparecían.
+	// Ahora: si cambia la categoría hacemos reset total, si no, fusionamos
+	// in-place los flags (isLiked/isSaved/likesCount) preservando lo cargado.
 	$effect(() => {
-		articles = [...data.articles];
-		pagination = { ...data.pagination };
+		if (data.currentCategoryId !== trackedCategory) {
+			trackedCategory = data.currentCategoryId;
+			articles = [...data.articles];
+			pagination = { ...data.pagination };
+			return;
+		}
+		const incoming = new Map(data.articles.map((a) => [a._id, a]));
+		articles = articles.map((a) => incoming.get(a._id) ?? a);
 	});
+
+	function requireLogin(e: Event) {
+		if (data.user) return;
+		e.preventDefault();
+		toast.info('Inicia sesión', 'Necesitas una cuenta para interactuar con los artículos.');
+		goto('/auth/login');
+	}
 
 	async function loadMore() {
 		if (loadingMore || !pagination.hasMore) return;
@@ -128,14 +149,15 @@
 										class="flex h-full w-full flex-shrink-0 snap-center items-center justify-center"
 									>
 										{#if item.type === 'video'}
+											<!-- svelte-ignore a11y_media_has_caption -->
 											<video
 												src={item.url}
 												controls
+												playsinline
+												preload="metadata"
 												class="max-h-full max-w-full"
 												aria-label="Video del artículo"
-											>
-												<track kind="captions" />
-											</video>
+											></video>
 										{:else}
 											<img src={item.url} alt="" class="h-full w-full object-contain" />
 										{/if}
@@ -219,9 +241,9 @@
 						<!-- Actions -->
 						<div class="flex items-center justify-between pt-2">
 							<div class="flex items-center gap-4">
-								<form method="POST" action="?/toggleLike" use:enhance>
+								<form method="POST" action="?/toggleLike" use:enhance onsubmit={requireLogin}>
 									<input type="hidden" name="id" value={article._id} />
-									<button type="submit" class="group flex items-center gap-1.5">
+									<button type="submit" class="group flex items-center gap-1.5" aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
 											viewBox="0 0 24 24"
@@ -273,7 +295,7 @@
 								</button>
 							</div>
 
-							<form method="POST" action="?/toggleSave" use:enhance>
+							<form method="POST" action="?/toggleSave" use:enhance onsubmit={requireLogin}>
 								<input type="hidden" name="id" value={article._id} />
 								<button
 									type="submit"

@@ -1,6 +1,10 @@
 import { fail, redirect } from '@sveltejs/kit';
 import type { Actions, PageServerLoad } from './$types';
-import { getPendingArticles, updateArticleStatus } from '$lib/server/articles';
+import {
+	getPendingArticles,
+	updateArticleStatus,
+	enrichArticlesWithUrls
+} from '$lib/server/articles';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 
@@ -14,11 +18,13 @@ export const load: PageServerLoad = async ({ locals }) => {
 	}
 
 	const [pendingArticles, categories] = await Promise.all([getPendingArticles(), getCategories()]);
+	const articlesWithUrls = await enrichArticlesWithUrls(pendingArticles);
 
 	const categoryMap = new Map(categories.map((c) => [c._id!.toString(), c.name]));
 
-	const enrichedArticles = pendingArticles.map((article) => ({
+	const enrichedArticles = articlesWithUrls.map((article) => ({
 		...article,
+		_id: article._id!.toString(),
 		category: categoryMap.get(article.categoryId) ?? 'Sin categoría'
 	}));
 
@@ -64,8 +70,10 @@ export const actions: Actions = {
 			return fail(400, { message: 'ID requerido' });
 		}
 
+		const reason = ((formData.get('reason') as string) ?? '').trim().slice(0, 500);
+
 		try {
-			const ok = await updateArticleStatus(id, 'rejected');
+			const ok = await updateArticleStatus(id, 'rejected', reason || undefined);
 			if (!ok) {
 				return fail(409, { message: 'El artículo ya no está pendiente de revisión' });
 			}

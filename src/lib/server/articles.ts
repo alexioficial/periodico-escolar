@@ -31,6 +31,9 @@ export interface ArticleDoc {
 	status: 'draft' | 'pending' | 'published' | 'rejected';
 	createdAt: Date;
 	publishedAt?: Date;
+	// Motivo opcional registrado por el moderador al rechazar. Aparece como
+	// feedback en el panel de redacción del autor.
+	rejectionReason?: string;
 
 	media?: ArticleMedia[];
 	attachments?: ArticleAttachment[];
@@ -167,7 +170,8 @@ const REVIEWABLE_STATUS = new Set<ArticleDoc['status']>(['published', 'rejected'
 
 export async function updateArticleStatus(
 	id: string,
-	status: ArticleDoc['status']
+	status: ArticleDoc['status'],
+	rejectionReason?: string
 ): Promise<boolean> {
 	if (typeof id !== 'string' || !ObjectId.isValid(id)) return false;
 	if (!REVIEWABLE_STATUS.has(status)) return false;
@@ -175,9 +179,14 @@ export async function updateArticleStatus(
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
 
-	const update: { status: ArticleDoc['status']; publishedAt?: Date } = { status };
+	const update: { status: ArticleDoc['status']; publishedAt?: Date; rejectionReason?: string } = {
+		status
+	};
 	if (status === 'published') {
 		update.publishedAt = new Date();
+	}
+	if (status === 'rejected' && typeof rejectionReason === 'string' && rejectionReason.trim()) {
+		update.rejectionReason = rejectionReason.trim().slice(0, 500);
 	}
 
 	const result = await collection.updateOne(

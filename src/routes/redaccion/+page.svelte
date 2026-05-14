@@ -56,7 +56,7 @@
 		<div class="space-y-1">
 			<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Panel de redacción</p>
 			<h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
-				Hola, {data.user.email}
+				Hola, {data.user.username ?? data.user.name ?? data.user.email.split('@')[0]}
 			</h1>
 		</div>
 		<button
@@ -211,6 +211,13 @@
 							</div>
 							<h3 class="line-clamp-2 text-lg font-semibold text-slate-900">{article.title}</h3>
 							<p class="line-clamp-3 text-sm text-slate-600">{article.excerpt}</p>
+
+							{#if article.status === 'rejected' && article.rejectionReason}
+								<div class="rounded-lg border border-red-100 bg-red-50 p-3 text-xs text-red-700">
+									<p class="mb-1 font-semibold uppercase tracking-wider text-red-600">Motivo del rechazo</p>
+									<p class="whitespace-pre-wrap">{article.rejectionReason}</p>
+								</div>
+							{/if}
 						</div>
 						<div class="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-500">
 							{new Date(article.createdAt).toLocaleDateString()}

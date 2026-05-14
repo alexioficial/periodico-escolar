@@ -18,7 +18,7 @@
 		</header>
 
 		<a
-			href="/auth/google"
+			href={`/auth/google?returnTo=${encodeURIComponent(data.returnTo)}`}
 			class="flex w-full items-center justify-center gap-2 rounded-full border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 transition-colors hover:bg-slate-50"
 		>
 			<svg class="h-4 w-4" viewBox="0 0 24 24" xmlns="http://www.w3.org/2000/svg">
@@ -61,6 +61,12 @@
 			</div>
 		{/if}
 
+		{#if data.passwordReset}
+			<div class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+				Tu contraseña fue actualizada. Iniciá sesión con la nueva.
+			</div>
+		{/if}
+
 		{#if form?.message}
 			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
 				{form.message}
@@ -78,6 +84,8 @@
 				};
 			}}
 		>
+			<input type="hidden" name="returnTo" value={data.returnTo} />
+
 			<div class="space-y-2">
 				<label class="block text-xs font-medium text-slate-700" for="email"
 					>Correo electrónico</label

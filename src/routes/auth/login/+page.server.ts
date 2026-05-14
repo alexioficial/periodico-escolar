@@ -4,24 +4,37 @@ import { validateUser } from '$lib/server/auth';
 import { createSession } from '$lib/server/session';
 import { checkRateLimit } from '$lib/server/rateLimit';
 
+// Sólo aceptamos returnTo a paths internos (no URLs absolutas). Esto bloquea
+// el clásico "open redirect" via ?returnTo=https://atacante.com.
+function safeReturnTo(raw: string | null): string {
+	if (typeof raw !== 'string' || !raw) return '/redaccion';
+	if (!raw.startsWith('/') || raw.startsWith('//')) return '/redaccion';
+	return raw;
+}
+
 export const load: PageServerLoad = async ({ locals, url }) => {
+	const returnTo = safeReturnTo(url.searchParams.get('returnTo'));
+
 	if (locals.user) {
-		throw redirect(303, '/redaccion');
+		throw redirect(303, returnTo);
 	}
 
 	const error = url.searchParams.get('error');
 	return {
 		csrfError: error === 'csrf',
-		accountConflict: error === 'account_conflict'
+		accountConflict: error === 'account_conflict',
+		passwordReset: url.searchParams.get('reset') === '1',
+		returnTo
 	};
 };
 
 export const actions: Actions = {
-	default: async ({ request, cookies, getClientAddress }) => {
+	default: async ({ request, cookies, getClientAddress, url }) => {
 		const rl = await checkRateLimit({
 			key: `login:${getClientAddress()}`,
 			limit: 5,
-			windowMs: 5 * 60_000
+			windowMs: 5 * 60_000,
+			onError: 'closed'
 		});
 		if (!rl.ok) {
 			return fail(429, {
@@ -35,6 +48,9 @@ export const actions: Actions = {
 			.trim()
 			.toLowerCase();
 		const password = String(formData.get('password') ?? '');
+		const returnTo = safeReturnTo(
+			(formData.get('returnTo') as string) ?? url.searchParams.get('returnTo')
+		);
 
 		if (!email || !password) {
 			return fail(400, { message: 'Faltan datos', email });
@@ -71,6 +87,6 @@ export const actions: Actions = {
 			maxAge: 60 * 60 * 24 * 7
 		});
 
-		throw redirect(303, '/redaccion');
+		throw redirect(303, returnTo);
 	}
 };

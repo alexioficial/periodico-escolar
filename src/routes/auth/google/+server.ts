@@ -1,22 +1,34 @@
-import { redirect } from '@sveltejs/kit';
+import { redirect, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
 
 const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 
+function safeReturnTo(raw: string | null): string {
+	if (typeof raw !== 'string' || !raw) return '/redaccion';
+	if (!raw.startsWith('/') || raw.startsWith('//')) return '/redaccion';
+	return raw;
+}
+
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	if (!GOOGLE_CLIENT_ID) {
 		console.error('GOOGLE_CLIENT_ID no está definido. Revisa tu archivo .env.');
-		return new Response('Configuración de Google OAuth incompleta (GOOGLE_CLIENT_ID).', {
-			status: 500
-		});
+		throw error(500, 'Configuración de Google OAuth incompleta.');
 	}
 
 	const redirectUri = new URL('/auth/google/callback', url.origin).toString();
 	const state = crypto.randomBytes(32).toString('hex');
+	const returnTo = safeReturnTo(url.searchParams.get('returnTo'));
 
 	cookies.set('oauth_state', state, {
+		path: '/',
+		httpOnly: true,
+		sameSite: 'lax',
+		secure: process.env.NODE_ENV === 'production',
+		maxAge: 5 * 60
+	});
+	cookies.set('oauth_returnTo', returnTo, {
 		path: '/',
 		httpOnly: true,
 		sameSite: 'lax',

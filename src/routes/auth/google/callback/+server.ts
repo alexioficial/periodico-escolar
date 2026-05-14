@@ -1,5 +1,5 @@
 import type { RequestHandler } from '@sveltejs/kit';
-import { redirect } from '@sveltejs/kit';
+import { redirect, error as svelteError } from '@sveltejs/kit';
 import { findOrCreateUserFromGoogle, EmailAccountConflictError } from '$lib/server/auth';
 import { createSession } from '$lib/server/session';
 import { env } from '$env/dynamic/private';
@@ -7,13 +7,23 @@ import { env } from '$env/dynamic/private';
 const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
 
+function safeReturnTo(raw: string | null | undefined): string {
+	if (typeof raw !== 'string' || !raw) return '/redaccion';
+	if (!raw.startsWith('/') || raw.startsWith('//')) return '/redaccion';
+	return raw;
+}
+
 export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	const code = url.searchParams.get('code');
-	const error = url.searchParams.get('error');
+	const oauthErr = url.searchParams.get('error');
 	const state = url.searchParams.get('state');
 
-	if (!code || error) {
-		throw redirect(303, '/auth/login');
+	const storedReturnTo = safeReturnTo(cookies.get('oauth_returnTo'));
+	cookies.delete('oauth_returnTo', { path: '/' });
+
+	if (!code || oauthErr) {
+		// Cuando el usuario cancela el consentimiento Google manda ?error=...
+		throw redirect(303, '/auth/login?error=oauth_cancelled');
 	}
 
 	const storedState = cookies.get('oauth_state');
@@ -26,9 +36,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 
 	if (!GOOGLE_CLIENT_ID || !GOOGLE_CLIENT_SECRET) {
 		console.error('GOOGLE_CLIENT_ID o GOOGLE_CLIENT_SECRET no configurados. Revisa tu .env');
-		return new Response('Configuración de Google OAuth incompleta (client id/secret).', {
-			status: 500
-		});
+		throw svelteError(500, 'Configuración de Google OAuth incompleta.');
 	}
 
 	const redirectUri = new URL('/auth/google/callback', url.origin).toString();
@@ -50,7 +58,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	if (!tokenRes.ok) {
 		const text = await tokenRes.text();
 		console.error('Error al obtener token de Google:', text);
-		return new Response('Error al obtener token de Google', { status: 500 });
+		throw svelteError(502, 'Error al obtener token de Google. Intenta de nuevo.');
 	}
 
 	const tokenJson = (await tokenRes.json()) as {
@@ -59,7 +67,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	};
 
 	if (!tokenJson.access_token) {
-		return new Response('No se recibió access_token de Google', { status: 500 });
+		throw svelteError(502, 'No se recibió access_token de Google.');
 	}
 
 	const userRes = await fetch('https://www.googleapis.com/oauth2/v3/userinfo', {
@@ -71,7 +79,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	if (!userRes.ok) {
 		const text = await userRes.text();
 		console.error('Error al obtener usuario de Google:', text);
-		return new Response('Error al obtener usuario de Google', { status: 500 });
+		throw svelteError(502, 'Error al obtener tus datos de Google.');
 	}
 
 	const profile = (await userRes.json()) as {
@@ -83,7 +91,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	};
 
 	if (!profile.email) {
-		return new Response('Google no devolvió un email válido', { status: 500 });
+		throw svelteError(502, 'Google no devolvió un email válido.');
 	}
 
 	let user;
@@ -96,7 +104,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 		throw err;
 	}
 	if (!user) {
-		return new Response('No se pudo crear o encontrar el usuario de Google', { status: 500 });
+		throw svelteError(500, 'No se pudo crear o encontrar el usuario de Google.');
 	}
 
 	const token = await createSession(user._id);
@@ -110,5 +118,5 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 		maxAge: 60 * 60 * 24 * 7
 	});
 
-	throw redirect(303, '/redaccion');
+	throw redirect(303, storedReturnTo);
 };

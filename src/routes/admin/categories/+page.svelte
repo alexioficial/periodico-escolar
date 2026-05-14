@@ -149,9 +149,7 @@
 									<form
 										method="POST"
 										action="?/update"
-										use:enhance={({ formData }) => {
-											formData.set('id', category._id);
-											formData.set('name', editName);
+										use:enhance={() => {
 											return async ({ result }) => {
 												if (result.type === 'success') {
 													toast.success('Categoría actualizada');
@@ -165,6 +163,8 @@
 											};
 										}}
 									>
+										<input type="hidden" name="id" value={category._id} />
+										<input type="hidden" name="name" value={editName} />
 										<button
 											type="submit"
 											class="text-sm font-medium text-indigo-600 hover:text-indigo-700"
@@ -190,9 +190,7 @@
 									<form
 										method="POST"
 										action="?/delete"
-										use:enhance={async ({ formData }) => {
-											formData.set('id', category._id);
-
+										use:enhance={async () => {
 											const confirmed = await confirmDialog.confirm({
 												title:
 													category.articlesCount > 0
@@ -225,6 +223,7 @@
 											};
 										}}
 									>
+										<input type="hidden" name="id" value={category._id} />
 										<button
 											type="submit"
 											disabled={category.articlesCount > 0}
