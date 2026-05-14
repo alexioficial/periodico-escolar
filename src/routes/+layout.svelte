@@ -1,7 +1,8 @@
 <script lang="ts">
 	import '../app.css';
-	import favicon from '$lib/assets/favicon.svg';
 	import { page } from '$app/state';
+
+	const LOGO_URL = 'https://cdn.widube.com/logo.svg';
 	import ToastHost from '$lib/components/ToastHost.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 
@@ -40,18 +41,15 @@
 
 <svelte:head>
 	<title>Periódico escolar</title>
-	<link rel="icon" href={favicon} />
+	<link rel="icon" type="image/svg+xml" href={LOGO_URL} />
+	<link rel="apple-touch-icon" href={LOGO_URL} />
 </svelte:head>
 
 <div class="min-h-screen bg-slate-50 text-slate-900">
 	<header class="border-b border-slate-200 bg-white/80 backdrop-blur">
 		<div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
 			<a href="/feed" class="flex items-center gap-2">
-				<div
-					class="flex h-8 w-8 items-center justify-center rounded-lg border border-sky-500/20 bg-sky-500/10"
-				>
-					<span class="text-sm font-semibold text-sky-600">PE</span>
-				</div>
+				<img src={LOGO_URL} alt="Logo" class="h-8 w-8" />
 				<div class="flex flex-col">
 					<span class="text-sm font-semibold tracking-tight">Periódico escolar</span>
 					<span class="text-[11px] leading-tight text-slate-500">Tu escuela</span>
