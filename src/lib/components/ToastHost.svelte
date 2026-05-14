@@ -29,12 +29,12 @@
 </script>
 
 <div class="pointer-events-none fixed inset-0 z-50 flex items-start justify-end px-4 py-4">
-	<div class="flex w-full max-w-sm flex-col gap-3">
+	<div class="flex w-full max-w-md flex-col gap-3">
 		{#each toasts as t (t.id)}
 			<div
 				in:fly={{ x: 32, duration: 180 }}
 				out:fade={{ duration: 150 }}
-				class={`pointer-events-auto flex items-start gap-3 rounded-xl border px-3 py-2 shadow-lg shadow-slate-900/10 ${variantClasses(t.variant)}`}
+				class={`pointer-events-auto flex items-start gap-3 rounded-xl border px-4 py-3 shadow-xl shadow-slate-900/15 ${variantClasses(t.variant)}`}
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"
@@ -44,7 +44,7 @@
 					stroke-width="2"
 					stroke-linecap="round"
 					stroke-linejoin="round"
-					class={`mt-0.5 h-5 w-5 flex-shrink-0 ${iconColor(t.variant)}`}
+					class={`mt-0.5 h-6 w-6 flex-shrink-0 ${iconColor(t.variant)}`}
 					aria-hidden="true"
 				>
 					{#if t.variant === 'success'}
@@ -66,15 +66,15 @@
 						<line x1="12" y1="8" x2="12.01" y2="8" />
 					{/if}
 				</svg>
-				<div class="flex-1 text-xs">
+				<div class="flex-1 text-sm">
 					<div class="leading-snug font-semibold">{t.message}</div>
 					{#if t.description}
-						<div class="mt-0.5 text-[11px] leading-snug opacity-80">{t.description}</div>
+						<div class="mt-0.5 text-xs leading-snug opacity-80">{t.description}</div>
 					{/if}
 				</div>
 				<button
 					type="button"
-					class="ml-1 rounded-full px-1.5 text-[10px] font-medium opacity-60 transition hover:bg-black/5 hover:opacity-100"
+					class="ml-1 rounded-full px-2 text-xs font-medium opacity-60 transition hover:bg-black/5 hover:opacity-100"
 					onclick={() => dismiss(t.id)}
 				>
 					Cerrar

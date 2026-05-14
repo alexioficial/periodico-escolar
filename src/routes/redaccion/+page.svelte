@@ -7,6 +7,8 @@
 
 	let showForm = $state(false);
 	let isSaving = $state(false);
+	let mediaApi = $state<{ clear: () => void } | null>(null);
+	let attachmentsApi = $state<{ clear: () => void } | null>(null);
 
 	const isStaff = $derived(['admin', 'superadmin'].includes(data.user.role));
 	const maxImages = $derived(isStaff ? Infinity : 10);
@@ -19,7 +21,13 @@
 			isSaving = false;
 
 			if (result.type === 'success') {
-				toast.success(isStaff ? 'Artículo publicado correctamente' : 'Artículo enviado a revisión');
+				toast.success(
+					isStaff ? 'Artículo publicado correctamente' : 'Artículo enviado a revisión',
+					undefined,
+					6000
+				);
+				mediaApi?.clear();
+				attachmentsApi?.clear();
 				await update({ reset: true });
 				showForm = false;
 			} else if (result.type === 'failure') {
@@ -109,6 +117,7 @@
 					maxSize={4.5}
 					{maxImages}
 					{maxVideos}
+					bind:api={mediaApi}
 				/>
 
 				<FileUploader
@@ -117,6 +126,7 @@
 					name="attachments"
 					maxSize={4.5}
 					maxItems={maxAttachments}
+					bind:api={attachmentsApi}
 				/>
 
 				<div class="space-y-2">

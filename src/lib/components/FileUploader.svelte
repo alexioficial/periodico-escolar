@@ -9,7 +9,8 @@
 		maxSize = 4.5,
 		maxImages = Infinity,
 		maxVideos = Infinity,
-		maxItems = Infinity
+		maxItems = Infinity,
+		api = $bindable<{ clear: () => void } | null>(null)
 	} = $props<{
 		accept?: string;
 		label?: string;
@@ -18,6 +19,7 @@
 		maxImages?: number;
 		maxVideos?: number;
 		maxItems?: number;
+		api?: { clear: () => void } | null;
 	}>();
 
 	let selectedFiles = $state<File[]>([]);
@@ -186,6 +188,19 @@
 			return '📽️';
 		return '📎';
 	}
+
+	function clear() {
+		previewUrls.forEach((url) => URL.revokeObjectURL(url));
+		previewUrls = new Map();
+		selectedFiles = [];
+		if (formInputRef) {
+			formInputRef.files = new DataTransfer().files;
+		}
+	}
+
+	$effect(() => {
+		api = { clear };
+	});
 
 	$effect(() => {
 		return () => {
