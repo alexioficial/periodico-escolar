@@ -1,8 +1,9 @@
 import { ObjectId, type Db } from 'mongodb';
-import { randomInt } from 'crypto';
+import { randomInt, timingSafeEqual } from 'crypto';
 import { getDb } from './db';
 import { sendPasswordResetEmail } from './mailer';
 import { setUserPassword } from './auth';
+import { deleteAllSessionsForUser } from './session';
 
 const CODES_COLLECTION = 'password_reset_codes';
 const USERS_COLLECTION = 'users';
@@ -29,7 +30,14 @@ export interface PasswordResetCodeDoc {
 	attempts: number;
 }
 
+function safeEqualStrings(a: string, b: string): boolean {
+	if (a.length !== b.length) return false;
+	return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+}
+
 export async function createAndSendResetCode(email: string) {
+	if (typeof email !== 'string' || !email) return;
+
 	const db: Db = await getDb();
 	const users = db.collection(USERS_COLLECTION);
 	const codes = db.collection<PasswordResetCodeDoc>(CODES_COLLECTION);
@@ -57,6 +65,16 @@ export async function createAndSendResetCode(email: string) {
 }
 
 export async function verifyResetCode(email: string, code: string, newPassword: string) {
+	if (typeof email !== 'string' || typeof code !== 'string' || typeof newPassword !== 'string') {
+		return { ok: false, reason: 'not_found' as const };
+	}
+
+	// Limitamos longitud del password: argon2 con inputs gigantes consume mucha
+	// CPU y puede ser usado como vector de DoS.
+	if (newPassword.length < 8 || newPassword.length > 128) {
+		return { ok: false, reason: 'invalid_password' as const };
+	}
+
 	const db: Db = await getDb();
 	const codes = db.collection<PasswordResetCodeDoc>(CODES_COLLECTION);
 
@@ -73,12 +91,15 @@ export async function verifyResetCode(email: string, code: string, newPassword: 
 		return { ok: false, reason: 'too_many_attempts' as const };
 	}
 
-	if (doc.code !== code) {
+	if (!safeEqualStrings(doc.code, code)) {
 		await codes.updateOne({ _id: doc._id }, { $inc: { attempts: 1 } });
 		return { ok: false, reason: 'invalid_code' as const };
 	}
 
 	await setUserPassword(doc.userId, newPassword);
+	// Importante: invalida todas las sesiones tras reset. Si la cuenta estaba
+	// hijackeada, el atacante queda fuera al cambiar la contraseña.
+	await deleteAllSessionsForUser(doc.userId);
 	await codes.deleteOne({ _id: doc._id });
 	return { ok: true as const };
 }

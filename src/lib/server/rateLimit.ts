@@ -15,6 +15,13 @@ export interface RateLimitOptions {
 	key: string;
 	limit: number;
 	windowMs: number;
+	/**
+	 * Comportamiento si Mongo falla. Por defecto `'open'` (`ok: true`) para no
+	 * tumbar el sitio entero, pero los endpoints sensibles (login, reset,
+	 * verificación) deberían pasar `'closed'` para no dejar deshabilitar el
+	 * rate limit forzando una caída de DB.
+	 */
+	onError?: 'open' | 'closed';
 }
 
 export interface RateLimitResult {
@@ -25,8 +32,7 @@ export interface RateLimitResult {
 
 /**
  * Rate limit persistido en Mongo: sobrevive reinicios y se comparte entre
- * instancias horizontales. Si Mongo no está disponible, la función falla
- * abierto (`ok: true`) para no tumbar el sitio entero por un rate limit.
+ * instancias horizontales.
  *
  * El índice TTL en `resetAt` (creado en `db.ts`) limpia automáticamente
  * los buckets expirados.
@@ -34,7 +40,8 @@ export interface RateLimitResult {
 export async function checkRateLimit({
 	key,
 	limit,
-	windowMs
+	windowMs,
+	onError = 'open'
 }: RateLimitOptions): Promise<RateLimitResult> {
 	try {
 		const db = await getDb();
@@ -74,6 +81,9 @@ export async function checkRateLimit({
 		}
 	} catch (error) {
 		console.error('Rate limit fallback (Mongo no disponible):', error);
+		if (onError === 'closed') {
+			return { ok: false, remaining: 0, retryAfter: Math.ceil(windowMs / 1000) };
+		}
 		return { ok: true, remaining: limit - 1, retryAfter: 0 };
 	}
 }

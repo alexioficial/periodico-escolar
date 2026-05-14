@@ -14,7 +14,8 @@ const reasonMessage = {
 	not_found: 'Código inválido o expirado. Solicita uno nuevo.',
 	expired: 'Código inválido o expirado. Solicita uno nuevo.',
 	too_many_attempts: 'Demasiados intentos. Solicita un nuevo código.',
-	invalid_code: 'Código inválido o expirado. Solicita uno nuevo.'
+	invalid_code: 'Código inválido o expirado. Solicita uno nuevo.',
+	invalid_password: 'La contraseña debe tener entre 8 y 128 caracteres.'
 } as const;
 
 export const actions: Actions = {
@@ -42,9 +43,9 @@ export const actions: Actions = {
 			return fail(400, { message: 'Faltan datos', email });
 		}
 
-		if (password.length < 6) {
+		if (password.length < 8 || password.length > 128) {
 			return fail(400, {
-				message: 'La contraseña debe tener al menos 6 caracteres',
+				message: 'La contraseña debe tener entre 8 y 128 caracteres',
 				email
 			});
 		}

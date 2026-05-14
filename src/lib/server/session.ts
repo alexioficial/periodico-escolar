@@ -37,7 +37,14 @@ export async function createSession(userId: ObjectId): Promise<string> {
 	return token;
 }
 
+// Tokens son hex de 64 chars (256 bits) generados con randomBytes. Validamos
+// formato antes de tocar Mongo para evitar inyección si alguien refactorea
+// la entrada y pasa algo que no sea string.
+const TOKEN_REGEX = /^[a-f0-9]{64}$/;
+
 export async function getUserBySessionToken(token: string) {
+	if (typeof token !== 'string' || !TOKEN_REGEX.test(token)) return null;
+
 	const db: Db = await getDb();
 	const sessions = db.collection<SessionDoc>(SESSIONS_COLLECTION);
 
@@ -56,7 +63,16 @@ export async function getUserBySessionToken(token: string) {
 }
 
 export async function deleteSession(token: string) {
+	if (typeof token !== 'string' || !TOKEN_REGEX.test(token)) return;
 	const db: Db = await getDb();
 	const sessions = db.collection<SessionDoc>(SESSIONS_COLLECTION);
 	await sessions.deleteOne({ token });
+}
+
+// Invalidación masiva: usar tras cambio de contraseña, reset, o cambio de rol
+// para forzar re-login en todos los dispositivos del usuario.
+export async function deleteAllSessionsForUser(userId: ObjectId) {
+	const db: Db = await getDb();
+	const sessions = db.collection<SessionDoc>(SESSIONS_COLLECTION);
+	await sessions.deleteMany({ userId });
 }

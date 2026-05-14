@@ -44,6 +44,10 @@ export interface SaveFileOptions {
 	maxFileSize?: number;
 }
 
+// Tope absoluto de tamaño (2 GB). Aunque el caller pase Infinity o no pase
+// nada, refuerza protección contra OOM por cargar el File completo en memoria.
+const ABSOLUTE_MAX_FILE_SIZE = 2 * 1024 * 1024 * 1024;
+
 const SIGNED_URL_TTL_SECONDS = 60 * 60; // 1 hora — alineado con la cache.
 const SIGNED_URL_CACHE_BUFFER_MS = 5 * 60_000; // refrescamos 5 min antes de expirar
 const SIGNED_URL_CACHE_MAX_ENTRIES = 5000;
@@ -87,8 +91,18 @@ function getBucket(): string {
 }
 
 function sanitizeExtension(name: string) {
-	const ext = name.split('.').pop() ?? '';
+	const idx = name.lastIndexOf('.');
+	// Sin punto en el nombre, no hay extensión que extraer (evita usar el
+	// nombre entero como ext cuando el archivo no tiene una).
+	if (idx < 0 || idx === name.length - 1) return '';
+	const ext = name.slice(idx + 1);
 	return ext.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+}
+
+// Para headers HTTP: aceptamos sólo ASCII imprimible y eliminamos comillas,
+// backslash y caracteres de control (CR/LF) para evitar header injection.
+function asciiFilename(name: string) {
+	return name.replace(/[\x00-\x1f\x7f"\\]/g, '_').slice(0, 200) || 'archivo';
 }
 
 /**
@@ -105,6 +119,11 @@ export async function saveFile(file: File, options: SaveFileOptions = {}): Promi
 	if (maxFileSize !== undefined && Number.isFinite(maxFileSize) && file.size > maxFileSize) {
 		throw new Error(
 			`El archivo ${file.name} es demasiado grande. Tamaño máximo: ${maxFileSize / 1024 / 1024} MB`
+		);
+	}
+	if (file.size > ABSOLUTE_MAX_FILE_SIZE) {
+		throw new Error(
+			`El archivo ${file.name} excede el tope absoluto del servidor (${ABSOLUTE_MAX_FILE_SIZE / 1024 / 1024 / 1024} GB).`
 		);
 	}
 	if (file.size === 0) {
@@ -200,13 +219,21 @@ export async function getDownloadUrl(
 	filename: string,
 	expiresIn = SIGNED_URL_TTL_SECONDS
 ): Promise<string> {
-	const safeFilename = filename.replace(/["\\]/g, '');
+	// Usamos RFC 5987 (filename*) para soportar caracteres no-ASCII de forma
+	// segura, y un fallback ASCII estricto para el `filename=` clásico. Esto
+	// también previene HTTP header injection si el filename trae CRLF.
+	const ascii = asciiFilename(filename);
+	const encoded = encodeURIComponent(filename).replace(/['()*]/g, (c) =>
+		'%' + c.charCodeAt(0).toString(16).toUpperCase()
+	);
+	const disposition = `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
+
 	return getSignedUrl(
 		getClient(),
 		new GetObjectCommand({
 			Bucket: getBucket(),
 			Key: key,
-			ResponseContentDisposition: `attachment; filename="${safeFilename}"`
+			ResponseContentDisposition: disposition
 		}),
 		{ expiresIn }
 	);

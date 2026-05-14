@@ -1,5 +1,5 @@
 import { ObjectId, type Db } from 'mongodb';
-import { randomInt } from 'crypto';
+import { randomInt, timingSafeEqual } from 'crypto';
 import { getDb } from './db';
 import { sendVerificationEmail } from './mailer';
 
@@ -28,13 +28,27 @@ export interface VerificationCodeDoc {
 	attempts: number;
 }
 
+function safeEqualStrings(a: string, b: string): boolean {
+	if (a.length !== b.length) return false;
+	return timingSafeEqual(Buffer.from(a, 'utf8'), Buffer.from(b, 'utf8'));
+}
+
 export async function createAndSendVerificationCode(email: string) {
+	if (typeof email !== 'string' || !email) return;
+
 	const db: Db = await getDb();
 	const users = db.collection(USERS_COLLECTION);
 	const codes = db.collection<VerificationCodeDoc>(CODES_COLLECTION);
 
-	const user = await users.findOne({ email });
-	if (!user) throw new Error('Usuario no encontrado');
+	// Sólo emitimos código para cuentas con contraseña que aún no verificaron.
+	// Silenciamos el caso de "no existe" / "ya verificada" / Google para no
+	// revelar qué emails están registrados.
+	const user = await users.findOne({
+		email,
+		provider: 'credentials',
+		emailVerified: { $ne: true }
+	});
+	if (!user) return;
 
 	const code = generate6DigitCode();
 
@@ -52,6 +66,10 @@ export async function createAndSendVerificationCode(email: string) {
 }
 
 export async function verifyEmailCode(email: string, code: string) {
+	if (typeof email !== 'string' || typeof code !== 'string') {
+		return { ok: false, reason: 'not_found' as const };
+	}
+
 	const db: Db = await getDb();
 	const users = db.collection(USERS_COLLECTION);
 	const codes = db.collection<VerificationCodeDoc>(CODES_COLLECTION);
@@ -69,7 +87,7 @@ export async function verifyEmailCode(email: string, code: string) {
 		return { ok: false, reason: 'too_many_attempts' as const };
 	}
 
-	if (doc.code !== code) {
+	if (!safeEqualStrings(doc.code, code)) {
 		await codes.updateOne({ _id: doc._id }, { $inc: { attempts: 1 } });
 		return { ok: false, reason: 'invalid_code' as const };
 	}
