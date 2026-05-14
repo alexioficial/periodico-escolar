@@ -34,11 +34,11 @@
 							<div
 								class="flex h-8 w-8 items-center justify-center rounded-full bg-slate-100 text-xs font-bold text-slate-600"
 							>
-								{article.authorEmail[0].toUpperCase()}
+								{article.authorDisplay[0]?.toUpperCase() ?? 'A'}
 							</div>
 							<div>
 								<p class="text-sm font-medium text-slate-900">
-									{article.authorEmail.split('@')[0]}
+									{article.authorDisplay}
 								</p>
 								<p class="text-xs text-slate-500">
 									{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : ''}

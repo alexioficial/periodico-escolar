@@ -3,12 +3,17 @@ import type { Actions, PageServerLoad } from './$types';
 import {
 	createArticle,
 	getArticlesByAuthor,
+	TITLE_MAX,
+	EXCERPT_MAX,
+	CONTENT_MAX,
 	type ArticleMedia,
 	type ArticleAttachment
 } from '$lib/server/articles';
 import { getCategories, ensureDefaultCategories, getCategoryById } from '$lib/server/categories';
 import { saveFile, deleteFile } from '$lib/server/storage';
 import { serialize } from '$lib/server/serialize';
+import { getDb } from '$lib/server/db';
+import { ObjectId } from 'mongodb';
 
 const ALLOWED_ATTACHMENT_MIMES = new Set([
 	'application/pdf',
@@ -57,6 +62,21 @@ export const actions: Actions = {
 			return fail(401, { message: 'No autorizado' });
 		}
 
+		// Email no verificado no debería poder publicar, ni siquiera quedar en
+		// cola: evita spam de pendientes desde cuentas falsas.
+		const db = await getDb();
+		const userDoc = await db
+			.collection('users')
+			.findOne({ _id: new ObjectId(locals.user._id) });
+		if (!userDoc) {
+			return fail(401, { message: 'Sesión inválida. Vuelve a iniciar sesión.' });
+		}
+		if (userDoc.provider === 'credentials' && userDoc.emailVerified !== true) {
+			return fail(403, {
+				message: 'Verifica tu correo antes de publicar artículos.'
+			});
+		}
+
 		const formData = await request.formData();
 		const title = (formData.get('title') as string)?.trim();
 		const content = (formData.get('content') as string)?.trim();
@@ -65,6 +85,16 @@ export const actions: Actions = {
 
 		if (!title || !content || !categoryId || !excerpt) {
 			return fail(400, { message: 'Faltan campos requeridos' });
+		}
+
+		if (title.length > TITLE_MAX) {
+			return fail(400, { message: `El título no puede superar los ${TITLE_MAX} caracteres` });
+		}
+		if (excerpt.length > EXCERPT_MAX) {
+			return fail(400, { message: `El extracto no puede superar los ${EXCERPT_MAX} caracteres` });
+		}
+		if (content.length > CONTENT_MAX) {
+			return fail(400, { message: `El contenido no puede superar los ${CONTENT_MAX} caracteres` });
 		}
 
 		try {
@@ -173,6 +203,7 @@ export const actions: Actions = {
 				excerpt,
 				authorId: locals.user._id,
 				authorEmail: locals.user.email,
+				authorUsername: locals.user.username ?? locals.user.name ?? undefined,
 				status,
 				publishedAt: status === 'published' ? new Date() : undefined,
 				media,

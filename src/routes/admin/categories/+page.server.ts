@@ -40,7 +40,7 @@ export const load: PageServerLoad = async ({ locals }) => {
 export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		if (locals.user?.role !== 'superadmin') {
-			return fail(401, { message: 'No autorizado' });
+			return fail(403, { message: 'No autorizado' });
 		}
 
 		const formData = await request.formData();
@@ -62,7 +62,7 @@ export const actions: Actions = {
 
 	update: async ({ request, locals }) => {
 		if (locals.user?.role !== 'superadmin') {
-			return fail(401, { message: 'No autorizado' });
+			return fail(403, { message: 'No autorizado' });
 		}
 
 		const formData = await request.formData();
@@ -85,7 +85,7 @@ export const actions: Actions = {
 
 	delete: async ({ request, locals }) => {
 		if (locals.user?.role !== 'superadmin') {
-			return fail(401, { message: 'No autorizado' });
+			return fail(403, { message: 'No autorizado' });
 		}
 
 		const formData = await request.formData();

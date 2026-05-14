@@ -15,7 +15,10 @@ const ARTICLES_PER_PAGE = 10;
 
 export const load: PageServerLoad = async ({ url, locals }) => {
 	const categoryId = url.searchParams.get('categoryId') || undefined;
-	const page = parseInt(url.searchParams.get('page') || '1');
+	// Clamp: sin esto `?page=-100` o `?page=abc` propagan skip negativo/NaN y
+	// Mongo lanza un error que se convierte en 500 visible al usuario.
+	const pageRaw = parseInt(url.searchParams.get('page') || '1');
+	const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
 	const skip = (page - 1) * ARTICLES_PER_PAGE;
 
 	const [articles, totalCount, categories] = await Promise.all([
@@ -29,12 +32,16 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 
 	const articlesWithUrls = await enrichArticlesWithUrls(articles);
 
-	const enrichedArticles = articlesWithUrls.map((article) => ({
+	// Privacidad: el feed es público. Exponer `authorEmail` permite scraping de
+	// correos. Devolvemos `authorDisplay` derivado del username/name, o un
+	// fallback genérico cuando ni siquiera había snapshot.
+	const enrichedArticles = articlesWithUrls.map(({ authorEmail: _email, ...article }) => ({
 		...article,
 		_id: article._id!.toString(),
+		authorDisplay: article.authorUsername?.trim() || 'Autor',
 		categoryName: categoryMap.get(article.categoryId)?.name || 'Sin categoría',
-		isLiked: userId ? article.likes?.includes(userId) : false,
-		isSaved: userId ? article.savedBy?.includes(userId) : false,
+		isLiked: userId ? (article.likes?.includes(userId) ?? false) : false,
+		isSaved: userId ? (article.savedBy?.includes(userId) ?? false) : false,
 		likesCount: article.likes?.length || 0
 	}));
 

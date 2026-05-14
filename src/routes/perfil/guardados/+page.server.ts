@@ -18,9 +18,10 @@ export const load: PageServerLoad = async ({ locals }) => {
 
 	const articlesWithUrls = await enrichArticlesWithUrls(savedArticles);
 
-	const enrichedArticles = articlesWithUrls.map((article) => ({
+	const enrichedArticles = articlesWithUrls.map(({ authorEmail: _email, ...article }) => ({
 		...article,
 		_id: article._id!.toString(),
+		authorDisplay: article.authorUsername?.trim() || 'Autor',
 		category: categoryMap.get(article.categoryId) ?? 'Sin categoría',
 		isLiked: article.likes?.includes(locals.user!._id) || false,
 		isSaved: true,

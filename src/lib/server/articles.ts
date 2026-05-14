@@ -25,6 +25,9 @@ export interface ArticleDoc {
 	categoryId: string;
 	authorId: string;
 	authorEmail: string;
+	// Snapshot del username/nombre visible al momento de publicar. Se prefiere
+	// sobre `authorEmail` al renderizar para no filtrar correos en feed público.
+	authorUsername?: string;
 	status: 'draft' | 'pending' | 'published' | 'rejected';
 	createdAt: Date;
 	publishedAt?: Date;
@@ -78,7 +81,22 @@ export async function enrichArticlesWithUrls<T extends ArticleDoc>(
 	return Promise.all(articles.map(enrichArticleWithUrls));
 }
 
+// Topes de longitud para no inflar la DB ni romper la UI con contenido enorme.
+export const TITLE_MAX = 200;
+export const EXCERPT_MAX = 500;
+export const CONTENT_MAX = 50_000;
+
 export async function createArticle(article: Omit<ArticleDoc, '_id' | 'createdAt'>) {
+	if (typeof article.title !== 'string' || article.title.length > TITLE_MAX) {
+		throw new Error(`El título supera los ${TITLE_MAX} caracteres`);
+	}
+	if (typeof article.excerpt !== 'string' || article.excerpt.length > EXCERPT_MAX) {
+		throw new Error(`El extracto supera los ${EXCERPT_MAX} caracteres`);
+	}
+	if (typeof article.content !== 'string' || article.content.length > CONTENT_MAX) {
+		throw new Error(`El contenido supera los ${CONTENT_MAX} caracteres`);
+	}
+
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
 
