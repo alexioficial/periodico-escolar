@@ -223,9 +223,13 @@
 		aria-modal="true"
 		aria-labelledby="avatar-cropper-title"
 	>
-		<div class="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl">
+		<div
+			class="pointer-events-auto w-full max-w-md overflow-hidden rounded-2xl bg-white shadow-2xl"
+		>
 			<header class="border-b border-slate-200 px-5 py-3">
-				<h2 id="avatar-cropper-title" class="text-base font-semibold text-slate-900">Ajustar foto de perfil</h2>
+				<h2 id="avatar-cropper-title" class="text-base font-semibold text-slate-900">
+					Ajustar foto de perfil
+				</h2>
 				<p class="text-xs text-slate-500">
 					Arrastrá para mover y usá el control de zoom para encuadrar.
 				</p>

@@ -65,9 +65,7 @@ export const actions: Actions = {
 		// Email no verificado no debería poder publicar, ni siquiera quedar en
 		// cola: evita spam de pendientes desde cuentas falsas.
 		const db = await getDb();
-		const userDoc = await db
-			.collection('users')
-			.findOne({ _id: new ObjectId(locals.user._id) });
+		const userDoc = await db.collection('users').findOne({ _id: new ObjectId(locals.user._id) });
 		if (!userDoc) {
 			return fail(401, { message: 'Sesión inválida. Vuelve a iniciar sesión.' });
 		}

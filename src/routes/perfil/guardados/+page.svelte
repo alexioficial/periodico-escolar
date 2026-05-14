@@ -234,5 +234,29 @@
 				</article>
 			{/each}
 		</div>
+
+		{#if data.pagination.totalPages > 1}
+			<nav class="flex items-center justify-center gap-2 pt-6" aria-label="Paginación">
+				{#if data.pagination.currentPage > 1}
+					<a
+						href={`?page=${data.pagination.currentPage - 1}`}
+						class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+					>
+						Anterior
+					</a>
+				{/if}
+				<span class="self-center text-xs text-slate-500">
+					Página {data.pagination.currentPage} de {data.pagination.totalPages}
+				</span>
+				{#if data.pagination.hasMore}
+					<a
+						href={`?page=${data.pagination.currentPage + 1}`}
+						class="rounded-lg border border-slate-200 bg-white px-4 py-2 text-sm font-medium text-slate-700 hover:bg-slate-50"
+					>
+						Siguiente
+					</a>
+				{/if}
+			</nav>
+		{/if}
 	{/if}
 </section>

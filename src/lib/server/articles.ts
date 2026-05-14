@@ -221,10 +221,7 @@ export async function toggleLike(articleId: string, userId: string) {
 	if (isLiked) {
 		await collection.updateOne({ _id, status: 'published' }, { $pull: { likes: userId } });
 	} else {
-		await collection.updateOne(
-			{ _id, status: 'published' },
-			{ $addToSet: { likes: userId } }
-		);
+		await collection.updateOne({ _id, status: 'published' }, { $addToSet: { likes: userId } });
 	}
 }
 
@@ -244,19 +241,27 @@ export async function toggleSave(articleId: string, userId: string) {
 	if (isSaved) {
 		await collection.updateOne({ _id, status: 'published' }, { $pull: { savedBy: userId } });
 	} else {
-		await collection.updateOne(
-			{ _id, status: 'published' },
-			{ $addToSet: { savedBy: userId } }
-		);
+		await collection.updateOne({ _id, status: 'published' }, { $addToSet: { savedBy: userId } });
 	}
 }
 
-export async function getSavedArticles(userId: string) {
+export async function getSavedArticles(userId: string, skip = 0, limit = 20) {
 	if (typeof userId !== 'string' || !userId) return [];
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
+	const safeSkip = Math.max(0, Math.floor(Number(skip) || 0));
+	const safeLimit = Math.min(MAX_PAGE_LIMIT, Math.max(1, Math.floor(Number(limit)) || 20));
 	return collection
 		.find({ savedBy: userId, status: 'published' })
 		.sort({ publishedAt: -1 })
+		.skip(safeSkip)
+		.limit(safeLimit)
 		.toArray();
+}
+
+export async function countSavedArticles(userId: string) {
+	if (typeof userId !== 'string' || !userId) return 0;
+	const db: Db = await getDb();
+	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
+	return collection.countDocuments({ savedBy: userId, status: 'published' });
 }

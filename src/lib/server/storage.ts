@@ -223,8 +223,9 @@ export async function getDownloadUrl(
 	// segura, y un fallback ASCII estricto para el `filename=` clásico. Esto
 	// también previene HTTP header injection si el filename trae CRLF.
 	const ascii = asciiFilename(filename);
-	const encoded = encodeURIComponent(filename).replace(/['()*]/g, (c) =>
-		'%' + c.charCodeAt(0).toString(16).toUpperCase()
+	const encoded = encodeURIComponent(filename).replace(
+		/['()*]/g,
+		(c) => '%' + c.charCodeAt(0).toString(16).toUpperCase()
 	);
 	const disposition = `attachment; filename="${ascii}"; filename*=UTF-8''${encoded}`;
 

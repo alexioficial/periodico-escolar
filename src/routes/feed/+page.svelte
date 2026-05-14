@@ -243,7 +243,11 @@
 							<div class="flex items-center gap-4">
 								<form method="POST" action="?/toggleLike" use:enhance onsubmit={requireLogin}>
 									<input type="hidden" name="id" value={article._id} />
-									<button type="submit" class="group flex items-center gap-1.5" aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}>
+									<button
+										type="submit"
+										class="group flex items-center gap-1.5"
+										aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}
+									>
 										<svg
 											xmlns="http://www.w3.org/2000/svg"
 											viewBox="0 0 24 24"

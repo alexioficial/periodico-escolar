@@ -62,7 +62,9 @@
 		{/if}
 
 		{#if data.passwordReset}
-			<div class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700">
+			<div
+				class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700"
+			>
 				Tu contraseña fue actualizada. Iniciá sesión con la nueva.
 			</div>
 		{/if}

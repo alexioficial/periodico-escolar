@@ -1,16 +1,22 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-import { getSavedArticles, enrichArticlesWithUrls } from '$lib/server/articles';
+import { getSavedArticles, countSavedArticles, enrichArticlesWithUrls } from '$lib/server/articles';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 
-export const load: PageServerLoad = async ({ locals }) => {
+const PER_PAGE = 20;
+
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
-		throw redirect(303, '/auth/login');
+		throw redirect(303, '/auth/login?returnTo=/perfil/guardados');
 	}
 
-	const [savedArticles, categories] = await Promise.all([
-		getSavedArticles(locals.user._id),
+	const pageRaw = parseInt(url.searchParams.get('page') || '1');
+	const page = Number.isFinite(pageRaw) && pageRaw > 0 ? pageRaw : 1;
+
+	const [savedArticles, totalCount, categories] = await Promise.all([
+		getSavedArticles(locals.user._id, (page - 1) * PER_PAGE, PER_PAGE),
+		countSavedArticles(locals.user._id),
 		getCategories()
 	]);
 
@@ -28,8 +34,16 @@ export const load: PageServerLoad = async ({ locals }) => {
 		likesCount: article.likes?.length || 0
 	}));
 
+	const totalPages = Math.max(1, Math.ceil(totalCount / PER_PAGE));
+
 	return {
 		articles: serialize(enrichedArticles),
-		user: locals.user
+		user: locals.user,
+		pagination: {
+			currentPage: page,
+			totalPages,
+			totalCount,
+			hasMore: page < totalPages
+		}
 	};
 };

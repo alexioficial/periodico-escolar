@@ -76,7 +76,11 @@ function getDummyHash(): Promise<string> {
 }
 
 export async function hashPassword(password: string) {
-	if (typeof password !== 'string' || password.length < PASSWORD_MIN || password.length > PASSWORD_MAX) {
+	if (
+		typeof password !== 'string' ||
+		password.length < PASSWORD_MIN ||
+		password.length > PASSWORD_MAX
+	) {
 		throw new Error(`La contraseña debe tener entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres`);
 	}
 	return argon2.hash(password, ARGON2_OPTIONS);
@@ -192,7 +196,10 @@ export async function updateUserProfile(
 			// Sólo aceptamos keys internas (subidas vía storage.saveFile, que
 			// devuelve `uploads/<uuid>[.ext]`). Esto evita que un caller arme
 			// el form con una URL externa o una key apuntando a otro recurso.
-			if (typeof update.picture !== 'string' || !/^uploads\/[a-z0-9-]+(?:\.[a-z0-9]+)?$/.test(update.picture)) {
+			if (
+				typeof update.picture !== 'string' ||
+				!/^uploads\/[a-z0-9-]+(?:\.[a-z0-9]+)?$/.test(update.picture)
+			) {
 				throw new Error('La referencia de la foto de perfil no es válida');
 			}
 			$set.picture = update.picture;

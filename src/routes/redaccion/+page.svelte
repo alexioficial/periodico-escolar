@@ -214,7 +214,9 @@
 
 							{#if article.status === 'rejected' && article.rejectionReason}
 								<div class="rounded-lg border border-red-100 bg-red-50 p-3 text-xs text-red-700">
-									<p class="mb-1 font-semibold uppercase tracking-wider text-red-600">Motivo del rechazo</p>
+									<p class="mb-1 font-semibold tracking-wider text-red-600 uppercase">
+										Motivo del rechazo
+									</p>
 									<p class="whitespace-pre-wrap">{article.rejectionReason}</p>
 								</div>
 							{/if}
