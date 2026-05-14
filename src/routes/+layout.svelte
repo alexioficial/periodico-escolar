@@ -1,12 +1,20 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
-
-	const LOGO_URL = 'https://cdn.widube.com/logo.svg';
 	import ToastHost from '$lib/components/ToastHost.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import MobileMenu from '$lib/components/MobileMenu.svelte';
+
+	const LOGO_URL = 'https://cdn.widube.com/logo.svg';
 
 	let { children, data } = $props();
+
+	let mobileMenuOpen = $state(false);
+
+	$effect(() => {
+		page.url.pathname;
+		mobileMenuOpen = false;
+	});
 
 	const getLinks = (user: typeof data.user) => {
 		const baseLinks = [{ href: '/feed', label: 'Inicio' }];
@@ -75,7 +83,31 @@
 					{/each}
 				</div>
 
-				<div class="flex items-center gap-3 text-xs text-slate-600">
+				<button
+					type="button"
+					onclick={() => (mobileMenuOpen = true)}
+					aria-label="Abrir menú"
+					aria-expanded={mobileMenuOpen}
+					class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 sm:hidden"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="h-5 w-5"
+						aria-hidden="true"
+					>
+						<line x1="3" y1="6" x2="21" y2="6" />
+						<line x1="3" y1="12" x2="21" y2="12" />
+						<line x1="3" y1="18" x2="21" y2="18" />
+					</svg>
+				</button>
+
+				<div class="hidden items-center gap-3 text-xs text-slate-600 sm:flex">
 					{#if data.user}
 						{@const displayName =
 							data.user.username || data.user.name || data.user.email.split('@')[0]}
@@ -125,4 +157,12 @@
 
 	<ToastHost />
 	<ConfirmDialog />
+	<MobileMenu
+		bind:open={mobileMenuOpen}
+		user={data.user}
+		{links}
+		logoUrl={LOGO_URL}
+		{isActive}
+		onClose={() => (mobileMenuOpen = false)}
+	/>
 </div>

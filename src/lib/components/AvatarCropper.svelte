@@ -170,9 +170,7 @@
 			const isPng = file.type === 'image/png';
 			const mime = isPng ? 'image/png' : 'image/jpeg';
 			const ext = isPng ? 'png' : 'jpg';
-			const blob = await new Promise<Blob | null>((resolve) =>
-				canvas.toBlob(resolve, mime, 0.92)
-			);
+			const blob = await new Promise<Blob | null>((resolve) => canvas.toBlob(resolve, mime, 0.92));
 			if (!blob) return;
 
 			const cropped = new File([blob], `avatar.${ext}`, { type: mime });
@@ -292,7 +290,9 @@
 				</div>
 			</div>
 
-			<footer class="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3">
+			<footer
+				class="flex items-center justify-end gap-2 border-t border-slate-200 bg-slate-50 px-5 py-3"
+			>
 				<button
 					type="button"
 					onclick={onCancel}
