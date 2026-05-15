@@ -162,13 +162,19 @@
 		<table class="min-w-full divide-y divide-slate-200">
 			<thead class="bg-slate-50">
 				<tr>
-					<th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase">
+					<th
+						class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
+					>
 						Nombre
 					</th>
-					<th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase">
+					<th
+						class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
+					>
 						Slug
 					</th>
-					<th class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase">
+					<th
+						class="px-6 py-3 text-left text-xs font-medium tracking-wider text-slate-500 uppercase"
+					>
 						Artículos
 					</th>
 					<th

@@ -23,8 +23,16 @@
 		loggingOut?: boolean;
 	};
 
-	let { open, user, links, logoUrl, isActive, onClose, onLogout, loggingOut = false }: Props =
-		$props();
+	let {
+		open,
+		user,
+		links,
+		logoUrl,
+		isActive,
+		onClose,
+		onLogout,
+		loggingOut = false
+	}: Props = $props();
 
 	const displayName = $derived(user ? user.username || user.name || user.email.split('@')[0] : '');
 	const initials = $derived(

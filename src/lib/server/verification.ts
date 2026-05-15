@@ -87,7 +87,13 @@ export async function verifyEmailCode(email: string, code: string) {
 		return { ok: false, reason: 'too_many_attempts' as const };
 	}
 
-	if (!safeEqualStrings(doc.code, code)) {
+	// Algunos clientes de correo añaden espacios o caracteres invisibles al copiar
+	// (el `letter-spacing` del template puede generar separadores al hacer copy).
+	// Normalizamos a sólo dígitos para que un copy/paste con basura siga siendo
+	// válido si los 6 dígitos coinciden.
+	const inputCode = code.replace(/\D/g, '');
+
+	if (!safeEqualStrings(doc.code, inputCode)) {
 		await codes.updateOne({ _id: doc._id }, { $inc: { attempts: 1 } });
 		return { ok: false, reason: 'invalid_code' as const };
 	}

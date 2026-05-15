@@ -112,11 +112,14 @@
 				<input
 					id="code"
 					name="code"
-					bind:value={code}
+					value={code}
+					oninput={(e) => {
+						const v = (e.currentTarget as HTMLInputElement).value.replace(/\D/g, '').slice(0, 6);
+						code = v;
+						(e.currentTarget as HTMLInputElement).value = v;
+					}}
 					inputmode="numeric"
-					pattern="[0-9]{6}"
-					minlength="6"
-					maxlength="6"
+					autocomplete="one-time-code"
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-center text-sm font-semibold tracking-widest outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
 				/>
