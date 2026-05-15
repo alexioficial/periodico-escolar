@@ -19,9 +19,12 @@
 		logoUrl: string;
 		isActive: (href: string) => boolean;
 		onClose: () => void;
+		onLogout: () => void;
+		loggingOut?: boolean;
 	};
 
-	let { open, user, links, logoUrl, isActive, onClose }: Props = $props();
+	let { open, user, links, logoUrl, isActive, onClose, onLogout, loggingOut = false }: Props =
+		$props();
 
 	const displayName = $derived(user ? user.username || user.name || user.email.split('@')[0] : '');
 	const initials = $derived(
@@ -134,14 +137,14 @@
 						<span class="truncate text-xs text-slate-500">{user.email}</span>
 					</span>
 				</a>
-				<form method="POST" action="/auth/logout" class="mt-3">
-					<button
-						type="submit"
-						class="w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-100"
-					>
-						Cerrar sesión
-					</button>
-				</form>
+				<button
+					type="button"
+					onclick={onLogout}
+					disabled={loggingOut}
+					class="mt-3 w-full rounded-xl border border-slate-300 bg-white px-4 py-2.5 text-sm font-medium text-slate-800 transition-colors hover:bg-slate-100 disabled:opacity-60"
+				>
+					{loggingOut ? 'Cerrando…' : 'Cerrar sesión'}
+				</button>
 			{:else}
 				<a
 					href="/auth/login"

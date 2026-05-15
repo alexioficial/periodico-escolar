@@ -1,6 +1,8 @@
 <script lang="ts">
 	import '../app.css';
 	import { page } from '$app/state';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { toast } from '$lib/toast';
 	import ToastHost from '$lib/components/ToastHost.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
@@ -10,11 +12,31 @@
 	let { children, data } = $props();
 
 	let mobileMenuOpen = $state(false);
+	let loggingOut = $state(false);
 
 	$effect(() => {
 		page.url.pathname;
 		mobileMenuOpen = false;
 	});
+
+	async function logout() {
+		if (loggingOut) return;
+		loggingOut = true;
+		try {
+			const res = await fetch('/auth/logout', { method: 'POST' });
+			if (!res.ok) {
+				toast.error('No se pudo cerrar sesión');
+				return;
+			}
+			const body = (await res.json()) as { redirectTo: string };
+			await invalidateAll();
+			await goto(body.redirectTo);
+		} catch {
+			toast.error('Error de red');
+		} finally {
+			loggingOut = false;
+		}
+	}
 
 	const getLinks = (user: typeof data.user) => {
 		const baseLinks = [{ href: '/feed', label: 'Inicio' }];
@@ -130,14 +152,14 @@
 							</span>
 							<span class="hidden text-xs font-medium sm:inline">{displayName}</span>
 						</a>
-						<form method="POST" action="/auth/logout">
-							<button
-								type="submit"
-								class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 transition-colors hover:bg-slate-50"
-							>
-								Cerrar sesión
-							</button>
-						</form>
+						<button
+							type="button"
+							onclick={logout}
+							disabled={loggingOut}
+							class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 transition-colors hover:bg-slate-50 disabled:opacity-60"
+						>
+							{loggingOut ? 'Cerrando…' : 'Cerrar sesión'}
+						</button>
 					{:else}
 						<a
 							href="/auth/login"
@@ -163,6 +185,8 @@
 		{links}
 		logoUrl={LOGO_URL}
 		{isActive}
+		{loggingOut}
 		onClose={() => (mobileMenuOpen = false)}
+		onLogout={logout}
 	/>
 </div>

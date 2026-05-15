@@ -1,11 +1,10 @@
-import { error, redirect } from '@sveltejs/kit';
+import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { deleteSession } from '$lib/server/session';
 import { checkRateLimit } from '$lib/server/rateLimit';
 
 export const POST: RequestHandler = async ({ cookies, request, url, getClientAddress }) => {
 	// Defensa contra CSRF: solo aceptamos POST con Origin del mismo sitio.
-	// SvelteKit no aplica el origin check a `+server.ts` endpoints automáticamente.
 	const origin = request.headers.get('origin');
 	if (origin && new URL(origin).origin !== url.origin) {
 		throw error(403, 'Origin no permitido');
@@ -27,5 +26,5 @@ export const POST: RequestHandler = async ({ cookies, request, url, getClientAdd
 		cookies.delete('session', { path: '/' });
 	}
 
-	throw redirect(303, '/auth/login');
+	return json({ ok: true, redirectTo: '/auth/login' });
 };

@@ -107,25 +107,31 @@
 		if (removePicture) clearSelection();
 	}
 
-	const handleSendVerification: SubmitFunction = () => {
+	async function handleSendVerification() {
+		if (isSendingVerification) return;
 		isSendingVerification = true;
-		return async ({ result }) => {
-			isSendingVerification = false;
-			if (result.type === 'redirect') {
-				toast.success('Te enviamos un código a tu correo', undefined, 5000);
-				await goto(result.location);
-			} else if (result.type === 'failure') {
-				const msg =
-					(result.data as { message?: string } | undefined)?.message ??
-					'No se pudo enviar el código';
+		try {
+			const res = await fetch('/api/profile/send-verification', { method: 'POST' });
+			if (!res.ok) {
+				let msg = 'No se pudo enviar el código';
+				try {
+					const body = (await res.json()) as { message?: string };
+					if (body?.message) msg = body.message;
+				} catch {
+					/* noop */
+				}
 				toast.error(msg);
-			} else if (result.type === 'success') {
-				toast.success('Te enviamos un código a tu correo', undefined, 5000);
-			} else {
-				toast.error('Error inesperado al enviar el código');
+				return;
 			}
-		};
-	};
+			const body = (await res.json()) as { redirectTo: string };
+			toast.success('Te enviamos un código a tu correo', undefined, 5000);
+			await goto(body.redirectTo);
+		} catch {
+			toast.error('Error de red');
+		} finally {
+			isSendingVerification = false;
+		}
+	}
 
 	const handleSubmit: SubmitFunction = () => {
 		isSaving = true;
@@ -323,12 +329,7 @@
 	</form>
 
 	{#if data.profile.provider === 'credentials' && !data.profile.emailVerified}
-		<form
-			method="POST"
-			action="?/sendVerification"
-			use:enhance={handleSendVerification}
-			class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm"
-		>
+		<div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
 			<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
 				<div class="flex items-start gap-3">
 					<svg
@@ -357,7 +358,8 @@
 					</div>
 				</div>
 				<button
-					type="submit"
+					type="button"
+					onclick={handleSendVerification}
 					disabled={isSendingVerification}
 					class="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-70"
 				>
@@ -381,7 +383,7 @@
 					{/if}
 				</button>
 			</div>
-		</form>
+		</div>
 	{/if}
 </section>
 

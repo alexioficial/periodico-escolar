@@ -8,8 +8,6 @@ import {
 	USERNAME_REGEX
 } from '$lib/server/auth';
 import { saveFile, deleteFile, getViewUrl } from '$lib/server/storage';
-import { createAndSendVerificationCode } from '$lib/server/verification';
-import { checkRateLimit } from '$lib/server/rateLimit';
 
 const MAX_AVATAR_MB = 4.5;
 
@@ -139,39 +137,5 @@ export const actions: Actions = {
 		}
 
 		return { success: true };
-	},
-	sendVerification: async ({ locals }) => {
-		if (!locals.user) return fail(401, { message: 'No autorizado' });
-
-		const rl = await checkRateLimit({
-			key: `verify-from-profile:${locals.user._id}`,
-			limit: 3,
-			windowMs: 60 * 60_000
-		});
-		if (!rl.ok) {
-			return fail(429, {
-				message: `Demasiadas solicitudes. Vuelve a intentarlo en ${rl.retryAfter}s.`
-			});
-		}
-
-		const userId = new ObjectId(locals.user._id);
-		const current = await getUserById(userId);
-		if (!current) return fail(404, { message: 'Usuario no encontrado' });
-
-		if (current.provider !== 'credentials') {
-			return fail(400, { message: 'Tu correo lo gestiona el proveedor externo.' });
-		}
-		if (current.emailVerified === true) {
-			return fail(400, { message: 'Tu correo ya está verificado.' });
-		}
-
-		try {
-			await createAndSendVerificationCode(current.email);
-		} catch (error) {
-			console.error('Error al enviar código de verificación:', error);
-			return fail(500, { message: 'No se pudo enviar el código. Intenta de nuevo.' });
-		}
-
-		throw redirect(303, `/auth/verify-email?email=${encodeURIComponent(current.email)}`);
 	}
 };
