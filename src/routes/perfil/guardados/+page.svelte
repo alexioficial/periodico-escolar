@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { toast } from '$lib/toast';
 	let { data } = $props();
 
@@ -10,13 +11,20 @@
 	let trackedPage = $state(data.pagination.currentPage);
 
 	$effect(() => {
-		if (data.pagination.currentPage !== trackedPage) {
-			trackedPage = data.pagination.currentPage;
-			articles = [...data.articles];
-			return;
-		}
-		const incoming = new Map(data.articles.map((a) => [a._id, a]));
-		articles = articles.map((a) => incoming.get(a._id) ?? a);
+		// Dependemos SOLO de los datos del server; la fusión va en untrack
+		// para no releer/reescribir `articles` dentro del propio effect
+		// (causaba effect_update_depth_exceeded y mataba la reactividad).
+		const incomingData = data.articles;
+		const currentPage = data.pagination.currentPage;
+		untrack(() => {
+			if (currentPage !== trackedPage) {
+				trackedPage = currentPage;
+				articles = [...incomingData];
+				return;
+			}
+			const incoming = new Map(incomingData.map((a) => [a._id, a]));
+			articles = articles.map((a) => incoming.get(a._id) ?? a);
+		});
 	});
 
 	async function readError(res: Response, fallback: string) {

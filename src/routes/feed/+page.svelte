@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/toast';
 
@@ -20,14 +21,22 @@
 	// Ahora: si cambia la categoría hacemos reset total, si no, fusionamos
 	// in-place los flags (isLiked/isSaved/likesCount) preservando lo cargado.
 	$effect(() => {
-		if (data.currentCategoryId !== trackedCategory) {
-			trackedCategory = data.currentCategoryId;
-			articles = [...data.articles];
-			pagination = { ...data.pagination };
-			return;
-		}
-		const incoming = new Map(data.articles.map((a) => [a._id, a]));
-		articles = articles.map((a) => incoming.get(a._id) ?? a);
+		// Dependemos SOLO de los datos del server (lectura tracked); la
+		// fusión va en untrack para no releer/reescribir `articles` dentro
+		// del propio effect (causaba effect_update_depth_exceeded).
+		const incomingData = data.articles;
+		const catId = data.currentCategoryId;
+		const incomingPagination = data.pagination;
+		untrack(() => {
+			if (catId !== trackedCategory) {
+				trackedCategory = catId;
+				articles = [...incomingData];
+				pagination = { ...incomingPagination };
+				return;
+			}
+			const incoming = new Map(incomingData.map((a) => [a._id, a]));
+			articles = articles.map((a) => incoming.get(a._id) ?? a);
+		});
 	});
 
 	function requireLogin() {
