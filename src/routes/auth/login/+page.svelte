@@ -1,11 +1,10 @@
 <script lang="ts">
-	import { goto, invalidateAll } from '$app/navigation';
-
 	let { data } = $props();
 
 	let email = $state('');
-	let password = $state('');
 	let loading = $state(false);
+	let sent = $state(false);
+	let sentTo = $state('');
 	let errorMessage = $state<string | null>(null);
 
 	async function readError(res: Response, fallback: string) {
@@ -23,23 +22,27 @@
 		loading = true;
 		errorMessage = null;
 		try {
-			const res = await fetch('/api/auth/login', {
+			const res = await fetch('/api/auth/magic-link', {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ email, password, returnTo: data.returnTo })
+				body: JSON.stringify({ email, returnTo: data.returnTo })
 			});
 			if (!res.ok) {
-				errorMessage = await readError(res, 'No se pudo iniciar sesión');
+				errorMessage = await readError(res, 'No se pudo enviar el enlace');
 				return;
 			}
-			const body = (await res.json()) as { redirectTo: string };
-			await invalidateAll();
-			await goto(body.redirectTo);
+			sentTo = email;
+			sent = true;
 		} catch {
 			errorMessage = 'Error de red';
 		} finally {
 			loading = false;
 		}
+	}
+
+	function useAnotherEmail() {
+		sent = false;
+		errorMessage = null;
 	}
 </script>
 
@@ -51,7 +54,9 @@
 	<div class="w-full max-w-md space-y-6 rounded-2xl border border-slate-200 bg-white p-8 shadow-xl">
 		<header class="space-y-2 text-center">
 			<h1 class="text-2xl font-semibold tracking-tight">Inicia sesión</h1>
-			<p class="text-sm text-slate-600">Accede al periódico escolar con tu cuenta</p>
+			<p class="text-sm text-slate-600">
+				Sin contraseñas. Te enviamos un enlace mágico a tu correo y listo.
+			</p>
 		</header>
 
 		<a
@@ -91,18 +96,9 @@
 			</div>
 		{/if}
 
-		{#if data.accountConflict}
+		{#if data.linkError}
 			<div class="rounded-lg border border-amber-300 bg-amber-50 px-3 py-2 text-xs text-amber-700">
-				Ya existe una cuenta con este correo registrada con contraseña. Inicia sesión con tu
-				contraseña o restablece tu contraseña.
-			</div>
-		{/if}
-
-		{#if data.passwordReset}
-			<div
-				class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700"
-			>
-				Tu contraseña fue actualizada. Iniciá sesión con la nueva.
+				{data.linkError}
 			</div>
 		{/if}
 
@@ -112,48 +108,62 @@
 			</div>
 		{/if}
 
-		<form class="space-y-4" onsubmit={handleSubmit}>
-			<div class="space-y-2">
-				<label class="block text-xs font-medium text-slate-700" for="email">
-					Correo electrónico
-				</label>
-				<input
-					id="email"
-					name="email"
-					type="email"
-					bind:value={email}
-					required
-					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
-				/>
-			</div>
-
-			<div class="space-y-2">
-				<label class="block text-xs font-medium text-slate-700" for="password">Contraseña</label>
-				<input
-					id="password"
-					name="password"
-					type="password"
-					bind:value={password}
-					minlength="6"
-					required
-					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
-				/>
-			</div>
-
-			<button
-				type="submit"
-				class="w-full rounded-full bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition-colors hover:bg-sky-400 disabled:opacity-60"
-				disabled={loading}
+		{#if sent}
+			<div
+				class="space-y-3 rounded-2xl border border-emerald-300 bg-emerald-50 px-4 py-4 text-center"
 			>
-				{loading ? 'Iniciando sesión...' : 'Entrar'}
+				<svg
+					xmlns="http://www.w3.org/2000/svg"
+					viewBox="0 0 24 24"
+					fill="none"
+					stroke="currentColor"
+					stroke-width="2"
+					stroke-linecap="round"
+					stroke-linejoin="round"
+					class="mx-auto h-8 w-8 text-emerald-600"
+					aria-hidden="true"
+				>
+					<path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z" />
+					<polyline points="22,6 12,13 2,6" />
+				</svg>
+				<p class="text-sm font-semibold text-emerald-900">Revisá tu correo</p>
+				<p class="text-xs text-emerald-800">
+					Si <strong class="break-all">{sentTo}</strong> está disponible, te llegará un enlace de acceso.
+					Expira en 15 minutos y solo se puede usar una vez.
+				</p>
+			</div>
+			<button
+				type="button"
+				onclick={useAnotherEmail}
+				class="w-full text-center text-xs text-sky-600 hover:underline"
+			>
+				Usar otro correo
 			</button>
-		</form>
+		{:else}
+			<form class="space-y-4" onsubmit={handleSubmit}>
+				<div class="space-y-2">
+					<label class="block text-xs font-medium text-slate-700" for="email">
+						Correo electrónico
+					</label>
+					<input
+						id="email"
+						name="email"
+						type="email"
+						autocomplete="email"
+						bind:value={email}
+						required
+						class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
+					/>
+				</div>
 
-		<div class="flex justify-between text-xs text-slate-500">
-			<a href="/auth/forgot-password" class="text-sky-600 hover:underline">
-				¿Olvidaste tu contraseña?
-			</a>
-			<a href="/auth/register" class="text-sky-600 hover:underline">Regístrate</a>
-		</div>
+				<button
+					type="submit"
+					class="w-full rounded-full bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition-colors hover:bg-sky-400 disabled:opacity-60"
+					disabled={loading}
+				>
+					{loading ? 'Enviando enlace...' : 'Enviar enlace de acceso'}
+				</button>
+			</form>
+		{/if}
 	</div>
 </div>

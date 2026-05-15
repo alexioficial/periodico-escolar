@@ -1,6 +1,6 @@
 import type { RequestHandler } from '@sveltejs/kit';
 import { redirect, error as svelteError } from '@sveltejs/kit';
-import { findOrCreateUserFromGoogle, EmailAccountConflictError } from '$lib/server/auth';
+import { findOrCreateUserFromGoogle } from '$lib/server/auth';
 import { createSession } from '$lib/server/session';
 import { env } from '$env/dynamic/private';
 
@@ -94,15 +94,7 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 		throw svelteError(502, 'Google no devolvió un email válido.');
 	}
 
-	let user;
-	try {
-		user = await findOrCreateUserFromGoogle(profile);
-	} catch (err) {
-		if (err instanceof EmailAccountConflictError) {
-			throw redirect(303, '/auth/login?error=account_conflict');
-		}
-		throw err;
-	}
+	const user = await findOrCreateUserFromGoogle(profile);
 	if (!user) {
 		throw svelteError(500, 'No se pudo crear o encontrar el usuario de Google.');
 	}

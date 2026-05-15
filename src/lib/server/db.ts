@@ -48,13 +48,9 @@ async function ensureIndexes(db: Db) {
 		db.collection('sessions').createIndex({ token: 1 }, { unique: true }),
 		db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
 
-		db.collection('email_verification_codes').createIndex({ email: 1 }),
-		db
-			.collection('email_verification_codes')
-			.createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
-
-		db.collection('password_reset_codes').createIndex({ email: 1 }),
-		db.collection('password_reset_codes').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
+		db.collection('magic_login_tokens').createIndex({ tokenHash: 1 }, { unique: true }),
+		db.collection('magic_login_tokens').createIndex({ email: 1 }),
+		db.collection('magic_login_tokens').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
 
 		db.collection('articles').createIndex({ status: 1, publishedAt: -1 }),
 		db.collection('articles').createIndex({ authorId: 1, createdAt: -1 }),

@@ -1,8 +1,5 @@
 import 'dotenv/config';
 import { MongoClient } from 'mongodb';
-import argon2 from 'argon2';
-import readline from 'node:readline/promises';
-import { stdin as input, stdout as output } from 'node:process';
 
 const TARGET_EMAIL = 'grullonmatiasalexi@gmail.com';
 
@@ -33,39 +30,14 @@ async function main() {
 		return;
 	}
 
-	console.log(`El usuario ${TARGET_EMAIL} no existe. Lo voy a crear con provider=credentials.`);
-	const rl = readline.createInterface({ input, output });
-	const username = (await rl.question('Nombre de usuario: ')).trim();
-	const password = (await rl.question('Contraseña (mínimo 6 caracteres): ')).trim();
-	rl.close();
-
-	if (!username || password.length < 6) {
-		console.error('✗ Datos inválidos. Username requerido y password >= 6 caracteres.');
-		await client.close();
-		process.exit(1);
-	}
-
-	const usernameTaken = await users.findOne({ username });
-	if (usernameTaken) {
-		console.error(`✗ El nombre de usuario "${username}" ya está en uso.`);
-		await client.close();
-		process.exit(1);
-	}
-
-	const passwordHash = await argon2.hash(password, { type: argon2.argon2id });
-
-	await users.insertOne({
-		email: TARGET_EMAIL,
-		username,
-		passwordHash,
-		createdAt: new Date(),
-		provider: 'credentials',
-		emailVerified: true,
-		role: 'superadmin'
-	});
-
-	console.log(`✓ Superadmin creado: ${TARGET_EMAIL} (usuario: ${username})`);
+	// El flujo de login es magic-link / Google: la cuenta se materializa al
+	// primer inicio de sesión. Acá solo ascendemos a superadmin a un usuario
+	// existente — si no existe, primero hay que loguearse al menos una vez.
+	console.error(
+		`✗ El usuario ${TARGET_EMAIL} no existe todavía. Inicia sesión una vez (magic-link o Google) y volvé a correr el script.`
+	);
 	await client.close();
+	process.exit(1);
 }
 
 main().catch((err) => {

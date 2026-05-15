@@ -2,10 +2,17 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 
 function safeReturnTo(raw: string | null): string {
-	if (typeof raw !== 'string' || !raw) return '/redaccion';
-	if (!raw.startsWith('/') || raw.startsWith('//')) return '/redaccion';
+	if (typeof raw !== 'string' || !raw) return '/feed';
+	if (!raw.startsWith('/') || raw.startsWith('//')) return '/feed';
 	return raw;
 }
+
+const errorMessages: Record<string, string> = {
+	invalid_link: 'El enlace de acceso no es válido. Solicitá uno nuevo.',
+	expired_link: 'El enlace expiró. Solicitá uno nuevo.',
+	used_link: 'Ese enlace ya se usó. Solicitá uno nuevo.',
+	oauth_cancelled: 'Cancelaste el inicio de sesión con Google.'
+};
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	const returnTo = safeReturnTo(url.searchParams.get('returnTo'));
@@ -14,11 +21,10 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 		throw redirect(303, returnTo);
 	}
 
-	const error = url.searchParams.get('error');
+	const errCode = url.searchParams.get('error');
 	return {
-		csrfError: error === 'csrf',
-		accountConflict: error === 'account_conflict',
-		passwordReset: url.searchParams.get('reset') === '1',
+		csrfError: errCode === 'csrf',
+		linkError: errCode && errorMessages[errCode] ? errorMessages[errCode] : null,
 		returnTo
 	};
 };

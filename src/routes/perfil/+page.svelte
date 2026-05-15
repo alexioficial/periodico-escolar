@@ -1,34 +1,15 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
 	import type { SubmitFunction } from '@sveltejs/kit';
-	import { goto, invalidateAll } from '$app/navigation';
-	import { page } from '$app/state';
+	import { invalidateAll } from '$app/navigation';
 	import { toast } from '$lib/toast';
 	import AvatarCropper from '$lib/components/AvatarCropper.svelte';
 
 	let { data } = $props();
 
 	let isSaving = $state(false);
-	let isSendingVerification = $state(false);
-	let verifiedToastShown = $state(false);
 	let cropperOpen = $state(false);
 	let cropperSource = $state<File | null>(null);
-
-	$effect(() => {
-		if (
-			!verifiedToastShown &&
-			page.url.searchParams.get('verified') === '1' &&
-			data.profile.emailVerified
-		) {
-			verifiedToastShown = true;
-			toast.success('Correo verificado correctamente', undefined, 5000);
-		}
-		if (page.url.searchParams.get('verified') === '1') {
-			const url = new URL(page.url);
-			url.searchParams.delete('verified');
-			history.replaceState(history.state, '', url);
-		}
-	});
 
 	let fileInput: HTMLInputElement | undefined = $state();
 	let selectedFile = $state<File | null>(null);
@@ -105,32 +86,6 @@
 	function toggleRemove() {
 		removePicture = !removePicture;
 		if (removePicture) clearSelection();
-	}
-
-	async function handleSendVerification() {
-		if (isSendingVerification) return;
-		isSendingVerification = true;
-		try {
-			const res = await fetch('/api/profile/send-verification', { method: 'POST' });
-			if (!res.ok) {
-				let msg = 'No se pudo enviar el código';
-				try {
-					const body = (await res.json()) as { message?: string };
-					if (body?.message) msg = body.message;
-				} catch {
-					/* noop */
-				}
-				toast.error(msg);
-				return;
-			}
-			const body = (await res.json()) as { redirectTo: string };
-			toast.success('Te enviamos un código a tu correo', undefined, 5000);
-			await goto(body.redirectTo);
-		} catch {
-			toast.error('Error de red');
-		} finally {
-			isSendingVerification = false;
-		}
 	}
 
 	const handleSubmit: SubmitFunction = () => {
@@ -264,27 +219,25 @@
 		<div class="space-y-2">
 			<div class="flex items-center justify-between gap-2">
 				<label for="email" class="text-sm font-medium text-slate-700">Correo electrónico</label>
-				{#if data.profile.emailVerified || data.profile.provider === 'google'}
-					<span
-						class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200/70 ring-inset"
+				<span
+					class="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 ring-1 ring-emerald-200/70 ring-inset"
+				>
+					<svg
+						xmlns="http://www.w3.org/2000/svg"
+						viewBox="0 0 24 24"
+						fill="none"
+						stroke="currentColor"
+						stroke-width="2.5"
+						stroke-linecap="round"
+						stroke-linejoin="round"
+						class="h-3 w-3"
+						aria-hidden="true"
 					>
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2.5"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="h-3 w-3"
-							aria-hidden="true"
-						>
-							<path d="m9 12 2 2 4-4" />
-							<circle cx="12" cy="12" r="10" />
-						</svg>
-						Correo verificado
-					</span>
-				{/if}
+						<path d="m9 12 2 2 4-4" />
+						<circle cx="12" cy="12" r="10" />
+					</svg>
+					Correo verificado
+				</span>
 			</div>
 			<input
 				id="email"
@@ -328,63 +281,6 @@
 		</div>
 	</form>
 
-	{#if data.profile.provider === 'credentials' && !data.profile.emailVerified}
-		<div class="rounded-2xl border border-amber-200 bg-amber-50 p-5 shadow-sm">
-			<div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-				<div class="flex items-start gap-3">
-					<svg
-						xmlns="http://www.w3.org/2000/svg"
-						viewBox="0 0 24 24"
-						fill="none"
-						stroke="currentColor"
-						stroke-width="2"
-						stroke-linecap="round"
-						stroke-linejoin="round"
-						class="mt-0.5 h-6 w-6 flex-shrink-0 text-amber-500"
-						aria-hidden="true"
-					>
-						<path
-							d="M10.29 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"
-						/>
-						<line x1="12" y1="9" x2="12" y2="13" />
-						<line x1="12" y1="17" x2="12.01" y2="17" />
-					</svg>
-					<div>
-						<p class="text-sm font-semibold text-amber-900">Tu correo aún no está verificado</p>
-						<p class="mt-0.5 text-xs text-amber-800/90">
-							Verificalo para poder recuperar tu contraseña si la olvidás. El código expira en 10
-							minutos.
-						</p>
-					</div>
-				</div>
-				<button
-					type="button"
-					onclick={handleSendVerification}
-					disabled={isSendingVerification}
-					class="inline-flex flex-shrink-0 items-center justify-center gap-2 rounded-lg bg-amber-500 px-4 py-2 text-sm font-medium text-white shadow-sm transition-colors hover:bg-amber-600 disabled:cursor-not-allowed disabled:opacity-70"
-				>
-					{#if isSendingVerification}
-						<svg
-							xmlns="http://www.w3.org/2000/svg"
-							viewBox="0 0 24 24"
-							fill="none"
-							stroke="currentColor"
-							stroke-width="2.5"
-							stroke-linecap="round"
-							stroke-linejoin="round"
-							class="h-4 w-4 animate-spin"
-							aria-hidden="true"
-						>
-							<path d="M21 12a9 9 0 1 1-6.219-8.56" />
-						</svg>
-						Enviando...
-					{:else}
-						Enviar código de verificación
-					{/if}
-				</button>
-			</div>
-		</div>
-	{/if}
 </section>
 
 <AvatarCropper

@@ -1,7 +1,7 @@
 import type { Db, ObjectId } from 'mongodb';
 import { MongoServerError } from 'mongodb';
+import crypto from 'crypto';
 import { getDb } from './db';
-import argon2 from 'argon2';
 
 const USERS_COLLECTION = 'users';
 
@@ -9,7 +9,6 @@ interface UserDoc {
 	_id: ObjectId;
 	email: string;
 	username?: string;
-	passwordHash?: string | null;
 	provider: 'credentials' | 'google';
 	googleId?: string;
 	createdAt: Date;
@@ -27,70 +26,10 @@ interface GoogleUserProfile {
 	email_verified?: boolean;
 }
 
-export class EmailAlreadyRegisteredError extends Error {
-	constructor() {
-		super('El correo ya está registrado');
-		this.name = 'EmailAlreadyRegisteredError';
-	}
-}
-
 export class UsernameTakenError extends Error {
 	constructor() {
 		super('El nombre de usuario ya está en uso');
 		this.name = 'UsernameTakenError';
-	}
-}
-
-export class EmailAccountConflictError extends Error {
-	constructor() {
-		super(
-			'Ya existe una cuenta con este correo registrada con contraseña. Inicia sesión con tu contraseña.'
-		);
-		this.name = 'EmailAccountConflictError';
-	}
-}
-
-// Parámetros explícitos de argon2 alineados con la guía OWASP 2024 (argon2id).
-// Fijarlos previene cambios silenciosos entre versiones de la lib y deja claros
-// los trade-offs CPU/memoria.
-const ARGON2_OPTIONS = {
-	type: argon2.argon2id,
-	memoryCost: 19_456, // 19 MiB
-	timeCost: 2,
-	parallelism: 1
-} as const;
-
-export const PASSWORD_MIN = 8;
-export const PASSWORD_MAX = 128;
-
-// Hash dummy para que `validateUser` corra argon2.verify aún cuando el usuario
-// no existe, evitando enumerar emails por timing. Se genera lazy en la primera
-// llamada y se cachea — así garantizamos un hash con los mismos parámetros que
-// usamos en producción.
-let dummyHashPromise: Promise<string> | null = null;
-function getDummyHash(): Promise<string> {
-	if (!dummyHashPromise) {
-		dummyHashPromise = argon2.hash('dummy-password-for-timing', ARGON2_OPTIONS);
-	}
-	return dummyHashPromise;
-}
-
-export async function hashPassword(password: string) {
-	if (
-		typeof password !== 'string' ||
-		password.length < PASSWORD_MIN ||
-		password.length > PASSWORD_MAX
-	) {
-		throw new Error(`La contraseña debe tener entre ${PASSWORD_MIN} y ${PASSWORD_MAX} caracteres`);
-	}
-	return argon2.hash(password, ARGON2_OPTIONS);
-}
-
-export async function verifyPassword(hash: string, password: string) {
-	try {
-		return await argon2.verify(hash, password);
-	} catch {
-		return false;
 	}
 }
 
@@ -101,53 +40,6 @@ function isDuplicateKeyError(error: unknown, field: string): boolean {
 	return !!keyPattern && Object.prototype.hasOwnProperty.call(keyPattern, field);
 }
 
-export async function createUser(email: string, username: string, password: string) {
-	if (typeof email !== 'string' || typeof username !== 'string' || typeof password !== 'string') {
-		throw new Error('Datos de registro inválidos');
-	}
-
-	const db: Db = await getDb();
-	const users = db.collection<UserDoc>(USERS_COLLECTION);
-
-	const passwordHash = await hashPassword(password); // valida longitud
-
-	try {
-		const result = await users.insertOne({
-			email,
-			username,
-			passwordHash,
-			createdAt: new Date(),
-			provider: 'credentials',
-			emailVerified: false,
-			role: 'user'
-		} as UserDoc);
-
-		return result.insertedId;
-	} catch (error) {
-		if (isDuplicateKeyError(error, 'email')) throw new EmailAlreadyRegisteredError();
-		if (isDuplicateKeyError(error, 'username')) throw new UsernameTakenError();
-		throw error;
-	}
-}
-
-export async function validateUser(email: string, password: string) {
-	if (typeof email !== 'string' || typeof password !== 'string') return null;
-
-	const db: Db = await getDb();
-	const users = db.collection<UserDoc>(USERS_COLLECTION);
-
-	const user = await users.findOne({ email, provider: 'credentials' });
-
-	// Para no enumerar emails por timing, corremos `verify` aún cuando el
-	// usuario no existe (o no tiene passwordHash). El verify contra el dummy
-	// devuelve false; descartamos la rama del usuario válido sólo después.
-	const hashToCheck = user?.passwordHash || (await getDummyHash());
-	const ok = await verifyPassword(hashToCheck, password);
-
-	if (!user || !user.passwordHash || !ok) return null;
-	return user;
-}
-
 export async function getUserById(userId: ObjectId) {
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
@@ -155,6 +47,72 @@ export async function getUserById(userId: ObjectId) {
 }
 
 export const USERNAME_REGEX = /^[a-zA-Z0-9_.-]{3,20}$/;
+
+// Genera un username único partiendo de la parte local del correo. Si está
+// ocupado, prueba sufijos de 4 dígitos. Como último recurso usa entropía
+// random — improbable que llegue ahí en la práctica.
+async function generateUniqueUsername(email: string): Promise<string> {
+	const db = await getDb();
+	const users = db.collection<UserDoc>(USERS_COLLECTION);
+
+	let base = email
+		.split('@')[0]
+		.toLowerCase()
+		.replace(/[^a-z0-9_.-]/g, '');
+	if (base.length < 3) base = `user${base}`;
+	base = base.slice(0, 16);
+
+	if (!(await users.findOne({ username: base }))) return base;
+
+	for (let i = 0; i < 10; i++) {
+		const suffix = Math.floor(Math.random() * 9000 + 1000);
+		const candidate = `${base.slice(0, 15)}-${suffix}`.slice(0, 20);
+		if (!(await users.findOne({ username: candidate }))) return candidate;
+	}
+
+	return `user-${crypto.randomBytes(4).toString('hex')}`;
+}
+
+// Usada por el consumo del magic-link. Si el usuario no existe, lo crea con
+// un username auto-generado (editable luego desde /perfil). Marca el correo
+// como verificado porque el click del link prueba propiedad del inbox.
+export async function findOrCreateUserByEmail(email: string) {
+	if (typeof email !== 'string' || !email) {
+		throw new Error('Email inválido');
+	}
+
+	const db: Db = await getDb();
+	const users = db.collection<UserDoc>(USERS_COLLECTION);
+	const normalized = email.toLowerCase();
+
+	const existing = await users.findOne({ email: normalized });
+	if (existing) {
+		if (existing.emailVerified !== true) {
+			await users.updateOne({ _id: existing._id }, { $set: { emailVerified: true } });
+			existing.emailVerified = true;
+		}
+		return existing;
+	}
+
+	const username = await generateUniqueUsername(normalized);
+	try {
+		const result = await users.insertOne({
+			email: normalized,
+			username,
+			createdAt: new Date(),
+			provider: 'credentials',
+			emailVerified: true,
+			role: 'user'
+		} as UserDoc);
+		return users.findOne({ _id: result.insertedId });
+	} catch (err) {
+		// Otra request creó la cuenta entre el findOne y el insert.
+		if (isDuplicateKeyError(err, 'email')) {
+			return users.findOne({ email: normalized });
+		}
+		throw err;
+	}
+}
 
 export interface ProfileUpdate {
 	username?: string;
@@ -193,9 +151,6 @@ export async function updateUserProfile(
 		if (update.picture === null) {
 			$unset.picture = '';
 		} else {
-			// Sólo aceptamos keys internas (subidas vía storage.saveFile, que
-			// devuelve `uploads/<uuid>[.ext]`). Esto evita que un caller arme
-			// el form con una URL externa o una key apuntando a otro recurso.
 			if (
 				typeof update.picture !== 'string' ||
 				!/^uploads\/[a-z0-9-]+(?:\.[a-z0-9]+)?$/.test(update.picture)
@@ -216,9 +171,6 @@ export async function updateUserProfile(
 	if (!Object.keys(updateOps).length) return null;
 
 	try {
-		// Atómico: devuelve el doc PREVIO (antes del update). Lo retornamos
-		// para que el caller pueda borrar la foto anterior sin riesgo de
-		// race entre dos updates concurrentes.
 		const previous = await users.findOneAndUpdate({ _id: userId }, updateOps, {
 			returnDocument: 'before'
 		});
@@ -229,16 +181,9 @@ export async function updateUserProfile(
 	}
 }
 
-export async function setUserPassword(userId: ObjectId, newPassword: string) {
-	const db: Db = await getDb();
-	const users = db.collection<UserDoc>(USERS_COLLECTION);
-	const passwordHash = await hashPassword(newPassword); // valida longitud
-	const res = await users.updateOne({ _id: userId }, { $set: { passwordHash } });
-	if (res.matchedCount !== 1) {
-		throw new Error('No se encontró el usuario al actualizar la contraseña');
-	}
-}
-
+// Google OAuth. Match preferente por googleId (estable si el usuario cambia
+// su correo en Google). Si no, busca por correo y unifica con esa cuenta.
+// Si no existe, crea una nueva con username auto-generado.
 export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
 	if (typeof profile?.sub !== 'string' || typeof profile?.email !== 'string') {
 		throw new Error('Perfil de Google inválido');
@@ -246,53 +191,51 @@ export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
 
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
-
 	const email = profile.email.toLowerCase();
 
-	let user = await users.findOne({ provider: 'google', googleId: profile.sub });
+	const byGoogleId = await users.findOne({ googleId: profile.sub });
+	if (byGoogleId) return byGoogleId;
 
-	if (!user) {
-		const existing = await users.findOne({ email });
-		if (existing && existing.provider !== 'google') {
-			// El email ya pertenece a una cuenta credentials — no permitimos hijack
-			// automático aunque Google diga que el email está verificado. El usuario
-			// debe iniciar sesión con su contraseña.
-			throw new EmailAccountConflictError();
-		}
-		user = existing;
+	// Mismo correo en otra cuenta (registrada por magic-link previa). Unificamos
+	// adjuntando el googleId, marcando verificado y rellenando nombre/foto sólo
+	// si todavía no los tenía.
+	const byEmail = await users.findOne({ email });
+	if (byEmail) {
+		const $set: Partial<UserDoc> = {
+			googleId: profile.sub,
+			emailVerified: true
+		};
+		if (!byEmail.name && profile.name) $set.name = profile.name;
+		if (!byEmail.picture && profile.picture) $set.picture = profile.picture;
+		await users.updateOne({ _id: byEmail._id }, { $set });
+		return users.findOne({ _id: byEmail._id });
 	}
 
-	if (!user) {
-		// Atómico: si dos requests OAuth llegan al mismo tiempo, sólo uno
-		// inserta y ambos terminan apuntando al mismo doc (insertedId vía
-		// upsert). Sin esto, podían crearse cuentas duplicadas.
-		try {
-			await users.updateOne(
-				{ provider: 'google', googleId: profile.sub },
-				{
-					$setOnInsert: {
-						email,
-						provider: 'google',
-						googleId: profile.sub,
-						name: profile.name,
-						picture: profile.picture,
-						emailVerified: profile.email_verified,
-						role: 'user',
-						createdAt: new Date()
-					}
-				},
-				{ upsert: true }
-			);
-		} catch (error) {
-			if (isDuplicateKeyError(error, 'email')) {
-				// Otra request creó la cuenta credentials entre nuestro check y
-				// el upsert. Tratamos igual que existing credentials.
-				throw new EmailAccountConflictError();
-			}
-			throw error;
+	const username = await generateUniqueUsername(email);
+	try {
+		// Upsert atómico: si dos callbacks llegan a la vez sólo uno inserta.
+		await users.updateOne(
+			{ googleId: profile.sub },
+			{
+				$setOnInsert: {
+					email,
+					username,
+					provider: 'google',
+					googleId: profile.sub,
+					name: profile.name,
+					picture: profile.picture,
+					emailVerified: true,
+					role: 'user',
+					createdAt: new Date()
+				}
+			},
+			{ upsert: true }
+		);
+	} catch (err) {
+		if (isDuplicateKeyError(err, 'email')) {
+			return users.findOne({ email });
 		}
-		user = await users.findOne({ provider: 'google', googleId: profile.sub });
+		throw err;
 	}
-
-	return user;
+	return users.findOne({ googleId: profile.sub });
 }

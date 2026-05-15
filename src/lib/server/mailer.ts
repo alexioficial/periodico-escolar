@@ -25,39 +25,18 @@ export async function sendEmail(to: string, subject: string, html: string) {
 	await transporter.sendMail({ from, to, subject, html });
 }
 
-function codeEmailTemplate(title: string, intro: string, code: string) {
-	return `
+export async function sendMagicLinkEmail(to: string, magicUrl: string) {
+	const html = `
 		<div style="font-family: system-ui, -apple-system, Segoe UI, Roboto, Helvetica, Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 24px;">
-			<h1 style="font-size: 20px; margin: 0 0 16px;">${title}</h1>
-			<p style="font-size: 14px; color: #334155;">${intro}</p>
-			<div style="font-size: 28px; letter-spacing: 8px; font-weight: 700; background: #0ea5e9; color: #0f172a; padding: 12px 16px; text-align: center; border-radius: 12px; margin: 16px 0;">
-				${code}
-			</div>
-			<p style="font-size: 12px; color: #64748b;">Si no solicitaste este correo, puedes ignorarlo.</p>
+			<h1 style="font-size: 20px; margin: 0 0 16px;">Inicia sesión en el Periódico escolar</h1>
+			<p style="font-size: 14px; color: #334155;">Hacé click en el botón de abajo para iniciar sesión. El enlace expira en 15 minutos y solo se puede usar una vez.</p>
+			<p style="margin: 24px 0; text-align: center;">
+				<a href="${magicUrl}" style="display: inline-block; background: #0ea5e9; color: #ffffff; padding: 12px 24px; border-radius: 12px; text-decoration: none; font-weight: 600; font-size: 14px;">Iniciar sesión</a>
+			</p>
+			<p style="font-size: 12px; color: #64748b;">¿No funciona el botón? Copia y pega este enlace en tu navegador:</p>
+			<p style="font-size: 12px; color: #334155; word-break: break-all;">${magicUrl}</p>
+			<p style="font-size: 12px; color: #64748b; margin-top: 24px;">Si no solicitaste este correo, puedes ignorarlo.</p>
 		</div>
 	`;
-}
-
-export async function sendVerificationEmail(to: string, code: string) {
-	await sendEmail(
-		to,
-		'Tu código de verificación',
-		codeEmailTemplate(
-			'Verifica tu correo',
-			'Usa el siguiente código para verificar tu cuenta. Expira en 15 minutos.',
-			code
-		)
-	);
-}
-
-export async function sendPasswordResetEmail(to: string, code: string) {
-	await sendEmail(
-		to,
-		'Restablece tu contraseña',
-		codeEmailTemplate(
-			'Restablece tu contraseña',
-			'Usa el siguiente código para restablecer tu contraseña. Expira en 15 minutos.',
-			code
-		)
-	);
+	await sendEmail(to, 'Tu enlace de acceso al Periódico escolar', html);
 }
