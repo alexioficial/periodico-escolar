@@ -1,9 +1,10 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import { goto } from '$app/navigation';
+	import { goto, invalidateAll } from '$app/navigation';
+	import { toast } from '$lib/toast';
 	let { data } = $props();
 
 	let emailSearch = $state('');
+	let pendingId = $state<string | null>(null);
 
 	$effect(() => {
 		emailSearch = data.emailFilter || '';
@@ -21,6 +22,33 @@
 		if (emailSearch) params.set('email', emailSearch);
 		params.set('page', page.toString());
 		goto(`/admin/users?${params.toString()}`);
+	}
+
+	async function setRole(id: string, role: 'user' | 'admin' | 'superadmin') {
+		pendingId = id;
+		try {
+			const res = await fetch(`/api/admin/users/${id}/role`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ role })
+			});
+			if (!res.ok) {
+				let msg = 'No se pudo actualizar el rol';
+				try {
+					const body = (await res.json()) as { message?: string };
+					if (body?.message) msg = body.message;
+				} catch {
+					/* noop */
+				}
+				toast.error(msg);
+				return;
+			}
+			await invalidateAll();
+		} catch {
+			toast.error('Error de red');
+		} finally {
+			pendingId = null;
+		}
 	}
 </script>
 
@@ -137,34 +165,42 @@
 							{#if String(user._id) === data.user._id}
 								<span class="text-xs text-slate-400">(tú)</span>
 							{:else if user.role === 'user'}
-								<form method="POST" action="?/promoteToAdmin" use:enhance class="inline">
-									<input type="hidden" name="id" value={user._id} />
-									<button type="submit" class="text-indigo-600 hover:text-indigo-900">
-										Ascender a Admin
-									</button>
-								</form>
+								<button
+									type="button"
+									onclick={() => setRole(String(user._id), 'admin')}
+									disabled={pendingId === String(user._id)}
+									class="text-indigo-600 hover:text-indigo-900 disabled:opacity-50"
+								>
+									Ascender a Admin
+								</button>
 							{:else if user.role === 'admin'}
 								<div class="flex justify-end gap-3">
-									<form method="POST" action="?/promoteToSuperadmin" use:enhance class="inline">
-										<input type="hidden" name="id" value={user._id} />
-										<button type="submit" class="text-purple-600 hover:text-purple-900">
-											Ascender a Superadmin
-										</button>
-									</form>
-									<form method="POST" action="?/demoteToUser" use:enhance class="inline">
-										<input type="hidden" name="id" value={user._id} />
-										<button type="submit" class="text-amber-600 hover:text-amber-900">
-											Degradar a Usuario
-										</button>
-									</form>
+									<button
+										type="button"
+										onclick={() => setRole(String(user._id), 'superadmin')}
+										disabled={pendingId === String(user._id)}
+										class="text-purple-600 hover:text-purple-900 disabled:opacity-50"
+									>
+										Ascender a Superadmin
+									</button>
+									<button
+										type="button"
+										onclick={() => setRole(String(user._id), 'user')}
+										disabled={pendingId === String(user._id)}
+										class="text-amber-600 hover:text-amber-900 disabled:opacity-50"
+									>
+										Degradar a Usuario
+									</button>
 								</div>
 							{:else if user.role === 'superadmin'}
-								<form method="POST" action="?/demoteToAdmin" use:enhance class="inline">
-									<input type="hidden" name="id" value={user._id} />
-									<button type="submit" class="text-amber-600 hover:text-amber-900">
-										Degradar a Admin
-									</button>
-								</form>
+								<button
+									type="button"
+									onclick={() => setRole(String(user._id), 'admin')}
+									disabled={pendingId === String(user._id)}
+									class="text-amber-600 hover:text-amber-900 disabled:opacity-50"
+								>
+									Degradar a Admin
+								</button>
 							{/if}
 						</td>
 					</tr>
