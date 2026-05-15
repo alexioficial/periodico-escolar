@@ -1,6 +1,4 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
-	import type { SubmitFunction } from '@sveltejs/kit';
 	import { toast } from '$lib/toast';
 	let { data } = $props();
 
@@ -11,7 +9,6 @@
 	// svelte-ignore state_referenced_locally
 	let trackedPage = $state(data.pagination.currentPage);
 
-	// Cuando la página cambia (paginación o invalidación), resincronizar.
 	$effect(() => {
 		if (data.pagination.currentPage !== trackedPage) {
 			trackedPage = data.pagination.currentPage;
@@ -22,36 +19,43 @@
 		articles = articles.map((a) => incoming.get(a._id) ?? a);
 	});
 
-	function optimisticLike(article: Article): SubmitFunction {
-		return () => {
-			const wasLiked = article.isLiked;
-			article.isLiked = !wasLiked;
-			article.likesCount += wasLiked ? -1 : 1;
-
-			return async ({ result }) => {
-				if (result.type === 'failure' || result.type === 'error') {
-					article.isLiked = wasLiked;
-					article.likesCount += wasLiked ? 1 : -1;
-					toast.error('No se pudo actualizar el me gusta');
-				}
-			};
-		};
+	async function readError(res: Response, fallback: string) {
+		try {
+			const body = (await res.json()) as { message?: string };
+			return body?.message || fallback;
+		} catch {
+			return fallback;
+		}
 	}
 
-	function optimisticUnsave(article: Article): SubmitFunction {
-		return () => {
-			const idx = articles.findIndex((a) => a._id === article._id);
-			if (idx === -1) return;
-			const removed = articles[idx];
-			articles.splice(idx, 1);
+	async function handleLike(article: Article) {
+		const wasLiked = article.isLiked;
+		article.isLiked = !wasLiked;
+		article.likesCount += wasLiked ? -1 : 1;
 
-			return async ({ result }) => {
-				if (result.type === 'failure' || result.type === 'error') {
-					articles.splice(idx, 0, removed);
-					toast.error('No se pudo quitar de guardados');
-				}
-			};
-		};
+		try {
+			const res = await fetch(`/api/articles/${article._id}/like`, { method: 'POST' });
+			if (!res.ok) throw new Error(await readError(res, 'No se pudo actualizar el me gusta'));
+		} catch (e) {
+			article.isLiked = wasLiked;
+			article.likesCount += wasLiked ? 1 : -1;
+			toast.error(e instanceof Error ? e.message : 'No se pudo actualizar el me gusta');
+		}
+	}
+
+	async function handleUnsave(article: Article) {
+		const idx = articles.findIndex((a) => a._id === article._id);
+		if (idx === -1) return;
+		const removed = articles[idx];
+		articles.splice(idx, 1);
+
+		try {
+			const res = await fetch(`/api/articles/${article._id}/save`, { method: 'POST' });
+			if (!res.ok) throw new Error(await readError(res, 'No se pudo quitar de guardados'));
+		} catch (e) {
+			articles.splice(idx, 0, removed);
+			toast.error(e instanceof Error ? e.message : 'No se pudo quitar de guardados');
+		}
 	}
 </script>
 
@@ -203,32 +207,34 @@
 						<!-- Actions (Reusing actions from feed, pointing to feed actions) -->
 						<div class="flex items-center justify-between pt-2">
 							<div class="flex items-center gap-4">
-								<form method="POST" action="/feed?/toggleLike" use:enhance={optimisticLike(article)}>
-									<input type="hidden" name="id" value={article._id} />
-									<button type="submit" class="group flex items-center gap-1.5">
-										<svg
-											xmlns="http://www.w3.org/2000/svg"
-											viewBox="0 0 24 24"
-											fill={article.isLiked ? 'currentColor' : 'none'}
-											stroke="currentColor"
-											stroke-width="2"
-											class="h-6 w-6 {article.isLiked
-												? 'text-red-500'
-												: 'text-slate-400 group-hover:text-red-500'} transition-colors"
-										>
-											<path
-												stroke-linecap="round"
-												stroke-linejoin="round"
-												d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-											/>
-										</svg>
-										<span
-											class="text-sm font-medium {article.isLiked
-												? 'text-red-600'
-												: 'text-slate-600'}">{article.likesCount}</span
-										>
-									</button>
-								</form>
+								<button
+									type="button"
+									onclick={() => handleLike(article)}
+									class="group flex items-center gap-1.5"
+									aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}
+								>
+									<svg
+										xmlns="http://www.w3.org/2000/svg"
+										viewBox="0 0 24 24"
+										fill={article.isLiked ? 'currentColor' : 'none'}
+										stroke="currentColor"
+										stroke-width="2"
+										class="h-6 w-6 {article.isLiked
+											? 'text-red-500'
+											: 'text-slate-400 group-hover:text-red-500'} transition-colors"
+									>
+										<path
+											stroke-linecap="round"
+											stroke-linejoin="round"
+											d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+										/>
+									</svg>
+									<span
+										class="text-sm font-medium {article.isLiked
+											? 'text-red-600'
+											: 'text-slate-600'}">{article.likesCount}</span
+									>
+								</button>
 
 								<button
 									class="text-slate-400 transition-colors hover:text-indigo-500"
@@ -257,29 +263,27 @@
 								</button>
 							</div>
 
-							<form method="POST" action="/feed?/toggleSave" use:enhance={optimisticUnsave(article)}>
-								<input type="hidden" name="id" value={article._id} />
-								<button
-									type="submit"
-									class="text-slate-400 transition-colors hover:text-amber-400"
-									aria-label={article.isSaved ? 'Quitar de guardados' : 'Guardar artículo'}
+							<button
+								type="button"
+								onclick={() => handleUnsave(article)}
+								class="text-slate-400 transition-colors hover:text-amber-400"
+								aria-label="Quitar de guardados"
+							>
+								<svg
+									xmlns="http://www.w3.org/2000/svg"
+									viewBox="0 0 24 24"
+									fill={article.isSaved ? 'currentColor' : 'none'}
+									stroke="currentColor"
+									stroke-width="2"
+									class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
 								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 24 24"
-										fill={article.isSaved ? 'currentColor' : 'none'}
-										stroke="currentColor"
-										stroke-width="2"
-										class="h-6 w-6 {article.isSaved ? 'text-amber-400' : ''}"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
-										/>
-									</svg>
-								</button>
-							</form>
+									<path
+										stroke-linecap="round"
+										stroke-linejoin="round"
+										d="M17.593 3.322c1.1.128 1.907 1.077 1.907 2.185V21L12 17.25 4.5 21V5.507c0-1.108.806-2.057 1.907-2.185a48.507 48.507 0 0111.186 0z"
+									/>
+								</svg>
+							</button>
 						</div>
 					</div>
 				</article>

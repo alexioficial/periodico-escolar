@@ -1,15 +1,11 @@
-import { fail } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
+import type { PageServerLoad } from './$types';
 import {
 	getPublishedArticles,
 	countPublishedArticles,
-	toggleLike,
-	toggleSave,
 	enrichArticlesWithUrls
 } from '$lib/server/articles';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
-import { checkRateLimit } from '$lib/server/rateLimit';
 
 const ARTICLES_PER_PAGE = 10;
 
@@ -61,35 +57,3 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	};
 };
 
-export const actions: Actions = {
-	toggleLike: async ({ request, locals }) => {
-		if (!locals.user) return fail(401);
-		const rl = await checkRateLimit({
-			key: `feed-toggle:${locals.user._id}`,
-			limit: 60,
-			windowMs: 60_000
-		});
-		if (!rl.ok) {
-			return fail(429, { message: `Vuelve a intentarlo en ${rl.retryAfter}s.` });
-		}
-		const data = await request.formData();
-		const id = data.get('id') as string;
-		await toggleLike(id, locals.user._id);
-		return { success: true };
-	},
-	toggleSave: async ({ request, locals }) => {
-		if (!locals.user) return fail(401);
-		const rl = await checkRateLimit({
-			key: `feed-toggle:${locals.user._id}`,
-			limit: 60,
-			windowMs: 60_000
-		});
-		if (!rl.ok) {
-			return fail(429, { message: `Vuelve a intentarlo en ${rl.retryAfter}s.` });
-		}
-		const data = await request.formData();
-		const id = data.get('id') as string;
-		await toggleSave(id, locals.user._id);
-		return { success: true };
-	}
-};

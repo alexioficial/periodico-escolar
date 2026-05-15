@@ -8,7 +8,9 @@
       "PowerShell(pnpm exec *)",
       "Bash(pnpm run *)",
       "Bash(pnpm exec *)",
-      "Bash(pnpm add *)"
+      "Bash(pnpm add *)",
+      "Bash(git add *)",
+      "Bash(git commit *)"
     ]
   }
 }
