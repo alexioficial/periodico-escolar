@@ -314,7 +314,7 @@
 									aria-label="Copiar enlace del artículo"
 									onclick={() => {
 										navigator.clipboard.writeText(
-											window.location.origin + '/articulo/' + article._id
+											window.location.origin + '/post/' + article._id
 										);
 										toast.success('Enlace copiado al portapapeles');
 									}}

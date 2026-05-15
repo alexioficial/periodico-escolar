@@ -54,7 +54,7 @@
 	}
 
 	function handleShare() {
-		const url = window.location.origin + '/articulo/' + article._id;
+		const url = window.location.origin + '/post/' + article._id;
 		navigator.clipboard.writeText(url);
 		toast.success('Enlace copiado al portapapeles');
 	}

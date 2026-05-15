@@ -11,7 +11,10 @@
       "Bash(pnpm add *)",
       "Bash(git add *)",
       "Bash(git commit *)",
-      "Bash(pnpm remove *)"
+      "Bash(pnpm remove *)",
+      "Bash(git mv *)",
+      "Bash(Select-Object -Last 15)",
+      "Bash(git push *)"
     ]
   }
 }
