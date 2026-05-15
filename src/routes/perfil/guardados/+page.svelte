@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { toast } from '$lib/toast';
+	import { shareDialog } from '$lib/shareDialog';
 	let { data } = $props();
 
 	type Article = (typeof data.articles)[number];
@@ -246,13 +247,12 @@
 
 								<button
 									class="text-slate-400 transition-colors hover:text-indigo-500"
-									aria-label="Copiar enlace del artículo"
-									onclick={() => {
-										navigator.clipboard.writeText(
-											window.location.origin + '/post/' + article._id
-										);
-										toast.success('Enlace copiado al portapapeles');
-									}}
+									aria-label="Compartir artículo"
+									onclick={() =>
+										shareDialog.open({
+											url: window.location.origin + '/post/' + article._id,
+											title: article.title
+										})}
 								>
 									<svg
 										xmlns="http://www.w3.org/2000/svg"

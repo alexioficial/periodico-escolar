@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { toast } from '$lib/toast';
+	import { shareDialog } from '$lib/shareDialog';
 
 	let { data } = $props();
 
@@ -54,9 +55,10 @@
 	}
 
 	function handleShare() {
-		const url = window.location.origin + '/post/' + article._id;
-		navigator.clipboard.writeText(url);
-		toast.success('Enlace copiado al portapapeles');
+		shareDialog.open({
+			url: window.location.origin + '/post/' + article._id,
+			title: article.title
+		});
 	}
 </script>
 

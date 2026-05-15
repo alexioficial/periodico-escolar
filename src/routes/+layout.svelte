@@ -5,6 +5,7 @@
 	import { toast } from '$lib/toast';
 	import ToastHost from '$lib/components/ToastHost.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
+	import ShareDialog from '$lib/components/ShareDialog.svelte';
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
 
 	const LOGO_URL = 'https://cdn.widube.com/logo.svg';
@@ -179,6 +180,7 @@
 
 	<ToastHost />
 	<ConfirmDialog />
+	<ShareDialog />
 	<MobileMenu
 		open={mobileMenuOpen}
 		user={data.user}
