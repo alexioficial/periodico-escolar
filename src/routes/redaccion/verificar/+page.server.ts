@@ -1,10 +1,6 @@
-import { fail, redirect } from '@sveltejs/kit';
-import type { Actions, PageServerLoad } from './$types';
-import {
-	getPendingArticles,
-	updateArticleStatus,
-	enrichArticlesWithUrls
-} from '$lib/server/articles';
+import { redirect } from '@sveltejs/kit';
+import type { PageServerLoad } from './$types';
+import { getPendingArticles, enrichArticlesWithUrls } from '$lib/server/articles';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 
@@ -32,55 +28,4 @@ export const load: PageServerLoad = async ({ locals }) => {
 		user: locals.user,
 		articles: serialize(enrichedArticles)
 	};
-};
-
-export const actions: Actions = {
-	approve: async ({ request, locals }) => {
-		if (!locals.user || !['admin', 'superadmin'].includes(locals.user.role)) {
-			return fail(401, { message: 'No autorizado' });
-		}
-
-		const formData = await request.formData();
-		const id = formData.get('id') as string;
-
-		if (!id) {
-			return fail(400, { message: 'ID requerido' });
-		}
-
-		try {
-			const ok = await updateArticleStatus(id, 'published');
-			if (!ok) {
-				return fail(409, { message: 'El artículo ya no está pendiente de revisión' });
-			}
-			return { success: true };
-		} catch (error) {
-			console.error(error);
-			return fail(500, { message: 'Error al aprobar el artículo' });
-		}
-	},
-	reject: async ({ request, locals }) => {
-		if (!locals.user || !['admin', 'superadmin'].includes(locals.user.role)) {
-			return fail(401, { message: 'No autorizado' });
-		}
-
-		const formData = await request.formData();
-		const id = formData.get('id') as string;
-
-		if (!id) {
-			return fail(400, { message: 'ID requerido' });
-		}
-
-		const reason = ((formData.get('reason') as string) ?? '').trim().slice(0, 500);
-
-		try {
-			const ok = await updateArticleStatus(id, 'rejected', reason || undefined);
-			if (!ok) {
-				return fail(409, { message: 'El artículo ya no está pendiente de revisión' });
-			}
-			return { success: true };
-		} catch (error) {
-			console.error(error);
-			return fail(500, { message: 'Error al rechazar el artículo' });
-		}
-	}
 };

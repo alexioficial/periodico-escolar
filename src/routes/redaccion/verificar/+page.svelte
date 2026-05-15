@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { invalidateAll } from '$app/navigation';
 	import { toast } from '$lib/toast';
 
 	let { data } = $props();
@@ -18,6 +18,61 @@
 	function closeReject() {
 		rejectingId = null;
 		rejectReason = '';
+	}
+
+	async function readError(res: Response, fallback: string) {
+		try {
+			const body = (await res.json()) as { message?: string };
+			return body?.message || fallback;
+		} catch {
+			return fallback;
+		}
+	}
+
+	async function approve(id: string) {
+		if (submittingId) return;
+		submittingId = id;
+		try {
+			const res = await fetch(`/api/articles/${id}/moderate`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ decision: 'approve' })
+			});
+			if (!res.ok) {
+				toast.error('No se pudo aprobar', await readError(res, 'Error al aprobar el artículo'));
+				return;
+			}
+			toast.success('Artículo publicado');
+			await invalidateAll();
+		} catch {
+			toast.error('Error de red');
+		} finally {
+			submittingId = null;
+		}
+	}
+
+	async function reject() {
+		if (!rejectingId || submittingId) return;
+		const id = rejectingId;
+		submittingId = id;
+		try {
+			const res = await fetch(`/api/articles/${id}/moderate`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ decision: 'reject', reason: rejectReason })
+			});
+			if (!res.ok) {
+				toast.error('No se pudo rechazar', await readError(res, 'Error al rechazar el artículo'));
+				return;
+			}
+			toast.success('Artículo rechazado');
+			closeReject();
+			await invalidateAll();
+		} catch {
+			toast.error('Error de red');
+		} finally {
+			submittingId = null;
+		}
 	}
 </script>
 
@@ -125,34 +180,14 @@
 						{/if}
 
 						<div class="flex items-center gap-3 border-t border-slate-100 pt-4">
-							<form
-								method="POST"
-								action="?/approve"
-								use:enhance={() => {
-									submittingId = article._id;
-									return async ({ result, update }) => {
-										submittingId = null;
-										if (result.type === 'success') {
-											toast.success('Artículo publicado');
-										} else if (result.type === 'failure') {
-											toast.error(
-												'No se pudo aprobar',
-												(result.data as { message?: string } | undefined)?.message
-											);
-										}
-										await update();
-									};
-								}}
+							<button
+								type="button"
+								onclick={() => approve(article._id)}
+								disabled={submittingId === article._id}
+								class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
 							>
-								<input type="hidden" name="id" value={article._id} />
-								<button
-									type="submit"
-									disabled={submittingId === article._id}
-									class="rounded-lg bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 focus:ring-2 focus:ring-green-500 focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60"
-								>
-									{submittingId === article._id ? 'Procesando…' : 'Aprobar y Publicar'}
-								</button>
-							</form>
+								{submittingId === article._id ? 'Procesando…' : 'Aprobar y Publicar'}
+							</button>
 
 							<button
 								type="button"
@@ -183,27 +218,12 @@
 			</p>
 
 			<form
-				method="POST"
-				action="?/reject"
-				use:enhance={() => {
-					submittingId = rejectingId;
-					return async ({ result, update }) => {
-						submittingId = null;
-						if (result.type === 'success') {
-							toast.success('Artículo rechazado');
-							closeReject();
-						} else if (result.type === 'failure') {
-							toast.error(
-								'No se pudo rechazar',
-								(result.data as { message?: string } | undefined)?.message
-							);
-						}
-						await update();
-					};
+				onsubmit={(e) => {
+					e.preventDefault();
+					reject();
 				}}
 				class="mt-4 space-y-3"
 			>
-				<input type="hidden" name="id" value={rejectingId} />
 				<textarea
 					name="reason"
 					bind:value={rejectReason}
