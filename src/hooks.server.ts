@@ -48,9 +48,12 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
 // - Imágenes y videos del mismo origen, data: (favicons inline) y https: (S3 firmado + Google avatars)
 // - 'unsafe-inline' en script-src es necesario para los scripts que Svelte
 //   inyecta para hidratación; idealmente cambiar a nonces (requiere config).
+// - static.cloudflareinsights.com: beacon de Cloudflare Web Analytics
+//   (lo inyecta Cloudflare en el edge). El POST de telemetría a
+//   cloudflareinsights.com ya entra por connect-src https:.
 const CSP_DIRECTIVES = [
 	"default-src 'self'",
-	"script-src 'self' 'unsafe-inline'",
+	"script-src 'self' 'unsafe-inline' https://static.cloudflareinsights.com",
 	"style-src 'self' 'unsafe-inline'",
 	"img-src 'self' data: blob: https:",
 	"media-src 'self' blob: https:",
