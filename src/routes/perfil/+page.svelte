@@ -280,7 +280,6 @@
 			</button>
 		</div>
 	</form>
-
 </section>
 
 <AvatarCropper
