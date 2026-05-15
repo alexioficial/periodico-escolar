@@ -1,11 +1,74 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { goto, invalidateAll } from '$app/navigation';
 
-	let { data, form } = $props();
+	let { data } = $props();
 
 	let loading = $state(false);
+	let resending = $state(false);
 	// svelte-ignore state_referenced_locally
 	let email = $state(data.email);
+	let code = $state('');
+	let errorMessage = $state<string | null>(null);
+	let successMessage = $state<string | null>(null);
+
+	async function readError(res: Response, fallback: string) {
+		try {
+			const body = (await res.json()) as { message?: string };
+			return body?.message || fallback;
+		} catch {
+			return fallback;
+		}
+	}
+
+	async function handleVerify(e: SubmitEvent) {
+		e.preventDefault();
+		if (loading) return;
+		loading = true;
+		errorMessage = null;
+		successMessage = null;
+		try {
+			const res = await fetch('/api/auth/verify-email', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email, code })
+			});
+			if (!res.ok) {
+				errorMessage = await readError(res, 'No se pudo verificar el código');
+				return;
+			}
+			const body = (await res.json()) as { redirectTo: string };
+			await invalidateAll();
+			await goto(body.redirectTo);
+		} catch {
+			errorMessage = 'Error de red';
+		} finally {
+			loading = false;
+		}
+	}
+
+	async function handleResend() {
+		if (resending || !email) return;
+		resending = true;
+		errorMessage = null;
+		successMessage = null;
+		try {
+			const res = await fetch('/api/auth/resend-verification', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email })
+			});
+			if (!res.ok) {
+				errorMessage = await readError(res, 'No se pudo reenviar el código');
+				return;
+			}
+			const body = (await res.json()) as { message?: string };
+			successMessage = body?.message ?? 'Código reenviado.';
+		} catch {
+			errorMessage = 'Error de red';
+		} finally {
+			resending = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -19,31 +82,20 @@
 			<p class="text-sm text-slate-600">Ingresa el código de 6 dígitos que te enviamos</p>
 		</header>
 
-		{#if form?.message && !form?.success}
+		{#if errorMessage}
 			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-				{form.message}
+				{errorMessage}
 			</div>
 		{/if}
-		{#if form?.success}
+		{#if successMessage}
 			<div
 				class="rounded-lg border border-emerald-300 bg-emerald-50 px-3 py-2 text-xs text-emerald-700"
 			>
-				{form.message}
+				{successMessage}
 			</div>
 		{/if}
 
-		<form
-			class="space-y-4"
-			method="POST"
-			action="?/verify"
-			use:enhance={() => {
-				loading = true;
-				return async ({ update }) => {
-					await update();
-					loading = false;
-				};
-			}}
-		>
+		<form class="space-y-4" onsubmit={handleVerify}>
 			<div class="space-y-2">
 				<label class="block text-xs font-medium text-slate-700" for="email">Correo</label>
 				<input
@@ -60,6 +112,7 @@
 				<input
 					id="code"
 					name="code"
+					bind:value={code}
 					inputmode="numeric"
 					pattern="[0-9]{6}"
 					minlength="6"
@@ -73,20 +126,18 @@
 				class="w-full rounded-full bg-sky-500 px-4 py-2.5 text-sm font-semibold text-slate-950 shadow-md shadow-sky-500/30 transition-colors hover:bg-sky-400 disabled:opacity-60"
 				disabled={loading}
 			>
-				Verificar
+				{loading ? 'Verificando...' : 'Verificar'}
 			</button>
 		</form>
 
-		<form method="POST" action="?/resend" use:enhance>
-			<input type="hidden" name="email" value={email} />
-			<button
-				type="submit"
-				class="w-full text-xs text-sky-600 hover:underline disabled:opacity-50"
-				disabled={loading || !email}
-			>
-				Reenviar código
-			</button>
-		</form>
+		<button
+			type="button"
+			onclick={handleResend}
+			class="w-full text-xs text-sky-600 hover:underline disabled:opacity-50"
+			disabled={resending || loading || !email}
+		>
+			{resending ? 'Reenviando…' : 'Reenviar código'}
+		</button>
 
 		<p class="text-center text-xs text-slate-500">
 			¿Ya verificaste?

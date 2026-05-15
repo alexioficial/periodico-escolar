@@ -1,9 +1,45 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 
-	let { form } = $props();
-
+	let username = $state('');
+	let email = $state('');
+	let password = $state('');
+	let confirmPassword = $state('');
 	let loading = $state(false);
+	let errorMessage = $state<string | null>(null);
+
+	async function readError(res: Response, fallback: string) {
+		try {
+			const body = (await res.json()) as { message?: string };
+			return body?.message || fallback;
+		} catch {
+			return fallback;
+		}
+	}
+
+	async function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
+		if (loading) return;
+		loading = true;
+		errorMessage = null;
+		try {
+			const res = await fetch('/api/auth/register', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email, username, password, confirmPassword })
+			});
+			if (!res.ok) {
+				errorMessage = await readError(res, 'No se pudo crear la cuenta');
+				return;
+			}
+			const body = (await res.json()) as { redirectTo: string };
+			await goto(body.redirectTo);
+		} catch {
+			errorMessage = 'Error de red';
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -48,32 +84,22 @@
 			<div class="h-px flex-1 bg-slate-200"></div>
 		</div>
 
-		{#if form?.message}
+		{#if errorMessage}
 			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-				{form.message}
+				{errorMessage}
 			</div>
 		{/if}
 
-		<form
-			class="space-y-4"
-			method="POST"
-			use:enhance={() => {
-				loading = true;
-				return async ({ update }) => {
-					await update();
-					loading = false;
-				};
-			}}
-		>
+		<form class="space-y-4" onsubmit={handleSubmit}>
 			<div class="space-y-2">
-				<label class="block text-xs font-medium text-slate-700" for="username"
-					>Nombre de usuario</label
-				>
+				<label class="block text-xs font-medium text-slate-700" for="username">
+					Nombre de usuario
+				</label>
 				<input
 					id="username"
 					name="username"
 					type="text"
-					value={form?.username ?? ''}
+					bind:value={username}
 					required
 					minlength="3"
 					maxlength="20"
@@ -83,14 +109,14 @@
 				/>
 			</div>
 			<div class="space-y-2">
-				<label class="block text-xs font-medium text-slate-700" for="email"
-					>Correo electrónico</label
-				>
+				<label class="block text-xs font-medium text-slate-700" for="email">
+					Correo electrónico
+				</label>
 				<input
 					id="email"
 					name="email"
 					type="email"
-					value={form?.email ?? ''}
+					bind:value={email}
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
 				/>
@@ -102,6 +128,7 @@
 					id="password"
 					name="password"
 					type="password"
+					bind:value={password}
 					minlength="6"
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"
@@ -109,13 +136,14 @@
 			</div>
 
 			<div class="space-y-2">
-				<label class="block text-xs font-medium text-slate-700" for="confirmPassword"
-					>Repite la contraseña</label
-				>
+				<label class="block text-xs font-medium text-slate-700" for="confirmPassword">
+					Repite la contraseña
+				</label>
 				<input
 					id="confirmPassword"
 					name="confirmPassword"
 					type="password"
+					bind:value={confirmPassword}
 					minlength="6"
 					required
 					class="w-full rounded-xl border border-slate-300 bg-white px-3 py-2 text-sm ring-0 outline-none focus:border-sky-500 focus:ring-2 focus:ring-sky-500/20"

@@ -1,11 +1,45 @@
 <script lang="ts">
-	import { enhance } from '$app/forms';
+	import { goto } from '$app/navigation';
 
-	let { data, form } = $props();
+	let { data } = $props();
 
 	let loading = $state(false);
 	// svelte-ignore state_referenced_locally
 	let email = $state(data.email);
+	let errorMessage = $state<string | null>(null);
+
+	async function readError(res: Response, fallback: string) {
+		try {
+			const body = (await res.json()) as { message?: string };
+			return body?.message || fallback;
+		} catch {
+			return fallback;
+		}
+	}
+
+	async function handleSubmit(e: SubmitEvent) {
+		e.preventDefault();
+		if (loading) return;
+		loading = true;
+		errorMessage = null;
+		try {
+			const res = await fetch('/api/auth/forgot-password', {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ email })
+			});
+			if (!res.ok) {
+				errorMessage = await readError(res, 'No se pudo enviar el código');
+				return;
+			}
+			const body = (await res.json()) as { redirectTo: string };
+			await goto(body.redirectTo);
+		} catch {
+			errorMessage = 'Error de red';
+		} finally {
+			loading = false;
+		}
+	}
 </script>
 
 <svelte:head>
@@ -21,23 +55,13 @@
 			</p>
 		</header>
 
-		{#if form?.message}
+		{#if errorMessage}
 			<div class="rounded-lg border border-red-300 bg-red-50 px-3 py-2 text-xs text-red-700">
-				{form.message}
+				{errorMessage}
 			</div>
 		{/if}
 
-		<form
-			class="space-y-4"
-			method="POST"
-			use:enhance={() => {
-				loading = true;
-				return async ({ update }) => {
-					await update();
-					loading = false;
-				};
-			}}
-		>
+		<form class="space-y-4" onsubmit={handleSubmit}>
 			<div class="space-y-2">
 				<label class="block text-xs font-medium text-slate-700" for="email">Correo</label>
 				<input
