@@ -6,7 +6,7 @@ import {
 	type ObjectId
 } from 'mongodb';
 import { env } from '$env/dynamic/private';
-import crypto from 'crypto';
+import { migrateLegacySessions } from './sessionIndexMigration';
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
@@ -98,27 +98,7 @@ async function ensureIndexes(db: Db) {
 	await ensureUniqueIndex(db, 'magic_login_tokens', 'email');
 
 	const sessions = db.collection('sessions');
-	const legacySessions = await sessions
-		.find<{
-			_id: ObjectId;
-			token: string;
-		}>({ token: { $type: 'string' } }, { projection: { token: 1 } })
-		.toArray();
-	if (legacySessions.length > 0) {
-		await sessions.bulkWrite(
-			legacySessions.map((session) => ({
-				updateOne: {
-					filter: { _id: session._id, token: session.token },
-					update: {
-						$set: {
-							tokenHash: crypto.createHash('sha256').update(session.token).digest('hex')
-						},
-						$unset: { token: '' }
-					}
-				}
-			}))
-		);
-	}
+	await migrateLegacySessions(sessions);
 	await ensureUniqueIndex(db, 'sessions', 'tokenHash', { sparse: true });
 
 	await Promise.all([
