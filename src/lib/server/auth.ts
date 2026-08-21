@@ -2,6 +2,7 @@ import type { Db, ObjectId } from 'mongodb';
 import { MongoServerError } from 'mongodb';
 import crypto from 'crypto';
 import { getDb } from './db';
+import { emailShouldBeVerified, type EmailAuthSource } from './authEmailPolicy';
 
 const USERS_COLLECTION = 'users';
 
@@ -73,10 +74,12 @@ async function generateUniqueUsername(email: string): Promise<string> {
 	return `user-${crypto.randomBytes(4).toString('hex')}`;
 }
 
-// Usada por el consumo del magic-link. Si el usuario no existe, lo crea con
-// un username auto-generado (editable luego desde /perfil). Marca el correo
-// como verificado porque el click del link prueba propiedad del inbox.
-export async function findOrCreateUserByEmail(email: string) {
+// Materializa usuarios de magic-link o del bypass QA. Solo el magic-link
+// marca el correo como verificado porque prueba propiedad real del inbox.
+export async function findOrCreateUserByEmail(
+	email: string,
+	source: EmailAuthSource = 'magic-link'
+) {
 	if (typeof email !== 'string' || !email) {
 		throw new Error('Email inválido');
 	}
@@ -84,10 +87,11 @@ export async function findOrCreateUserByEmail(email: string) {
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);
 	const normalized = email.toLowerCase();
+	const verifyEmail = emailShouldBeVerified(source);
 
 	const existing = await users.findOne({ email: normalized });
 	if (existing) {
-		if (existing.emailVerified !== true) {
+		if (verifyEmail && existing.emailVerified !== true) {
 			await users.updateOne({ _id: existing._id }, { $set: { emailVerified: true } });
 			existing.emailVerified = true;
 		}
@@ -101,7 +105,7 @@ export async function findOrCreateUserByEmail(email: string) {
 			username,
 			createdAt: new Date(),
 			provider: 'credentials',
-			emailVerified: true,
+			emailVerified: verifyEmail,
 			role: 'user'
 		} as UserDoc);
 		return users.findOne({ _id: result.insertedId });

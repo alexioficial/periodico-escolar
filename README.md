@@ -61,6 +61,10 @@ pnpm create:superadmin -- usuario@ejemplo.com
 - Las lecturas anónimas de contenido y las páginas públicas de autenticación se limitan por IP.
 - La creación de artículos se limita por usuario: 10 por hora para usuarios y 60 por hora para staff.
 - La solicitud y consumo de magic links tienen límites independientes.
+- El bypass temporal de QA requiere `QA_AUTH_BYPASS_ENABLED=true` y un
+  `QA_AUTH_BYPASS_SECRET` de al menos 32 caracteres. Solo se muestra al abrir
+  `/auth/login?qa=EL_SECRETO_URL_ENCODED`; el servidor limpia inmediatamente la URL.
+  Desactivarlo o rotar el secreto invalida las sesiones QA existentes.
 
 Los rate limits se guardan en MongoDB, por lo que se comparten entre instancias y sobreviven reinicios.
 

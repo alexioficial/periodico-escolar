@@ -1,6 +1,8 @@
 import { ObjectId, type Db } from 'mongodb';
 import crypto from 'crypto';
+import { env } from '$env/dynamic/private';
 import { getDb } from './db';
+import { isQaAuthVersionActive } from './qaAuthBypass';
 
 const SESSIONS_COLLECTION = 'sessions';
 const SESSION_TTL_DAYS = 7;
@@ -19,13 +21,17 @@ export interface SessionDoc {
 	userId: ObjectId;
 	createdAt: Date;
 	expiresAt: Date;
+	qaAuthVersion?: string;
 }
 
 function hashToken(token: string): string {
 	return crypto.createHash('sha256').update(token).digest('hex');
 }
 
-export async function createSession(userId: ObjectId): Promise<string> {
+export async function createSession(
+	userId: ObjectId,
+	options: { qaAuthVersion?: string } = {}
+): Promise<string> {
 	const db: Db = await getDb();
 	const sessions = db.collection<SessionDoc>(SESSIONS_COLLECTION);
 
@@ -37,6 +43,7 @@ export async function createSession(userId: ObjectId): Promise<string> {
 		createdAt: new Date(),
 		expiresAt: getExpiryDate()
 	};
+	if (options.qaAuthVersion) session.qaAuthVersion = options.qaAuthVersion;
 
 	await sessions.insertOne(session as SessionDoc);
 
@@ -57,6 +64,17 @@ export async function getUserBySessionToken(token: string) {
 	const tokenHash = hashToken(token);
 	const session = await sessions.findOne({ $or: [{ tokenHash }, { token }] });
 	if (!session) return null;
+	if (
+		session.qaAuthVersion &&
+		!isQaAuthVersionActive({
+			enabled: env.QA_AUTH_BYPASS_ENABLED,
+			configuredSecret: env.QA_AUTH_BYPASS_SECRET,
+			version: session.qaAuthVersion
+		})
+	) {
+		await sessions.deleteOne({ _id: session._id });
+		return null;
+	}
 	if (session.token) {
 		await sessions.updateOne(
 			{ _id: session._id, token: session.token },
