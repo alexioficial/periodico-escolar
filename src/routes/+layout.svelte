@@ -16,8 +16,7 @@
 	let loggingOut = $state(false);
 
 	$effect(() => {
-		page.url.pathname;
-		mobileMenuOpen = false;
+		if (page.url.pathname) mobileMenuOpen = false;
 	});
 
 	async function logout() {

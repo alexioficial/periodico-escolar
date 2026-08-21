@@ -1,6 +1,7 @@
 import { error } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getArticleById, enrichArticleWithUrls } from '$lib/server/articles';
+import { toPublicArticle } from '$lib/server/publicArticle';
 import { getCategoryById } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 
@@ -14,16 +15,17 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 	const category = enriched.categoryId ? await getCategoryById(enriched.categoryId) : null;
 
 	const userId = locals.user?._id;
-	const { authorEmail: _email, ...rest } = enriched;
+	const publicArticle = toPublicArticle(enriched);
+	const likes = enriched.likes ?? [];
+	const savedBy = enriched.savedBy ?? [];
 
 	const article = {
-		...rest,
-		_id: rest._id!.toString(),
-		authorDisplay: rest.authorUsername?.trim() || 'Autor',
+		...publicArticle,
+		authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
 		categoryName: category?.name || 'Sin categoría',
-		isLiked: userId ? (rest.likes?.includes(userId) ?? false) : false,
-		isSaved: userId ? (rest.savedBy?.includes(userId) ?? false) : false,
-		likesCount: rest.likes?.length || 0
+		isLiked: userId ? likes.includes(userId) : false,
+		isSaved: userId ? savedBy.includes(userId) : false,
+		likesCount: likes.length
 	};
 
 	return {

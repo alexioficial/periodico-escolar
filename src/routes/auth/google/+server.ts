@@ -2,14 +2,9 @@ import { redirect, error } from '@sveltejs/kit';
 import type { RequestHandler } from '@sveltejs/kit';
 import { env } from '$env/dynamic/private';
 import crypto from 'crypto';
+import { safeReturnTo } from '$lib/server/redirect';
 
 const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
-
-function safeReturnTo(raw: string | null): string {
-	if (typeof raw !== 'string' || !raw) return '/redaccion';
-	if (!raw.startsWith('/') || raw.startsWith('//')) return '/redaccion';
-	return raw;
-}
 
 export const GET: RequestHandler = async ({ url, cookies }) => {
 	if (!GOOGLE_CLIENT_ID) {
@@ -19,7 +14,7 @@ export const GET: RequestHandler = async ({ url, cookies }) => {
 
 	const redirectUri = new URL('/auth/google/callback', url.origin).toString();
 	const state = crypto.randomBytes(32).toString('hex');
-	const returnTo = safeReturnTo(url.searchParams.get('returnTo'));
+	const returnTo = safeReturnTo(url.searchParams.get('returnTo'), '/redaccion');
 
 	cookies.set('oauth_state', state, {
 		path: '/',

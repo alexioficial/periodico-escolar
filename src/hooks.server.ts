@@ -2,6 +2,8 @@ import type { Handle } from '@sveltejs/kit';
 import { sequence } from '@sveltejs/kit/hooks';
 import { getUserBySessionToken } from '$lib/server/session';
 import { getViewUrl } from '$lib/server/storage';
+import { checkRateLimit } from '$lib/server/rateLimit';
+import { getPublicRateLimitPolicy } from '$lib/server/publicRateLimit';
 
 async function resolvePictureUrl(picture: string | undefined | null): Promise<string | undefined> {
 	if (!picture) return undefined;
@@ -84,4 +86,44 @@ const securityHeadersHandle: Handle = async ({ event, resolve }) => {
 	return response;
 };
 
-export const handle: Handle = sequence(sessionHandle, securityHeadersHandle);
+const publicRateLimitHandle: Handle = async ({ event, resolve }) => {
+	if (event.request.method !== 'GET' || event.locals.user) return resolve(event);
+
+	const policy = getPublicRateLimitPolicy(event.url.pathname);
+	if (!policy) return resolve(event);
+
+	const result = await checkRateLimit({
+		key: `${policy.scope}:${event.getClientAddress()}`,
+		limit: policy.limit,
+		windowMs: policy.windowMs,
+		onError: 'closed'
+	});
+
+	if (!result.ok) {
+		const headers = new Headers({
+			'Retry-After': String(result.retryAfter),
+			'X-RateLimit-Limit': String(policy.limit),
+			'X-RateLimit-Remaining': '0'
+		});
+		if (event.url.pathname.startsWith('/api/')) {
+			headers.set('Content-Type', 'application/json; charset=utf-8');
+			return new Response(JSON.stringify({ message: 'Demasiadas solicitudes' }), {
+				status: 429,
+				headers
+			});
+		}
+		return new Response('Demasiadas solicitudes. Intenta de nuevo más tarde.', {
+			status: 429,
+			headers
+		});
+	}
+
+	const response = await resolve(event);
+	response.headers.set('X-RateLimit-Limit', String(policy.limit));
+	response.headers.set('X-RateLimit-Remaining', String(result.remaining));
+	return response;
+};
+
+// El rate limit necesita la sesión resuelta. Security envuelve la respuesta
+// para que incluso los 429 tempranos reciban CSP y el resto de headers.
+export const handle: Handle = sequence(sessionHandle, securityHeadersHandle, publicRateLimitHandle);

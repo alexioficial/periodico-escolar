@@ -42,15 +42,21 @@ export async function createMagicLink(
 	const plainToken = crypto.randomBytes(32).toString('hex');
 	const tokenHash = sha256(plainToken);
 
-	await col.deleteMany({ email });
-	await col.insertOne({
-		email,
-		tokenHash,
-		returnTo,
-		createdAt: new Date(),
-		expiresAt: expiryDate(),
-		used: false
-	} as MagicLinkDoc);
+	// Un único documento por email: dos solicitudes concurrentes no pueden
+	// dejar dos enlaces activos. El índice único de email refuerza el upsert.
+	await col.updateOne(
+		{ email },
+		{
+			$set: {
+				tokenHash,
+				returnTo,
+				createdAt: new Date(),
+				expiresAt: expiryDate(),
+				used: false
+			}
+		},
+		{ upsert: true }
+	);
 
 	const url = `${origin}/auth/m/${plainToken}`;
 	await sendMagicLinkEmail(email, url);
@@ -69,20 +75,24 @@ export async function consumeMagicLink(plainToken: string): Promise<ConsumeResul
 	const db: Db = await getDb();
 	const col = db.collection<MagicLinkDoc>(COLLECTION);
 
-	const doc = await col.findOne({ tokenHash });
-	if (!doc) return { ok: false, reason: 'not_found' };
-
-	if (doc.used) {
-		return { ok: false, reason: 'used' };
+	const now = new Date();
+	const consumed = await col.findOneAndUpdate(
+		{ tokenHash, used: false, expiresAt: { $gt: now } },
+		{ $set: { used: true } },
+		{ returnDocument: 'before' }
+	);
+	if (consumed) {
+		return { ok: true, email: consumed.email, returnTo: consumed.returnTo };
 	}
 
-	if (doc.expiresAt < new Date()) {
-		await col.deleteOne({ _id: doc._id });
+	// Esta lectura sólo clasifica el error. La autorización ya se decidió de
+	// forma atómica arriba, por lo que dos requests nunca obtienen `ok: true`.
+	const existing = await col.findOne({ tokenHash });
+	if (!existing) return { ok: false, reason: 'not_found' };
+	if (existing.used) return { ok: false, reason: 'used' };
+	if (existing.expiresAt <= now) {
+		await col.deleteOne({ _id: existing._id });
 		return { ok: false, reason: 'expired' };
 	}
-
-	// Marcamos `used` en vez de borrar: si el cliente refresca la URL del
-	// magic-link, ve "ya usado" en lugar de un 404 confuso.
-	await col.updateOne({ _id: doc._id }, { $set: { used: true } });
-	return { ok: true, email: doc.email, returnTo: doc.returnTo };
+	return { ok: false, reason: 'not_found' };
 }

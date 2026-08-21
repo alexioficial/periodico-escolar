@@ -14,6 +14,7 @@ import { saveFile, deleteFile } from '$lib/server/storage';
 import { serialize } from '$lib/server/serialize';
 import { getDb } from '$lib/server/db';
 import { ObjectId } from 'mongodb';
+import { checkRateLimit } from '$lib/server/rateLimit';
 
 const ALLOWED_ATTACHMENT_MIMES = new Set([
 	'application/pdf',
@@ -60,6 +61,19 @@ export const actions: Actions = {
 	create: async ({ request, locals }) => {
 		if (!locals.user) {
 			return fail(401, { message: 'No autorizado' });
+		}
+
+		const articleLimit = ['admin', 'superadmin'].includes(locals.user.role) ? 60 : 10;
+		const rateLimit = await checkRateLimit({
+			key: `article-create:${locals.user._id}`,
+			limit: articleLimit,
+			windowMs: 60 * 60_000,
+			onError: 'closed'
+		});
+		if (!rateLimit.ok) {
+			return fail(429, {
+				message: `Has alcanzado el límite de publicaciones. Intenta de nuevo en ${rateLimit.retryAfter}s.`
+			});
 		}
 
 		// Email no verificado no debería poder publicar, ni siquiera quedar en

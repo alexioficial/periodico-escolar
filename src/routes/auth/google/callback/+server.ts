@@ -3,22 +3,17 @@ import { redirect, error as svelteError } from '@sveltejs/kit';
 import { findOrCreateUserFromGoogle } from '$lib/server/auth';
 import { createSession } from '$lib/server/session';
 import { env } from '$env/dynamic/private';
+import { safeReturnTo } from '$lib/server/redirect';
 
 const GOOGLE_CLIENT_ID = env.GOOGLE_CLIENT_ID;
 const GOOGLE_CLIENT_SECRET = env.GOOGLE_CLIENT_SECRET;
-
-function safeReturnTo(raw: string | null | undefined): string {
-	if (typeof raw !== 'string' || !raw) return '/redaccion';
-	if (!raw.startsWith('/') || raw.startsWith('//')) return '/redaccion';
-	return raw;
-}
 
 export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 	const code = url.searchParams.get('code');
 	const oauthErr = url.searchParams.get('error');
 	const state = url.searchParams.get('state');
 
-	const storedReturnTo = safeReturnTo(cookies.get('oauth_returnTo'));
+	const storedReturnTo = safeReturnTo(cookies.get('oauth_returnTo'), '/redaccion');
 	cookies.delete('oauth_returnTo', { path: '/' });
 
 	if (!code || oauthErr) {
@@ -90,8 +85,8 @@ export const GET: RequestHandler = async ({ url, cookies, fetch }) => {
 		email_verified?: boolean;
 	};
 
-	if (!profile.email) {
-		throw svelteError(502, 'Google no devolvió un email válido.');
+	if (!profile.email || profile.email_verified !== true) {
+		throw svelteError(502, 'Google no devolvió un correo verificado.');
 	}
 
 	const user = await findOrCreateUserFromGoogle(profile);

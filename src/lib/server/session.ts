@@ -13,10 +13,16 @@ function getExpiryDate() {
 
 export interface SessionDoc {
 	_id: ObjectId;
-	token: string;
+	tokenHash: string;
+	/** Campo legado; se migra a tokenHash al iniciar. */
+	token?: string;
 	userId: ObjectId;
 	createdAt: Date;
 	expiresAt: Date;
+}
+
+function hashToken(token: string): string {
+	return crypto.createHash('sha256').update(token).digest('hex');
 }
 
 export async function createSession(userId: ObjectId): Promise<string> {
@@ -26,7 +32,7 @@ export async function createSession(userId: ObjectId): Promise<string> {
 	const token = crypto.randomBytes(32).toString('hex');
 
 	const session: Omit<SessionDoc, '_id'> = {
-		token,
+		tokenHash: hashToken(token),
 		userId,
 		createdAt: new Date(),
 		expiresAt: getExpiryDate()
@@ -48,8 +54,15 @@ export async function getUserBySessionToken(token: string) {
 	const db: Db = await getDb();
 	const sessions = db.collection<SessionDoc>(SESSIONS_COLLECTION);
 
-	const session = await sessions.findOne({ token });
+	const tokenHash = hashToken(token);
+	const session = await sessions.findOne({ $or: [{ tokenHash }, { token }] });
 	if (!session) return null;
+	if (session.token) {
+		await sessions.updateOne(
+			{ _id: session._id, token: session.token },
+			{ $set: { tokenHash }, $unset: { token: '' } }
+		);
+	}
 
 	if (session.expiresAt < new Date()) {
 		await sessions.deleteOne({ _id: session._id });
@@ -66,7 +79,7 @@ export async function deleteSession(token: string) {
 	if (typeof token !== 'string' || !TOKEN_REGEX.test(token)) return;
 	const db: Db = await getDb();
 	const sessions = db.collection<SessionDoc>(SESSIONS_COLLECTION);
-	await sessions.deleteOne({ token });
+	await sessions.deleteOne({ $or: [{ tokenHash: hashToken(token) }, { token }] });
 }
 
 // Invalidación masiva: usar tras cambio de contraseña, reset, o cambio de rol

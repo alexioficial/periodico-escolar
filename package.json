@@ -2,6 +2,7 @@
 	"name": "periodico-escolar",
 	"private": true,
 	"version": "0.0.1",
+	"packageManager": "pnpm@11.6.0",
 	"type": "module",
 	"scripts": {
 		"dev": "vite dev",
@@ -10,6 +11,7 @@
 		"prepare": "svelte-kit sync || echo ''",
 		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
 		"check:watch": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json --watch",
+		"test": "tsx --test tests/*.test.ts",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
 		"create:superadmin": "tsx scripts/createSuperadmin.ts"
@@ -46,14 +48,6 @@
 		"@aws-sdk/s3-request-presigner": "^3.1045.0",
 		"file-type": "^22.0.1",
 		"mongodb": "^7.1.0",
-		"nodemailer": "^8.0.7"
-	},
-	"pnpm": {
-		"overrides": {
-			"undici": ">=6.24.0"
-		},
-		"onlyBuiltDependencies": [
-			"argon2"
-		]
+		"nodemailer": "^9.0.1"
 	}
 }

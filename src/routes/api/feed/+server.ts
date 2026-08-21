@@ -5,6 +5,7 @@ import {
 	countPublishedArticles,
 	enrichArticlesWithUrls
 } from '$lib/server/articles';
+import { toPublicArticle } from '$lib/server/publicArticle';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 
@@ -29,15 +30,19 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 
 	const articlesWithUrls = await enrichArticlesWithUrls(articles);
 
-	const enrichedArticles = articlesWithUrls.map(({ authorEmail: _email, ...article }) => ({
-		...article,
-		_id: article._id!.toString(),
-		authorDisplay: article.authorUsername?.trim() || 'Autor',
-		categoryName: categoryMap.get(article.categoryId)?.name || 'Sin categoría',
-		isLiked: userId ? (article.likes?.includes(userId) ?? false) : false,
-		isSaved: userId ? (article.savedBy?.includes(userId) ?? false) : false,
-		likesCount: article.likes?.length || 0
-	}));
+	const enrichedArticles = articlesWithUrls.map((article) => {
+		const publicArticle = toPublicArticle(article);
+		const likes = article.likes ?? [];
+		const savedBy = article.savedBy ?? [];
+		return {
+			...publicArticle,
+			authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
+			categoryName: categoryMap.get(publicArticle.categoryId)?.name || 'Sin categoría',
+			isLiked: userId ? likes.includes(userId) : false,
+			isSaved: userId ? savedBy.includes(userId) : false,
+			likesCount: likes.length
+		};
+	});
 
 	const totalPages = Math.ceil(totalCount / ARTICLES_PER_PAGE);
 

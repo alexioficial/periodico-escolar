@@ -1,14 +1,18 @@
 import 'dotenv/config';
 import { MongoClient } from 'mongodb';
 
-const TARGET_EMAIL = 'grullonmatiasalexi@gmail.com';
-
 async function main() {
 	const uri = process.env.MONGODB_URI;
 	const dbName = process.env.MONGODB_DB ?? 'periodico_escolar';
+	const cliEmail = process.argv.slice(2).find((value) => value !== '--');
+	const targetEmail = (cliEmail ?? process.env.SUPERADMIN_EMAIL ?? '').trim().toLowerCase();
 
 	if (!uri) {
 		console.error('✗ MONGODB_URI no está definida en .env');
+		process.exit(1);
+	}
+	if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(targetEmail)) {
+		console.error('✗ Indica un correo válido como argumento o en SUPERADMIN_EMAIL.');
 		process.exit(1);
 	}
 
@@ -17,14 +21,14 @@ async function main() {
 	const db = client.db(dbName);
 	const users = db.collection('users');
 
-	const existing = await users.findOne({ email: TARGET_EMAIL });
+	const existing = await users.findOne({ email: targetEmail });
 
 	if (existing) {
 		if (existing.role === 'superadmin') {
-			console.log(`✓ ${TARGET_EMAIL} ya es superadmin. Nada que hacer.`);
+			console.log(`✓ ${targetEmail} ya es superadmin. Nada que hacer.`);
 		} else {
 			await users.updateOne({ _id: existing._id }, { $set: { role: 'superadmin' } });
-			console.log(`✓ ${TARGET_EMAIL} ahora es superadmin.`);
+			console.log(`✓ ${targetEmail} ahora es superadmin.`);
 		}
 		await client.close();
 		return;
@@ -34,7 +38,7 @@ async function main() {
 	// primer inicio de sesión. Acá solo ascendemos a superadmin a un usuario
 	// existente — si no existe, primero hay que loguearse al menos una vez.
 	console.error(
-		`✗ El usuario ${TARGET_EMAIL} no existe todavía. Inicia sesión una vez (magic-link o Google) y volvé a correr el script.`
+		`✗ El usuario ${targetEmail} no existe todavía. Inicia sesión una vez (magic-link o Google) y volvé a correr el script.`
 	);
 	await client.close();
 	process.exit(1);

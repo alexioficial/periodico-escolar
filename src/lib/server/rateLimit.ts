@@ -75,7 +75,7 @@ export async function checkRateLimit({
 			// Otro request creó el bucket entre nuestro find y nuestro upsert.
 			// Reintentamos una vez para incrementar contra el bucket recién creado.
 			if (error instanceof MongoServerError && error.code === 11000) {
-				return checkRateLimit({ key, limit, windowMs });
+				return checkRateLimit({ key, limit, windowMs, onError });
 			}
 			throw error;
 		}

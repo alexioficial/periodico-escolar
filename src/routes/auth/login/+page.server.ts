@@ -1,11 +1,6 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
-
-function safeReturnTo(raw: string | null): string {
-	if (typeof raw !== 'string' || !raw) return '/feed';
-	if (!raw.startsWith('/') || raw.startsWith('//')) return '/feed';
-	return raw;
-}
+import { safeReturnTo } from '$lib/server/redirect';
 
 const errorMessages: Record<string, string> = {
 	invalid_link: 'El enlace de acceso no es válido. Solicitá uno nuevo.',
@@ -15,7 +10,7 @@ const errorMessages: Record<string, string> = {
 };
 
 export const load: PageServerLoad = async ({ locals, url }) => {
-	const returnTo = safeReturnTo(url.searchParams.get('returnTo'));
+	const returnTo = safeReturnTo(url.searchParams.get('returnTo'), '/feed');
 
 	if (locals.user) {
 		throw redirect(303, returnTo);

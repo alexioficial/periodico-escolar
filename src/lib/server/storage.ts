@@ -102,7 +102,11 @@ function sanitizeExtension(name: string) {
 // Para headers HTTP: aceptamos sólo ASCII imprimible y eliminamos comillas,
 // backslash y caracteres de control (CR/LF) para evitar header injection.
 function asciiFilename(name: string) {
-	return name.replace(/[\x00-\x1f\x7f"\\]/g, '_').slice(0, 200) || 'archivo';
+	const safe = Array.from(name, (character) => {
+		const code = character.charCodeAt(0);
+		return code <= 31 || code === 127 || character === '"' || character === '\\' ? '_' : character;
+	}).join('');
+	return safe.slice(0, 200) || 'archivo';
 }
 
 /**

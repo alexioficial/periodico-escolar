@@ -1,13 +1,13 @@
 # ---------- Stage 1: builder ----------
 FROM node:22-slim AS builder
 
-# Habilitar pnpm via corepack con versión pinneada (debe coincidir con la del lockfile)
-RUN corepack enable && corepack prepare pnpm@10.33.3 --activate
+# Habilitar pnpm via corepack con versión pinneada (debe coincidir con package.json)
+RUN corepack enable && corepack prepare pnpm@11.6.0 --activate
 
 WORKDIR /app
 
 # Capa de dependencias cacheable
-COPY package.json pnpm-lock.yaml .npmrc ./
+COPY package.json pnpm-lock.yaml pnpm-workspace.yaml .npmrc ./
 RUN pnpm install --frozen-lockfile
 
 # Copiar fuente y compilar

@@ -188,6 +188,9 @@ export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
 	if (typeof profile?.sub !== 'string' || typeof profile?.email !== 'string') {
 		throw new Error('Perfil de Google inválido');
 	}
+	if (profile.email_verified !== true) {
+		throw new Error('Google no confirmó que el correo esté verificado');
+	}
 
 	const db: Db = await getDb();
 	const users = db.collection<UserDoc>(USERS_COLLECTION);

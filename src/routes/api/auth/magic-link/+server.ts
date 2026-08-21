@@ -2,12 +2,7 @@ import { json, error } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { createMagicLink } from '$lib/server/magicLink';
 import { checkRateLimit } from '$lib/server/rateLimit';
-
-function safeReturnTo(raw: unknown): string {
-	if (typeof raw !== 'string' || !raw) return '/feed';
-	if (!raw.startsWith('/') || raw.startsWith('//')) return '/feed';
-	return raw;
-}
+import { safeReturnTo } from '$lib/server/redirect';
 
 // Validación básica de formato. La autoridad de existencia la tiene el correo
 // real (si no llega, no llega).
@@ -34,7 +29,7 @@ export const POST: RequestHandler = async ({ request, getClientAddress, url }) =
 	}
 
 	const email = typeof body.email === 'string' ? body.email.trim().toLowerCase() : '';
-	const returnTo = safeReturnTo(body.returnTo);
+	const returnTo = safeReturnTo(body.returnTo, '/feed');
 
 	if (!email || !EMAIL_REGEX.test(email) || email.length > 254) {
 		throw error(400, 'Correo inválido');

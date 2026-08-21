@@ -1,6 +1,7 @@
 import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getSavedArticles, countSavedArticles, enrichArticlesWithUrls } from '$lib/server/articles';
+import { toPublicArticle } from '$lib/server/publicArticle';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 
@@ -24,15 +25,18 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const articlesWithUrls = await enrichArticlesWithUrls(savedArticles);
 
-	const enrichedArticles = articlesWithUrls.map(({ authorEmail: _email, ...article }) => ({
-		...article,
-		_id: article._id!.toString(),
-		authorDisplay: article.authorUsername?.trim() || 'Autor',
-		category: categoryMap.get(article.categoryId) ?? 'Sin categoría',
-		isLiked: article.likes?.includes(locals.user!._id) || false,
-		isSaved: true,
-		likesCount: article.likes?.length || 0
-	}));
+	const enrichedArticles = articlesWithUrls.map((article) => {
+		const publicArticle = toPublicArticle(article);
+		const likes = article.likes ?? [];
+		return {
+			...publicArticle,
+			authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
+			category: categoryMap.get(publicArticle.categoryId) ?? 'Sin categoría',
+			isLiked: likes.includes(locals.user!._id),
+			isSaved: true,
+			likesCount: likes.length
+		};
+	});
 
 	const totalPages = Math.max(1, Math.ceil(totalCount / PER_PAGE));
 

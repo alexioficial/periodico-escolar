@@ -1,5 +1,12 @@
-import { MongoClient, type Db } from 'mongodb';
+import {
+	MongoClient,
+	MongoServerError,
+	type Db,
+	type IndexDescriptionInfo,
+	type ObjectId
+} from 'mongodb';
 import { env } from '$env/dynamic/private';
+import crypto from 'crypto';
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
@@ -14,6 +21,15 @@ if (!env.MONGODB_URI) {
 
 const CI_COLLATION = { locale: 'en', strength: 2 };
 
+async function listIndexesOrEmpty(db: Db, collection: string): Promise<IndexDescriptionInfo[]> {
+	try {
+		return await db.collection(collection).indexes();
+	} catch (error) {
+		if (error instanceof MongoServerError && error.code === 26) return [];
+		throw error;
+	}
+}
+
 async function ensureCollatedUniqueIndex(
 	db: Db,
 	collection: string,
@@ -21,7 +37,9 @@ async function ensureCollatedUniqueIndex(
 	options: { sparse?: boolean } = {}
 ) {
 	const coll = db.collection(collection);
-	const indexes = await coll.indexes();
+	// listIndexes falla con NamespaceNotFound en una base recién creada;
+	// createIndex sí crea la colección, así que ese caso equivale a lista vacía.
+	const indexes = await listIndexesOrEmpty(db, collection);
 	const existing = indexes.find((i) => i.name === `${field}_1`);
 	const collationOk =
 		!!existing?.collation &&
@@ -35,21 +53,79 @@ async function ensureCollatedUniqueIndex(
 	await coll.createIndex({ [field]: 1 }, { unique: true, collation: CI_COLLATION, ...options });
 }
 
+async function ensureUniqueIndex(
+	db: Db,
+	collection: string,
+	field: string,
+	options: { sparse?: boolean } = {}
+) {
+	const coll = db.collection(collection);
+	const name = `${field}_1`;
+	const existing = (await listIndexesOrEmpty(db, collection)).find((index) => index.name === name);
+	const optionsMatch =
+		existing?.unique === true &&
+		(options.sparse === undefined || existing.sparse === options.sparse);
+	if (existing && !optionsMatch) await coll.dropIndex(name);
+	await coll.createIndex({ [field]: 1 }, { unique: true, ...options });
+}
+
 async function ensureIndexes(db: Db) {
 	// users.email y users.username deben ser únicos case-insensitive para
 	// que "Pepe" y "pepe" sean el mismo usuario. Si los índices viejos están
 	// sin collation, los recreamos con collation.
 	await ensureCollatedUniqueIndex(db, 'users', 'email');
 	await ensureCollatedUniqueIndex(db, 'users', 'username', { sparse: true });
+	await ensureCollatedUniqueIndex(db, 'categories', 'name');
+
+	// Versiones previas permitían más de un magic-link por correo. Conservamos
+	// sólo el más reciente antes de convertir email_1 en índice único.
+	const magicTokens = db.collection('magic_login_tokens');
+	const duplicateTokenEmails = await magicTokens
+		.aggregate<{
+			_id: string;
+			ids: ObjectId[];
+		}>([
+			{ $sort: { createdAt: -1 } },
+			{ $group: { _id: '$email', ids: { $push: '$_id' }, count: { $sum: 1 } } },
+			{ $match: { count: { $gt: 1 } } }
+		])
+		.toArray();
+	for (const duplicate of duplicateTokenEmails) {
+		await magicTokens.deleteMany({ _id: { $in: duplicate.ids.slice(1) } });
+	}
+
+	await ensureUniqueIndex(db, 'users', 'googleId', { sparse: true });
+	await ensureUniqueIndex(db, 'magic_login_tokens', 'email');
+
+	const sessions = db.collection('sessions');
+	const legacySessions = await sessions
+		.find<{
+			_id: ObjectId;
+			token: string;
+		}>({ token: { $type: 'string' } }, { projection: { token: 1 } })
+		.toArray();
+	if (legacySessions.length > 0) {
+		await sessions.bulkWrite(
+			legacySessions.map((session) => ({
+				updateOne: {
+					filter: { _id: session._id, token: session.token },
+					update: {
+						$set: {
+							tokenHash: crypto.createHash('sha256').update(session.token).digest('hex')
+						},
+						$unset: { token: '' }
+					}
+				}
+			}))
+		);
+	}
+	await ensureUniqueIndex(db, 'sessions', 'tokenHash', { sparse: true });
 
 	await Promise.all([
-		db.collection('users').createIndex({ provider: 1, googleId: 1 }, { sparse: true }),
-
-		db.collection('sessions').createIndex({ token: 1 }, { unique: true }),
+		db.collection('sessions').createIndex({ userId: 1 }),
 		db.collection('sessions').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
 
 		db.collection('magic_login_tokens').createIndex({ tokenHash: 1 }, { unique: true }),
-		db.collection('magic_login_tokens').createIndex({ email: 1 }),
 		db.collection('magic_login_tokens').createIndex({ expiresAt: 1 }, { expireAfterSeconds: 0 }),
 
 		db.collection('articles').createIndex({ status: 1, publishedAt: -1 }),
@@ -58,7 +134,6 @@ async function ensureIndexes(db: Db) {
 		db.collection('articles').createIndex({ categoryId: 1 }),
 
 		db.collection('categories').createIndex({ slug: 1 }, { unique: true }),
-		db.collection('categories').createIndex({ name: 1 }, { unique: true }),
 
 		db.collection('rate_limit_buckets').createIndex({ key: 1 }, { unique: true }),
 		db.collection('rate_limit_buckets').createIndex({ resetAt: 1 }, { expireAfterSeconds: 0 })
@@ -66,7 +141,10 @@ async function ensureIndexes(db: Db) {
 }
 
 export async function getDb(): Promise<Db> {
-	if (db && client) return db;
+	if (db && client && indexesPromise) {
+		await indexesPromise;
+		return db;
+	}
 
 	if (!connectPromise) {
 		const uri = env.MONGODB_URI;
@@ -83,22 +161,21 @@ export async function getDb(): Promise<Db> {
 			});
 			try {
 				await c.connect();
-			} catch (err) {
-				// Permitimos reintento en la próxima llamada en vez de quedar
-				// con una promesa rechazada cacheada para siempre.
+				const connectedDb = c.db(dbName);
+				indexesPromise = ensureIndexes(connectedDb);
+				await indexesPromise;
+				client = c;
+				db = connectedDb;
+				return connectedDb;
+			} catch (error) {
+				// No servimos tráfico sin los índices de integridad. Limpiamos el
+				// estado para permitir un reintento real en la próxima solicitud.
+				console.error('Error al conectar o preparar MongoDB:', error);
 				connectPromise = null;
-				throw err;
+				indexesPromise = null;
+				await c.close().catch(() => {});
+				throw error;
 			}
-			client = c;
-			db = c.db(dbName);
-
-			if (!indexesPromise) {
-				indexesPromise = ensureIndexes(db).catch((err) => {
-					console.error('Error al crear índices:', err);
-				});
-			}
-
-			return db;
 		})();
 	}
 
