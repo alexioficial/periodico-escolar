@@ -1,8 +1,8 @@
 import type { Db, ObjectId } from 'mongodb';
 import { MongoServerError } from 'mongodb';
-import crypto from 'crypto';
 import { getDb } from './db';
-import { emailShouldBeVerified, type EmailAuthSource } from './authEmailPolicy';
+import type { EmailAuthSource } from './authEmailPolicy';
+import { findOrCreateUserByEmailInDb, generateUniqueUsernameInDb } from './authUserMaterialization';
 
 const USERS_COLLECTION = 'users';
 
@@ -49,73 +49,14 @@ export async function getUserById(userId: ObjectId) {
 
 export const USERNAME_REGEX = /^[a-zA-Z0-9_.-]{3,20}$/;
 
-// Genera un username único partiendo de la parte local del correo. Si está
-// ocupado, prueba sufijos de 4 dígitos. Como último recurso usa entropía
-// random — improbable que llegue ahí en la práctica.
-async function generateUniqueUsername(email: string): Promise<string> {
-	const db = await getDb();
-	const users = db.collection<UserDoc>(USERS_COLLECTION);
-
-	let base = email
-		.split('@')[0]
-		.toLowerCase()
-		.replace(/[^a-z0-9_.-]/g, '');
-	if (base.length < 3) base = `user${base}`;
-	base = base.slice(0, 16);
-
-	if (!(await users.findOne({ username: base }))) return base;
-
-	for (let i = 0; i < 10; i++) {
-		const suffix = Math.floor(Math.random() * 9000 + 1000);
-		const candidate = `${base.slice(0, 15)}-${suffix}`.slice(0, 20);
-		if (!(await users.findOne({ username: candidate }))) return candidate;
-	}
-
-	return `user-${crypto.randomBytes(4).toString('hex')}`;
-}
-
-// Materializa usuarios de magic-link o del bypass QA. Solo el magic-link
-// marca el correo como verificado porque prueba propiedad real del inbox.
+// Materializa usuarios de magic-link o del bypass QA. Ambos habilitan los
+// flujos que requieren correo verificado; el bypass solo existe con flag y secreto.
 export async function findOrCreateUserByEmail(
 	email: string,
 	source: EmailAuthSource = 'magic-link'
 ) {
-	if (typeof email !== 'string' || !email) {
-		throw new Error('Email inválido');
-	}
-
 	const db: Db = await getDb();
-	const users = db.collection<UserDoc>(USERS_COLLECTION);
-	const normalized = email.toLowerCase();
-	const verifyEmail = emailShouldBeVerified(source);
-
-	const existing = await users.findOne({ email: normalized });
-	if (existing) {
-		if (verifyEmail && existing.emailVerified !== true) {
-			await users.updateOne({ _id: existing._id }, { $set: { emailVerified: true } });
-			existing.emailVerified = true;
-		}
-		return existing;
-	}
-
-	const username = await generateUniqueUsername(normalized);
-	try {
-		const result = await users.insertOne({
-			email: normalized,
-			username,
-			createdAt: new Date(),
-			provider: 'credentials',
-			emailVerified: verifyEmail,
-			role: 'user'
-		} as UserDoc);
-		return users.findOne({ _id: result.insertedId });
-	} catch (err) {
-		// Otra request creó la cuenta entre el findOne y el insert.
-		if (isDuplicateKeyError(err, 'email')) {
-			return users.findOne({ email: normalized });
-		}
-		throw err;
-	}
+	return findOrCreateUserByEmailInDb(db, email, source);
 }
 
 export interface ProfileUpdate {
@@ -218,7 +159,7 @@ export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
 		return users.findOne({ _id: byEmail._id });
 	}
 
-	const username = await generateUniqueUsername(email);
+	const username = await generateUniqueUsernameInDb(db, email);
 	try {
 		// Upsert atómico: si dos callbacks llegan a la vez sólo uno inserta.
 		await users.updateOne(

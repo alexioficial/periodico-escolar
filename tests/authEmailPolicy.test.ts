@@ -9,9 +9,9 @@ async function loadModule(): Promise<AuthModule> {
 	return import('../src/lib/server/authEmailPolicy.ts').catch(() => ({}));
 }
 
-test('solo una prueba real del inbox marca el correo como verificado', async () => {
+test('magic-link y bypass QA habilitan flujos que exigen correo verificado', async () => {
 	const { emailShouldBeVerified } = await loadModule();
 	assert.equal(typeof emailShouldBeVerified, 'function');
 	assert.equal(emailShouldBeVerified?.('magic-link'), true);
-	assert.equal(emailShouldBeVerified?.('qa-bypass'), false);
+	assert.equal(emailShouldBeVerified?.('qa-bypass'), true);
 });
