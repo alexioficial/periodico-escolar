@@ -3,6 +3,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { toast } from '$lib/toast';
 	import FileUploader from '$lib/components/FileUploader.svelte';
+	import { formatArticleDate } from '$lib/articlePresentation';
 	let { data } = $props();
 
 	let showForm = $state(false);
@@ -222,7 +223,7 @@
 							{/if}
 						</div>
 						<div class="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-500">
-							{new Date(article.createdAt).toLocaleDateString()}
+							{formatArticleDate(article.createdAt)}
 						</div>
 					</article>
 				{/each}

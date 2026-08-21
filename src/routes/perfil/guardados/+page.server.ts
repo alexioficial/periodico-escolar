@@ -4,12 +4,13 @@ import { getSavedArticles, countSavedArticles, enrichArticlesWithUrls } from '$l
 import { toPublicArticle } from '$lib/server/publicArticle';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
+import { loginPath } from '$lib/server/redirect';
 
 const PER_PAGE = 20;
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
-		throw redirect(303, '/auth/login?returnTo=/perfil/guardados');
+		throw redirect(303, loginPath(`${url.pathname}${url.search}`));
 	}
 
 	const pageRaw = parseInt(url.searchParams.get('page') || '1');

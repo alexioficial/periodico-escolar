@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from '$lib/toast';
+	import { articleImageAlt, formatArticleDate } from '$lib/articlePresentation';
 
 	let { data } = $props();
 
@@ -114,7 +115,7 @@
 								</span>
 							</div>
 							<span class="text-xs text-slate-400">
-								{new Date(article.createdAt).toLocaleDateString()}
+								{formatArticleDate(article.createdAt)}
 							</span>
 						</div>
 
@@ -146,7 +147,11 @@
 													aria-label="Video pendiente de revisión"
 												></video>
 											{:else}
-												<img src={item.url} alt="" class="h-full w-full object-contain" />
+												<img
+													src={item.url}
+													alt={articleImageAlt(article.title, i, article.media.length)}
+													class="h-full w-full object-contain"
+												/>
 											{/if}
 										</div>
 									{/each}

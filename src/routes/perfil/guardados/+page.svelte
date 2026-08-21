@@ -2,6 +2,7 @@
 	import { untrack } from 'svelte';
 	import { toast } from '$lib/toast';
 	import { shareDialog } from '$lib/shareDialog';
+	import { articleImageAlt, formatArticleDate } from '$lib/articlePresentation';
 	let { data } = $props();
 
 	type Article = (typeof data.articles)[number];
@@ -105,7 +106,7 @@
 									{article.authorDisplay}
 								</p>
 								<p class="text-xs text-slate-500">
-									{article.publishedAt ? new Date(article.publishedAt).toLocaleDateString() : ''}
+									{formatArticleDate(article.publishedAt)}
 								</p>
 							</div>
 						</div>
@@ -120,7 +121,7 @@
 					{#if article.media && article.media.length > 0}
 						<div class="group relative aspect-video bg-black">
 							<div class="scrollbar-hide flex h-full w-full snap-x snap-mandatory overflow-x-auto">
-								{#each article.media as item (item.url)}
+								{#each article.media as item, mediaIndex (item.url)}
 									<div
 										class="flex h-full w-full flex-shrink-0 snap-center items-center justify-center"
 									>
@@ -134,7 +135,11 @@
 												<track kind="captions" />
 											</video>
 										{:else}
-											<img src={item.url} alt="" class="h-full w-full object-contain" />
+											<img
+												src={item.url}
+												alt={articleImageAlt(article.title, mediaIndex, article.media.length)}
+												class="h-full w-full object-contain"
+											/>
 										{/if}
 									</div>
 								{/each}

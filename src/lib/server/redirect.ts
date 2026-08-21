@@ -16,3 +16,7 @@ export function safeReturnTo(raw: unknown, fallback: string): string {
 		return fallback;
 	}
 }
+
+export function loginPath(returnTo: unknown): string {
+	return `/auth/login?returnTo=${encodeURIComponent(safeReturnTo(returnTo, '/feed'))}`;
+}

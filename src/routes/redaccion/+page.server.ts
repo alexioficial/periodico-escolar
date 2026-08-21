@@ -15,6 +15,7 @@ import { serialize } from '$lib/server/serialize';
 import { getDb } from '$lib/server/db';
 import { ObjectId } from 'mongodb';
 import { checkRateLimit } from '$lib/server/rateLimit';
+import { loginPath } from '$lib/server/redirect';
 
 const ALLOWED_ATTACHMENT_MIMES = new Set([
 	'application/pdf',
@@ -32,9 +33,9 @@ function extOf(name: string) {
 	return name.split('.').pop()?.toLowerCase() ?? '';
 }
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
-		throw redirect(303, '/auth/login');
+		throw redirect(303, loginPath(`${url.pathname}${url.search}`));
 	}
 
 	await ensureDefaultCategories();

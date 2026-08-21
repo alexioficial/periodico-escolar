@@ -8,17 +8,18 @@ import {
 	USERNAME_REGEX
 } from '$lib/server/auth';
 import { saveFile, deleteFile, getViewUrl } from '$lib/server/storage';
+import { loginPath } from '$lib/server/redirect';
 
 const MAX_AVATAR_MB = 4.5;
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
-		throw redirect(303, '/auth/login');
+		throw redirect(303, loginPath(`${url.pathname}${url.search}`));
 	}
 
 	const fullUser = await getUserById(new ObjectId(locals.user._id));
 	if (!fullUser) {
-		throw redirect(303, '/auth/login');
+		throw redirect(303, loginPath(`${url.pathname}${url.search}`));
 	}
 
 	let pictureUrl: string | undefined;

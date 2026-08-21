@@ -2,12 +2,13 @@ import { redirect } from '@sveltejs/kit';
 import type { PageServerLoad } from './$types';
 import { getDb } from '$lib/server/db';
 import { serialize } from '$lib/server/serialize';
+import { loginPath } from '$lib/server/redirect';
 
 const USERS_PER_PAGE = 10;
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
-		throw redirect(303, '/auth/login');
+		throw redirect(303, loginPath(`${url.pathname}${url.search}`));
 	}
 
 	if (locals.user.role !== 'superadmin') {

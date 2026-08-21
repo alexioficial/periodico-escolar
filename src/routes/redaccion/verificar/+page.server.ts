@@ -3,10 +3,11 @@ import type { PageServerLoad } from './$types';
 import { getPendingArticles, enrichArticlesWithUrls } from '$lib/server/articles';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
+import { loginPath } from '$lib/server/redirect';
 
-export const load: PageServerLoad = async ({ locals }) => {
+export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
-		throw redirect(303, '/auth/login');
+		throw redirect(303, loginPath(`${url.pathname}${url.search}`));
 	}
 
 	if (!['admin', 'superadmin'].includes(locals.user.role)) {
