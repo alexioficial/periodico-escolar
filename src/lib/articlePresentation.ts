@@ -2,7 +2,7 @@ const articleDateFormatter = new Intl.DateTimeFormat('es', {
 	year: 'numeric',
 	month: 'numeric',
 	day: 'numeric',
-	timeZone: 'UTC'
+	timeZone: 'America/La_Paz'
 });
 
 export function formatArticleDate(value: string | Date | null | undefined): string {
