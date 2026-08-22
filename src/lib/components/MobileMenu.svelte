@@ -77,7 +77,7 @@
 		<header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
 			<div class="flex items-center gap-2">
 				<img src={logoUrl} alt="Logo" class="h-8 w-8" />
-				<span class="text-sm font-semibold tracking-tight text-slate-900">Periódico escolar</span>
+				<span class="text-sm font-semibold tracking-tight text-slate-900">Periódico sales</span>
 			</div>
 			<button
 				type="button"

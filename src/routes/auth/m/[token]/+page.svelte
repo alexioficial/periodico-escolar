@@ -1,5 +1,5 @@
 <svelte:head>
-	<title>Confirmar acceso · Periódico escolar</title>
+	<title>Confirmar acceso · Periódico sales</title>
 </svelte:head>
 
 <section class="mx-auto flex min-h-[60vh] max-w-md items-center">

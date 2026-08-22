@@ -114,7 +114,7 @@
 </script>
 
 <svelte:head>
-	<title>Categorías · Periódico escolar</title>
+	<title>Categorías · Periódico sales</title>
 </svelte:head>
 
 <section class="space-y-8">

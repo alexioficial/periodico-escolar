@@ -113,12 +113,12 @@
 </script>
 
 <svelte:head>
-	<title>Inicio · Periódico escolar</title>
+	<title>Inicio · Periódico sales</title>
 </svelte:head>
 
 <section class="space-y-8">
 	<header class="space-y-3">
-		<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Periódico escolar</p>
+		<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Periódico sales</p>
 		<h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
 			Últimas Noticias
 		</h1>

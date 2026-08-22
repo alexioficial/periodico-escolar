@@ -56,7 +56,7 @@
 </script>
 
 <svelte:head>
-	<title>Iniciar sesión · Periódico escolar</title>
+	<title>Iniciar sesión · Periódico sales</title>
 </svelte:head>
 
 <div class="flex min-h-[calc(100svh-9rem)] items-center justify-center text-slate-900">

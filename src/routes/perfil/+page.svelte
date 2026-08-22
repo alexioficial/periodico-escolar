@@ -112,7 +112,7 @@
 </script>
 
 <svelte:head>
-	<title>Editar perfil · Periódico escolar</title>
+	<title>Editar perfil · Periódico sales</title>
 </svelte:head>
 
 <section class="mx-auto max-w-2xl space-y-8">

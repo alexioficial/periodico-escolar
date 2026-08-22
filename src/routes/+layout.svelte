@@ -70,7 +70,7 @@
 </script>
 
 <svelte:head>
-	<title>Periódico escolar</title>
+	<title>Periódico sales</title>
 	<link rel="icon" type="image/svg+xml" href={LOGO_URL} />
 	<link rel="apple-touch-icon" href={LOGO_URL} />
 </svelte:head>
@@ -81,7 +81,7 @@
 			<a href="/feed" class="flex items-center gap-2">
 				<img src={LOGO_URL} alt="Logo" class="h-8 w-8" />
 				<div class="flex flex-col">
-					<span class="text-sm font-semibold tracking-tight">Periódico escolar</span>
+					<span class="text-sm font-semibold tracking-tight">Periódico sales</span>
 					<!-- <span class="text-[11px] leading-tight text-slate-500"></span> -->
 				</div>
 			</a>

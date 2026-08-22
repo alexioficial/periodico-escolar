@@ -70,7 +70,7 @@
 </script>
 
 <svelte:head>
-	<title>Guardados · Periódico escolar</title>
+	<title>Guardados · Periódico sales</title>
 </svelte:head>
 
 <section class="space-y-8">

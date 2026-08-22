@@ -65,7 +65,7 @@
 </script>
 
 <svelte:head>
-	<title>{article.title} · Periódico escolar</title>
+	<title>{article.title} · Periódico sales</title>
 </svelte:head>
 
 <section class="space-y-6">

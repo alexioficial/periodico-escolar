@@ -78,7 +78,7 @@
 </script>
 
 <svelte:head>
-	<title>Verificar artículos · Periódico escolar</title>
+	<title>Verificar artículos · Periódico sales</title>
 </svelte:head>
 
 <section class="space-y-8">

@@ -1,4 +1,4 @@
-# Periódico Escolar — política de crawling
+# Periódico Sales — política de crawling
 User-agent: *
 Disallow: /admin/
 Disallow: /auth/

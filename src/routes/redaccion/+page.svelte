@@ -49,7 +49,7 @@
 </script>
 
 <svelte:head>
-	<title>Redacción · Periódico escolar</title>
+	<title>Redacción · Periódico sales</title>
 </svelte:head>
 
 <section class="space-y-8">
