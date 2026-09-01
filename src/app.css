@@ -2,7 +2,81 @@
 @plugin '@tailwindcss/forms';
 @plugin '@tailwindcss/typography';
 
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-light.otf') format('opentype');
+	font-weight: 300;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-light-italic.otf') format('opentype');
+	font-weight: 300;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-regular.otf') format('opentype');
+	font-weight: 400;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-italic.otf') format('opentype');
+	font-weight: 400;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-bold.otf') format('opentype');
+	font-weight: 700;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-bold-italic.otf') format('opentype');
+	font-weight: 700;
+	font-style: italic;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-heavy.otf') format('opentype');
+	font-weight: 900;
+	font-style: normal;
+	font-display: swap;
+}
+
+@font-face {
+	font-family: 'Decima Nova Pro';
+	src: url('/fonts/decima/decima-nova-pro-heavy-italic.otf') format('opentype');
+	font-weight: 900;
+	font-style: italic;
+	font-display: swap;
+}
+
+@theme {
+	--font-sans:
+		'Decima Nova Pro', ui-sans-serif, system-ui, sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji',
+		'Segoe UI Symbol', 'Noto Color Emoji';
+}
+
 @layer base {
+	html {
+		font-family: var(--font-sans);
+	}
+
 	button:not(:disabled),
 	[role='button']:not([aria-disabled='true']),
 	summary,

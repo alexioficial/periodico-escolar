@@ -73,6 +73,13 @@
 	<title>Periódico sales</title>
 	<link rel="icon" type="image/svg+xml" href={LOGO_URL} />
 	<link rel="apple-touch-icon" href={LOGO_URL} />
+	<link
+		rel="preload"
+		href="/fonts/decima/decima-nova-pro-regular.otf"
+		as="font"
+		type="font/otf"
+		crossorigin="anonymous"
+	/>
 </svelte:head>
 
 <div class="min-h-screen bg-slate-50 text-slate-900">
