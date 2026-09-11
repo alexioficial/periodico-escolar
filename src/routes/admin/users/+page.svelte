@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { goto, invalidateAll } from '$app/navigation';
+	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	let { data } = $props();
 
@@ -53,7 +54,7 @@
 </script>
 
 <svelte:head>
-	<title>Usuarios · Periódico sales</title>
+	<title>{brandTitle('Usuarios')}</title>
 </svelte:head>
 
 <section class="space-y-8">

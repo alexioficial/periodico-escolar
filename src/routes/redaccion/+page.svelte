@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { brandTitle } from '$lib/brand';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { toast } from '$lib/toast';
 	import FileUploader from '$lib/components/FileUploader.svelte';
@@ -49,7 +50,7 @@
 </script>
 
 <svelte:head>
-	<title>Redacción · Periódico sales</title>
+	<title>{brandTitle('Redacción')}</title>
 </svelte:head>
 
 <section class="space-y-8">

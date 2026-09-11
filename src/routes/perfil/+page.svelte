@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { enhance } from '$app/forms';
+	import { brandTitle } from '$lib/brand';
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from '$lib/toast';
@@ -112,7 +113,7 @@
 </script>
 
 <svelte:head>
-	<title>Editar perfil · Periódico sales</title>
+	<title>{brandTitle('Editar perfil')}</title>
 </svelte:head>
 
 <section class="mx-auto max-w-2xl space-y-8">

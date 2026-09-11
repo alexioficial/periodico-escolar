@@ -1,5 +1,9 @@
+<script lang="ts">
+	import { brandTitle } from '$lib/brand';
+</script>
+
 <svelte:head>
-	<title>Confirmar acceso · Periódico sales</title>
+	<title>{brandTitle('Confirmar acceso')}</title>
 </svelte:head>
 
 <section class="mx-auto flex min-h-[60vh] max-w-md items-center">

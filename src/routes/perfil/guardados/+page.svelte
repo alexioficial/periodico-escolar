@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
+	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import { shareDialog } from '$lib/shareDialog';
 	import { articleImageAlt, formatArticleDate } from '$lib/articlePresentation';
@@ -70,7 +71,7 @@
 </script>
 
 <svelte:head>
-	<title>Guardados · Periódico sales</title>
+	<title>{brandTitle('Guardados')}</title>
 </svelte:head>
 
 <section class="space-y-8">

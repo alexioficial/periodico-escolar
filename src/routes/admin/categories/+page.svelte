@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import { confirmDialog } from '$lib/confirmDialog';
 	import ValidatedInput from '$lib/components/ValidatedInput.svelte';
@@ -114,7 +115,7 @@
 </script>
 
 <svelte:head>
-	<title>Categorías · Periódico sales</title>
+	<title>{brandTitle('Categorías')}</title>
 </svelte:head>
 
 <section class="space-y-8">

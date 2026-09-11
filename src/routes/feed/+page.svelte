@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
 	import { goto } from '$app/navigation';
+	import { BRAND_SUBTITLE, brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import { shareDialog } from '$lib/shareDialog';
 	import { articleImageAlt, formatArticleDate } from '$lib/articlePresentation';
@@ -113,12 +114,12 @@
 </script>
 
 <svelte:head>
-	<title>Inicio · Periódico sales</title>
+	<title>{brandTitle('Inicio')}</title>
 </svelte:head>
 
 <section class="space-y-8">
 	<header class="space-y-3">
-		<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Periódico sales</p>
+		<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">{BRAND_SUBTITLE}</p>
 		<h1 class="text-3xl font-semibold tracking-tight text-slate-900 sm:text-4xl">
 			Últimas Noticias
 		</h1>

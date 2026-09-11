@@ -1,4 +1,6 @@
 <script lang="ts">
+	import { brandTitle } from '$lib/brand';
+
 	let { data } = $props();
 
 	let email = $state('');
@@ -56,7 +58,7 @@
 </script>
 
 <svelte:head>
-	<title>Iniciar sesión · Periódico sales</title>
+	<title>{brandTitle('Iniciar sesión')}</title>
 </svelte:head>
 
 <div class="flex min-h-[calc(100svh-9rem)] items-center justify-center text-slate-900">

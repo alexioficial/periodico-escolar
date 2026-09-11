@@ -2,6 +2,7 @@
 	import '../app.css';
 	import { page } from '$app/state';
 	import { goto, invalidateAll } from '$app/navigation';
+	import { BRAND_NAME, BRAND_SUBTITLE, brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import ToastHost from '$lib/components/ToastHost.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
@@ -70,7 +71,7 @@
 </script>
 
 <svelte:head>
-	<title>Periódico sales</title>
+	<title>{brandTitle()}</title>
 	<link rel="icon" type="image/svg+xml" href={LOGO_URL} />
 	<link rel="apple-touch-icon" href={LOGO_URL} />
 	<link
@@ -87,15 +88,19 @@
 		<div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
 			<a href="/feed" class="flex items-center gap-2">
 				<img src={LOGO_URL} alt="Logo" class="h-8 w-8" />
-				<div class="flex flex-col">
-					<span class="text-sm font-semibold tracking-tight">Periódico sales</span>
-					<!-- <span class="text-[11px] leading-tight text-slate-500"></span> -->
+				<div class="flex flex-col leading-none">
+					<span class="text-xs font-bold tracking-[0.06em] text-slate-950 sm:text-sm">
+						{BRAND_NAME}
+					</span>
+					<span class="mt-1 text-[9px] font-medium tracking-[0.08em] text-slate-500 sm:text-[10px]">
+						{BRAND_SUBTITLE}
+					</span>
 				</div>
 			</a>
 
 			<nav class="flex items-center gap-4">
 				<div
-					class="hidden items-center gap-1 rounded-full bg-slate-100 px-1 py-1 text-xs text-slate-600 sm:flex"
+					class="hidden items-center gap-1 rounded-full bg-slate-100 px-1 py-1 text-xs text-slate-600 lg:flex"
 				>
 					{#each links as link (link.href)}
 						<a
@@ -117,7 +122,7 @@
 					onclick={() => (mobileMenuOpen = true)}
 					aria-label="Abrir menú"
 					aria-expanded={mobileMenuOpen}
-					class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 sm:hidden"
+					class="inline-flex h-9 w-9 items-center justify-center rounded-full border border-slate-200 bg-white text-slate-700 transition-colors hover:bg-slate-50 lg:hidden"
 				>
 					<svg
 						xmlns="http://www.w3.org/2000/svg"
@@ -136,7 +141,7 @@
 					</svg>
 				</button>
 
-				<div class="hidden items-center gap-3 text-xs text-slate-600 sm:flex">
+				<div class="hidden items-center gap-3 text-xs text-slate-600 lg:flex">
 					{#if data.user}
 						{@const displayName =
 							data.user.username || data.user.name || data.user.email.split('@')[0]}

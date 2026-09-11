@@ -1,4 +1,4 @@
-# Periódico Escolar
+# Santo Domingo Savio — Periódico Escolar Salesiano
 
 Plataforma SvelteKit para crear, moderar y publicar artículos de una comunidad escolar.
 

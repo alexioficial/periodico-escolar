@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { shareDialog } from '$lib/shareDialog';
+	import { BRAND_SUBTITLE } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import { fade, scale } from 'svelte/transition';
 	import { lockBodyScroll, unlockBodyScroll } from '$lib/scrollLock';
@@ -9,7 +10,7 @@
 	let copied = $state(false);
 	let urlInput = $state<HTMLInputElement | undefined>();
 
-	const shareTitle = $derived(dialog.title || 'Periódico escolar');
+	const shareTitle = $derived(dialog.title || BRAND_SUBTITLE);
 
 	const targets = $derived([
 		{

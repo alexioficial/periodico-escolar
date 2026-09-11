@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { fade, fly } from 'svelte/transition';
+	import { BRAND_NAME, BRAND_SUBTITLE } from '$lib/brand';
 	import { lockBodyScroll, unlockBodyScroll } from '$lib/scrollLock';
 
 	type MobileUser = {
@@ -77,7 +78,12 @@
 		<header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
 			<div class="flex items-center gap-2">
 				<img src={logoUrl} alt="Logo" class="h-8 w-8" />
-				<span class="text-sm font-semibold tracking-tight text-slate-900">Periódico sales</span>
+				<div class="flex flex-col leading-none">
+					<span class="text-xs font-bold tracking-[0.06em] text-slate-950">{BRAND_NAME}</span>
+					<span class="mt-1 text-[9px] font-medium tracking-[0.08em] text-slate-500">
+						{BRAND_SUBTITLE}
+					</span>
+				</div>
 			</div>
 			<button
 				type="button"

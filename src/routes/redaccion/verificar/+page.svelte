@@ -1,5 +1,6 @@
 <script lang="ts">
 	import { invalidateAll } from '$app/navigation';
+	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import { articleImageAlt, formatArticleDate } from '$lib/articlePresentation';
 
@@ -78,7 +79,7 @@
 </script>
 
 <svelte:head>
-	<title>Verificar artículos · Periódico sales</title>
+	<title>{brandTitle('Verificar artículos')}</title>
 </svelte:head>
 
 <section class="space-y-8">
