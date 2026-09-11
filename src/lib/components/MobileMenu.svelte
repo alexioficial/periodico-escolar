@@ -77,7 +77,15 @@
 	>
 		<header class="flex items-center justify-between border-b border-slate-200 px-4 py-3">
 			<div class="flex items-center gap-2">
-				<img src={logoUrl} alt="Logo" class="h-8 w-8" />
+				<span
+					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
+				>
+					<img
+						src={logoUrl}
+						alt="Isotipo de Santo Domingo Savio"
+						class="h-full w-full object-contain"
+					/>
+				</span>
 				<div class="flex flex-col leading-none">
 					<span class="text-xs font-bold tracking-[0.06em] text-slate-950">{BRAND_NAME}</span>
 					<span class="mt-1 text-[9px] font-medium tracking-[0.08em] text-slate-500">

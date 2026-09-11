@@ -10,6 +10,15 @@ export interface EmailMessage {
 	subject: string;
 	html: string;
 	text: string;
+	attachments?: EmailAttachment[];
+}
+
+export interface EmailAttachment {
+	filename: string;
+	content: string;
+	type: string;
+	disposition: 'inline' | 'attachment';
+	content_id?: string;
 }
 
 interface SendOptions {
@@ -73,7 +82,8 @@ export async function sendCloudflareEmail(
 		to: message.to,
 		subject: message.subject,
 		html: message.html,
-		text: message.text
+		text: message.text,
+		...(message.attachments?.length ? { attachments: message.attachments } : {})
 	};
 
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt += 1) {

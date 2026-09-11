@@ -2,14 +2,15 @@
 	import '../app.css';
 	import { page } from '$app/state';
 	import { goto, invalidateAll } from '$app/navigation';
+	import logoUrl from '$lib/assets/brand/isotipo-periodico-sds.svg';
+	import faviconUrl from '$lib/assets/brand/favicon.svg';
+	import touchIconUrl from '$lib/assets/brand/isotipo-periodico-sds-email.png';
 	import { BRAND_NAME, BRAND_SUBTITLE, brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import ToastHost from '$lib/components/ToastHost.svelte';
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ShareDialog from '$lib/components/ShareDialog.svelte';
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
-
-	const LOGO_URL = 'https://cdn.widube.com/logo.svg';
 
 	let { children, data } = $props();
 
@@ -72,8 +73,8 @@
 
 <svelte:head>
 	<title>{brandTitle()}</title>
-	<link rel="icon" type="image/svg+xml" href={LOGO_URL} />
-	<link rel="apple-touch-icon" href={LOGO_URL} />
+	<link rel="icon" type="image/svg+xml" href={faviconUrl} />
+	<link rel="apple-touch-icon" href={touchIconUrl} />
 	<link
 		rel="preload"
 		href="/fonts/decima/decima-nova-pro-regular.otf"
@@ -87,7 +88,15 @@
 	<header class="border-b border-slate-200 bg-white/80 backdrop-blur">
 		<div class="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
 			<a href="/feed" class="flex items-center gap-2">
-				<img src={LOGO_URL} alt="Logo" class="h-8 w-8" />
+				<span
+					class="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-slate-200 bg-white p-1 shadow-sm"
+				>
+					<img
+						src={logoUrl}
+						alt="Isotipo de Santo Domingo Savio"
+						class="h-full w-full object-contain"
+					/>
+				</span>
 				<div class="flex flex-col leading-none">
 					<span class="text-xs font-bold tracking-[0.06em] text-slate-950 sm:text-sm">
 						{BRAND_NAME}
@@ -196,7 +205,7 @@
 		open={mobileMenuOpen}
 		user={data.user}
 		{links}
-		logoUrl={LOGO_URL}
+		{logoUrl}
 		{isActive}
 		{loggingOut}
 		onClose={() => (mobileMenuOpen = false)}

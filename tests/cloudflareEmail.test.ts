@@ -9,7 +9,19 @@ type CloudflareEmailModule = {
 			fromAddress: string;
 			fromName?: string;
 		},
-		message: { to: string; subject: string; html: string; text: string },
+		message: {
+			to: string;
+			subject: string;
+			html: string;
+			text: string;
+			attachments?: Array<{
+				filename: string;
+				content: string;
+				type: string;
+				disposition: 'inline' | 'attachment';
+				content_id?: string;
+			}>;
+		},
 		options?: {
 			fetch?: typeof fetch;
 			delay?: (milliseconds: number) => Promise<void>;
@@ -77,6 +89,41 @@ test('envía el contrato completo al API REST de Cloudflare', async () => {
 		text: 'Abre el enlace'
 	});
 	assert.equal(messageId, '<message-id@widube.com>');
+});
+
+test('incluye un logo inline en el payload enviado a Cloudflare', async () => {
+	const { sendCloudflareEmail } = await loadModule();
+	assert.equal(typeof sendCloudflareEmail, 'function');
+
+	let requestInit: RequestInit | undefined;
+	const fakeFetch: typeof fetch = async (_input, init) => {
+		requestInit = init;
+		return Response.json({
+			success: true,
+			errors: [],
+			messages: [],
+			result: {
+				delivered: ['lector@example.com'],
+				queued: [],
+				permanent_bounces: [],
+				suppressed_recipients: [],
+				message_id: '<inline-logo@widube.com>'
+			}
+		});
+	};
+	const attachments = [
+		{
+			filename: 'isotipo-periodico-sds.png',
+			content: 'iVBORw0KGgoAAAANSUhEUg==',
+			type: 'image/png',
+			disposition: 'inline' as const,
+			content_id: 'periodico-sds-logo'
+		}
+	];
+
+	await sendCloudflareEmail?.(config, { ...message, attachments }, { fetch: fakeFetch });
+
+	assert.deepEqual(JSON.parse(String(requestInit?.body)).attachments, attachments);
 });
 
 test('acepta como exitoso un correo encolado', async () => {
