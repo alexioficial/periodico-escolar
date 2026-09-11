@@ -1,28 +1,16 @@
-import nodemailer from 'nodemailer';
 import { env } from '$env/dynamic/private';
+import { sendCloudflareEmail } from './cloudflareEmail';
 
-export function getTransport() {
-	const host = env.SMTP_HOST;
-	const port = env.SMTP_PORT ? Number(env.SMTP_PORT) : 587;
-	const user = env.SMTP_USER;
-	const pass = env.SMTP_PASS;
-
-	if (!host || !user || !pass) {
-		throw new Error('SMTP no está configurado correctamente');
-	}
-
-	return nodemailer.createTransport({
-		host,
-		port,
-		secure: port === 465,
-		auth: { user, pass }
-	});
-}
-
-export async function sendEmail(to: string, subject: string, html: string) {
-	const from = env.SMTP_FROM ?? 'No-Reply <no-reply@example.com>';
-	const transporter = getTransport();
-	await transporter.sendMail({ from, to, subject, html });
+export async function sendEmail(to: string, subject: string, html: string, text: string) {
+	await sendCloudflareEmail(
+		{
+			accountId: env.CLOUDFLARE_ACCOUNT_ID ?? '',
+			apiToken: env.CLOUDFLARE_API_TOKEN ?? '',
+			fromAddress: env.EMAIL_FROM_ADDRESS ?? 'no-reply@widube.com',
+			fromName: env.EMAIL_FROM_NAME ?? 'Periódico escolar'
+		},
+		{ to, subject, html, text }
+	);
 }
 
 export async function sendMagicLinkEmail(to: string, magicUrl: string) {
@@ -38,5 +26,13 @@ export async function sendMagicLinkEmail(to: string, magicUrl: string) {
 			<p style="font-size: 12px; color: #64748b; margin-top: 24px;">Si no solicitaste este correo, puedes ignorarlo.</p>
 		</div>
 	`;
-	await sendEmail(to, 'Tu enlace de acceso al Periódico escolar', html);
+	const text = `Inicia sesión en el Periódico escolar
+
+Abre este enlace para iniciar sesión:
+${magicUrl}
+
+El enlace expira en 15 minutos y solo se puede usar una vez.
+
+Si no solicitaste este correo, puedes ignorarlo.`;
+	await sendEmail(to, 'Tu enlace de acceso al Periódico escolar', html, text);
 }
