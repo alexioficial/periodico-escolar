@@ -26,7 +26,6 @@
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.1.18",
 		"@types/node": "^24",
-		"@types/nodemailer": "^8.0.0",
 		"dotenv": "^17.4.2",
 		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
@@ -47,7 +46,6 @@
 		"@aws-sdk/client-s3": "^3.1045.0",
 		"@aws-sdk/s3-request-presigner": "^3.1045.0",
 		"file-type": "^22.0.1",
-		"mongodb": "^7.1.0",
-		"nodemailer": "^9.0.1"
+		"mongodb": "^7.1.0"
 	}
 }
