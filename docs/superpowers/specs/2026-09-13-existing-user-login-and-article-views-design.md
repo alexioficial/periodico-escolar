@@ -6,20 +6,18 @@ Fecha: 2026-09-13
 
 - El contenido publicado, el feed y los enlaces compartidos siguen siendo públicos.
 - No se crean usuarios nuevos. Sólo los documentos que ya existen en `users` pueden iniciar sesión.
-- La única entrada visible al login es `GET /login/<_id>` con el `ObjectId` real de esa cuenta. No se reemplaza por un token aleatorio, por decisión explícita del propietario.
-- El `_id` **no es un secreto**: una persona autenticada puede conocer el suyo y compartirlo. La posesión del enlace no autentica; el correo de la cuenta aún debe verificarse mediante magic link.
-- Google OAuth queda deshabilitado, no sólo oculto. El bypass QA también queda deshabilitado para que no pueda crear cuentas ni saltarse la restricción, incluso si las variables antiguas siguen configuradas.
+- La única entrada al login es `GET /login/<_id>` con el `ObjectId` real de esa cuenta. No se reemplaza por un token aleatorio, por decisión explícita del propietario. La visita crea una sesión inmediatamente y redirige a `/feed`, sin formulario, correo ni verificación adicional.
+- El `_id` **no es un secreto**: una persona autenticada puede conocer el suyo y compartirlo. La posesión del enlace **sí autentica como esa cuenta**, incluido su rol de administrador o superadministrador. Si el enlace se filtra, cualquiera puede reutilizarlo mientras exista la cuenta y esta ruta siga activa. El propietario aceptó expresamente este riesgo como solución temporal.
+- Google OAuth, magic link y el bypass QA quedan deshabilitados, no sólo ocultos, incluso si las variables antiguas siguen configuradas.
 - Los likes desaparecen de interfaz, API, tipos y documentos históricos. No existe un sistema de comentarios en este repositorio.
 - Cada apertura de un artículo publicado y la primera aparición de cada tarjeta montada en el viewport del feed suman una vista. Son impresiones, no visitantes únicos: recargas, nuevos montajes y bots pueden contar de nuevo.
 
 ## Flujo de acceso
 
 1. `GET /login`, `GET /auth/login` y `GET /login/<_id>` con formato inválido o sin usuario correspondiente devuelven HTTP 404 mediante la página `+error.svelte` habitual. No hay página ni mensaje diferenciador para el ID incorrecto. Los problemas de base de datos son errores operativos, no falsos 404.
-2. `GET /login/<_id>` válido muestra el formulario de correo sin publicar la dirección asociada al ID. El campo se envía junto con el ID y el destino interno validado.
-3. `POST /api/auth/magic-link` conserva sus límites por IP y correo. Sólo emite correo si el ID y el correo normalizado pertenecen al **mismo usuario existente**. Si no coinciden, responde de forma genérica, sin emitir correo ni revelar qué dato falló.
-4. El token de magic link queda vinculado al ID y al correo. Al canjearlo, se vuelve a consultar esa cuenta y se verifica la coincidencia; no se llama a ningún `findOrCreate`. Tokens antiguos sin esta vinculación dejan de ser canjeables. La verificación por correo puede marcar `emailVerified` para esa cuenta existente.
-5. Se retiran botones y redirecciones públicas que apuntan al login abierto. Al cerrar sesión se vuelve al feed público. Los accesos directos a `/auth/google`, `/auth/google/callback` y `/auth/qa-login` no autentican; devuelven 404. Las sesiones QA existentes dejan de ser válidas; las sesiones ordinarias existentes siguen siendo válidas.
-6. Los endpoints de redacción, administración, perfil y guardados continúan comprobando `locals.user` y rol en el servidor. Conocer un ID no concede permisos ni permite seleccionar otra cuenta durante el login.
+2. `GET /login/<_id>` válido comprueba que el usuario ya existe, invalida una sesión previa del navegador si la hay, crea una nueva sesión para ese ID con cookie `HttpOnly`, `SameSite=Lax` y `Secure` en producción, y redirige a `/feed`. La respuesta no se cachea ni expone el ID en `Referer` a terceros.
+3. Se retiran botones y redirecciones públicas que apuntan al login abierto. Al cerrar sesión se vuelve al feed público. Los accesos directos a `/auth/google`, `/auth/google/callback`, `/auth/qa-login`, `/api/auth/magic-link` y `/auth/m/<token>` no autentican; devuelven 404. Las sesiones QA existentes dejan de ser válidas; las sesiones ordinarias existentes siguen siendo válidas.
+4. Los endpoints de redacción, administración, perfil y guardados continúan comprobando `locals.user` y rol en el servidor. Quien abre un enlace válido obtiene exactamente el rol de la cuenta identificada.
 
 ## Likes y datos históricos
 
@@ -37,12 +35,12 @@ Fecha: 2026-09-13
 
 ## Verificación
 
-- Pruebas de 404 para rutas de login inválidas y OAuth/QA deshabilitados; prueba de coincidencia ID/correo y de que no se crean cuentas.
-- Pruebas de token de correo ligado al usuario, canje único y rechazo de tokens anteriores sin ID.
+- Pruebas de 404 para rutas de login inválidas y OAuth/QA/magic link deshabilitados; prueba de que un ID existente crea sesión sin correo y respeta el rol de esa cuenta.
+- Pruebas de cookie segura, redirección al feed, reemplazo de sesión anterior y rechazo de sesiones QA anteriores.
 - Pruebas del incremento atómico sólo para artículos publicados, migración de `likes` y `views`, y ausencia de likes en respuestas públicas.
 - Suite completa, `check`, `lint`, build y una revisión manual de feed público, post compartido, login válido/inválido y vistas tras scroll.
 
 ## Despliegue
 
 - La migración se ejecuta al inicializar la conexión de la aplicación a MongoDB; no requiere pegar credenciales ni ejecutar borrados manuales contra producción.
-- Al desplegar, los enlaces de login anteriores dejan de funcionar y los magic links emitidos antes del cambio dejan de ser canjeables. Los enlaces de publicaciones siguen funcionando.
+- Al desplegar, el login anterior y los magic links emitidos antes del cambio dejan de funcionar. Los enlaces de publicaciones siguen funcionando. Para revocar la capacidad de entrar mediante un `_id` concreto hará falta desactivar este mecanismo o retirar esa cuenta; cerrar sus sesiones no revoca el enlace.
