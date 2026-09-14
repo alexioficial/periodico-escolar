@@ -1,10 +1,10 @@
 <script lang="ts">
 	import { untrack } from 'svelte';
-	import { goto } from '$app/navigation';
 	import { BRAND_SUBTITLE, brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import { shareDialog } from '$lib/shareDialog';
 	import { articleImageAlt, formatArticleDate } from '$lib/articlePresentation';
+	import { trackArticleView } from '$lib/articleViewTracker';
 
 	let { data } = $props();
 
@@ -19,10 +19,10 @@
 	let loadingMore = $state(false);
 
 	// El bug previo: este effect pisaba `articles` con `data.articles` cada
-	// vez que la página se invalidaba (p. ej. tras un like). Si el usuario
+	// vez que la página se invalidaba (p. ej. tras guardar). Si el usuario
 	// había hecho "Cargar más", los artículos extra desaparecían.
 	// Ahora: si cambia la categoría hacemos reset total, si no, fusionamos
-	// in-place los flags (isLiked/isSaved/likesCount) preservando lo cargado.
+	// in-place el estado de guardado preservando lo cargado.
 	$effect(() => {
 		// Dependemos SOLO de los datos del server (lectura tracked); la
 		// fusión va en untrack para no releer/reescribir `articles` dentro
@@ -43,9 +43,7 @@
 	});
 
 	function requireLogin() {
-		toast.info('Inicia sesión', 'Necesitas una cuenta para interactuar con los artículos.');
-		const returnTo = `${window.location.pathname}${window.location.search}`;
-		goto(`/auth/login?returnTo=${encodeURIComponent(returnTo)}`);
+		toast.info('Acceso restringido', 'Necesitas un enlace de acceso para guardar artículos.');
 	}
 
 	async function readError(res: Response, fallback: string) {
@@ -54,24 +52,6 @@
 			return body?.message || fallback;
 		} catch {
 			return fallback;
-		}
-	}
-
-	// Optimistic UI: aplicamos el cambio al instante y rollback si falla.
-	async function handleLike(article: Article) {
-		if (!data.user) return requireLogin();
-
-		const wasLiked = article.isLiked;
-		article.isLiked = !wasLiked;
-		article.likesCount += wasLiked ? -1 : 1;
-
-		try {
-			const res = await fetch(`/api/articles/${article._id}/like`, { method: 'POST' });
-			if (!res.ok) throw new Error(await readError(res, 'No se pudo actualizar el me gusta'));
-		} catch (e) {
-			article.isLiked = wasLiked;
-			article.likesCount += wasLiked ? 1 : -1;
-			toast.error(e instanceof Error ? e.message : 'No se pudo actualizar el me gusta');
 		}
 	}
 
@@ -167,7 +147,10 @@
 	{:else}
 		<div class="mx-auto grid max-w-2xl gap-8">
 			{#each articles as article (article._id)}
-				<article class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
+				<article
+					use:trackArticleView={article._id}
+					class="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm"
+				>
 					<!-- Header -->
 					<div class="flex items-center justify-between border-b border-slate-50 p-4">
 						<div class="flex items-center gap-3">
@@ -297,35 +280,6 @@
 						<!-- Actions -->
 						<div class="flex items-center justify-between pt-2">
 							<div class="flex items-center gap-4">
-								<button
-									type="button"
-									onclick={() => handleLike(article)}
-									class="group flex items-center gap-1.5"
-									aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}
-								>
-									<svg
-										xmlns="http://www.w3.org/2000/svg"
-										viewBox="0 0 24 24"
-										fill={article.isLiked ? 'currentColor' : 'none'}
-										stroke="currentColor"
-										stroke-width="2"
-										class="h-6 w-6 {article.isLiked
-											? 'text-red-500'
-											: 'text-slate-400 group-hover:text-red-500'} transition-colors"
-									>
-										<path
-											stroke-linecap="round"
-											stroke-linejoin="round"
-											d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
-										/>
-									</svg>
-									<span
-										class="text-sm font-medium {article.isLiked
-											? 'text-red-600'
-											: 'text-slate-600'}">{article.likesCount}</span
-									>
-								</button>
-
 								<button
 									class="text-slate-400 transition-colors hover:text-indigo-500"
 									aria-label="Compartir artículo"

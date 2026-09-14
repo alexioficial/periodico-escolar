@@ -7,6 +7,7 @@ import {
 } from 'mongodb';
 import { env } from '$env/dynamic/private';
 import { migrateLegacySessions } from './sessionIndexMigration';
+import { migrateArticleEngagement } from './articleEngagementMigration';
 
 let client: MongoClient | null = null;
 let db: Db | null = null;
@@ -70,6 +71,7 @@ async function ensureUniqueIndex(
 }
 
 async function ensureIndexes(db: Db) {
+	await migrateArticleEngagement(db.collection('articles'));
 	// users.email y users.username deben ser únicos case-insensitive para
 	// que "Pepe" y "pepe" sean el mismo usuario. Si los índices viejos están
 	// sin collation, los recreamos con collation.

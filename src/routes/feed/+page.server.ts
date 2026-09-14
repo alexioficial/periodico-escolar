@@ -34,15 +34,12 @@ export const load: PageServerLoad = async ({ url, locals }) => {
 	// fallback genérico cuando ni siquiera había snapshot.
 	const enrichedArticles = articlesWithUrls.map((article) => {
 		const publicArticle = toPublicArticle(article);
-		const likes = article.likes ?? [];
 		const savedBy = article.savedBy ?? [];
 		return {
 			...publicArticle,
 			authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
 			categoryName: categoryMap.get(publicArticle.categoryId)?.name || 'Sin categoría',
-			isLiked: userId ? likes.includes(userId) : false,
-			isSaved: userId ? savedBy.includes(userId) : false,
-			likesCount: likes.length
+			isSaved: userId ? savedBy.includes(userId) : false
 		};
 	});
 

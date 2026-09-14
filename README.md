@@ -4,8 +4,8 @@ Plataforma SvelteKit para crear, moderar y publicar artículos de una comunidad 
 
 ## Funcionalidades
 
-- Feed público con categorías, paginación, likes y guardados.
-- Login con Google o enlace mágico de un solo uso.
+- Feed público con categorías, paginación, guardados y conteo de vistas.
+- Acceso directo de cuentas existentes mediante `/login/<_id>`; no se crean usuarios nuevos.
 - Perfil con avatar recortable.
 - Redacción con imágenes, videos y adjuntos almacenados en S3 privado.
 - Moderación para administradores.
@@ -17,8 +17,6 @@ Plataforma SvelteKit para crear, moderar y publicar artículos de una comunidad 
 - pnpm 11.6.0
 - MongoDB
 - Bucket S3 o servicio compatible
-- Servidor SMTP para enlaces mágicos
-- Credenciales OAuth de Google
 
 ## Desarrollo
 
@@ -40,15 +38,13 @@ pnpm build
 pnpm audit --prod
 ```
 
-El workflow de GitHub Actions ejecuta estas comprobaciones en cada push y pull request.
-
 ## Roles
 
 - `user`: envía artículos a revisión.
 - `admin`: modera artículos y puede publicar directamente.
 - `superadmin`: además administra categorías, usuarios y roles.
 
-Para ascender la primera cuenta, después de que el usuario haya iniciado sesión al menos una vez, ejecuta:
+Para ascender una cuenta que ya exista en MongoDB, ejecuta:
 
 ```bash
 pnpm create:superadmin -- usuario@ejemplo.com
@@ -56,15 +52,13 @@ pnpm create:superadmin -- usuario@ejemplo.com
 
 ## Seguridad y rate limits
 
-- Las sesiones y magic links se almacenan mediante hashes.
+- Las sesiones se almacenan mediante hashes.
 - Los archivos permanecen privados y se sirven mediante URLs firmadas.
-- Las lecturas anónimas de contenido y las páginas públicas de autenticación se limitan por IP.
+- Las lecturas anónimas, los accesos directos y las impresiones de artículos se limitan por IP.
 - La creación de artículos se limita por usuario: 10 por hora para usuarios y 60 por hora para staff.
-- La solicitud y consumo de magic links tienen límites independientes.
-- El bypass temporal de QA requiere `QA_AUTH_BYPASS_ENABLED=true` y un
-  `QA_AUTH_BYPASS_SECRET` de al menos 32 caracteres. Solo se muestra al abrir
-  `/auth/login?qa=EL_SECRETO_URL_ENCODED`; el servidor limpia inmediatamente la URL.
-  Desactivarlo o rotar el secreto invalida las sesiones QA existentes.
+- Abrir `/login/<_id>` inicia sesión inmediatamente como esa cuenta, incluso si es superadmin. El ID funciona como una credencial reutilizable: no compartas esos enlaces fuera del grupo autorizado. Cerrar sesión no invalida el enlace.
+- `/login`, IDs incorrectos y los antiguos flujos de Google, magic link y QA responden 404. Las sesiones QA anteriores se invalidan.
+- Los artículos publicados suman una vista al abrir su página y otra cuando su tarjeta entra en pantalla en el feed. La migración borra permanentemente los likes históricos e inicializa `views: 0` en artículos antiguos.
 
 Los rate limits se guardan en MongoDB, por lo que se comparten entre instancias y sobreviven reinicios.
 

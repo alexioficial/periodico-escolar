@@ -26,5 +26,5 @@ export const POST: RequestHandler = async ({ cookies, request, url, getClientAdd
 		cookies.delete('session', { path: '/' });
 	}
 
-	return json({ ok: true, redirectTo: '/auth/login' });
+	return json({ ok: true, redirectTo: '/feed' });
 };
