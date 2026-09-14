@@ -20,3 +20,12 @@ export function getPublicRateLimitPolicy(pathname: string): PublicRateLimitPolic
 
 	return null;
 }
+
+export function shouldApplyPublicRateLimit(
+	method: string,
+	pathname: string,
+	isAuthenticated: boolean
+): boolean {
+	if (method !== 'GET' || !getPublicRateLimitPolicy(pathname)) return false;
+	return !isAuthenticated || pathname.startsWith('/post/') || pathname.startsWith('/login/');
+}
