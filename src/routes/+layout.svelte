@@ -180,6 +180,13 @@
 						>
 							{loggingOut ? 'Cerrando…' : 'Cerrar sesión'}
 						</button>
+					{:else}
+						<a
+							href={`/login?returnTo=${encodeURIComponent(page.url.pathname + page.url.search)}`}
+							class="rounded-full border border-slate-300 bg-white px-3 py-1.5 text-[11px] font-medium text-slate-800 transition-colors hover:bg-slate-50"
+						>
+							Iniciar sesión
+						</a>
 					{/if}
 				</div>
 			</nav>

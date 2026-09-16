@@ -5,6 +5,7 @@ import { toPublicArticle } from '$lib/server/publicArticle';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 import { loginPath } from '$lib/server/redirect';
+import { getArticleLikeSummary } from '$lib/server/articleLikes';
 
 const PER_PAGE = 20;
 
@@ -32,6 +33,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			...publicArticle,
 			authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
 			category: categoryMap.get(publicArticle.categoryId) ?? 'Sin categoría',
+			...getArticleLikeSummary(article.likes, locals.user!._id),
 			isSaved: true
 		};
 	});

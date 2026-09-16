@@ -8,6 +8,7 @@ import {
 import { toPublicArticle } from '$lib/server/publicArticle';
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
+import { getArticleLikeSummary } from '$lib/server/articleLikes';
 
 const ARTICLES_PER_PAGE = 10;
 
@@ -37,6 +38,7 @@ export const GET: RequestHandler = async ({ url, locals }) => {
 			...publicArticle,
 			authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
 			categoryName: categoryMap.get(publicArticle.categoryId)?.name || 'Sin categoría',
+			...getArticleLikeSummary(article.likes, userId),
 			isSaved: userId ? savedBy.includes(userId) : false
 		};
 	});

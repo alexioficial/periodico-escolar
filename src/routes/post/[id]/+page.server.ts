@@ -8,6 +8,7 @@ import {
 import { toPublicArticle } from '$lib/server/publicArticle';
 import { getCategoryById } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
+import { getArticleLikeSummary } from '$lib/server/articleLikes';
 
 export const load: PageServerLoad = async ({ params, locals }) => {
 	const doc = await getArticleById(params.id);
@@ -27,6 +28,7 @@ export const load: PageServerLoad = async ({ params, locals }) => {
 		...publicArticle,
 		authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
 		categoryName: category?.name || 'Sin categoría',
+		...getArticleLikeSummary(enriched.likes, userId),
 		isSaved: userId ? savedBy.includes(userId) : false
 	};
 

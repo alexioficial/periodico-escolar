@@ -1,4 +1,5 @@
 <script lang="ts">
+	import { goto } from '$app/navigation';
 	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
 	import { shareDialog } from '$lib/shareDialog';
@@ -10,7 +11,9 @@
 	let article = $state({ ...data.article });
 
 	function requireLogin() {
-		toast.info('Acceso restringido', 'Necesitas un enlace de acceso para guardar artículos.');
+		toast.info('Inicia sesión', 'Necesitas una cuenta para interactuar con los artículos.');
+		const returnTo = `${window.location.pathname}${window.location.search}`;
+		goto(`/login?returnTo=${encodeURIComponent(returnTo)}`);
 	}
 
 	async function readError(res: Response, fallback: string) {
@@ -19,6 +22,22 @@
 			return body?.message || fallback;
 		} catch {
 			return fallback;
+		}
+	}
+
+	async function handleLike() {
+		if (!data.user) return requireLogin();
+		const wasLiked = article.isLiked;
+		article.isLiked = !wasLiked;
+		article.likesCount += wasLiked ? -1 : 1;
+
+		try {
+			const res = await fetch(`/api/articles/${article._id}/like`, { method: 'POST' });
+			if (!res.ok) throw new Error(await readError(res, 'No se pudo actualizar el me gusta'));
+		} catch (error) {
+			article.isLiked = wasLiked;
+			article.likesCount += wasLiked ? 1 : -1;
+			toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el me gusta');
 		}
 	}
 
@@ -101,6 +120,31 @@
 			</div>
 
 			<div class="flex flex-wrap items-center gap-2" aria-label="Acciones del artículo">
+				<button
+					type="button"
+					onclick={handleLike}
+					aria-pressed={article.isLiked}
+					class="group inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 transition-colors hover:border-red-200 hover:text-red-600 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:outline-none"
+					aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}
+				>
+					<svg
+						viewBox="0 0 24 24"
+						fill={article.isLiked ? 'currentColor' : 'none'}
+						stroke="currentColor"
+						stroke-width="2"
+						class="h-5 w-5 {article.isLiked
+							? 'text-red-500'
+							: 'text-slate-500 group-hover:text-red-500'} transition-colors"
+						aria-hidden="true"
+					>
+						<path
+							stroke-linecap="round"
+							stroke-linejoin="round"
+							d="M21 8.25c0-2.485-2.099-4.5-4.688-4.5-1.935 0-3.597 1.126-4.312 2.733-.715-1.607-2.377-2.733-4.313-2.733C5.1 3.75 3 5.765 3 8.25c0 7.22 9 12 9 12s9-4.78 9-12z"
+						/>
+					</svg>
+					<span>{article.likesCount}</span>
+				</button>
 				<button
 					type="button"
 					onclick={handleShare}

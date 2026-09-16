@@ -1,17 +1,53 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
+import {
+	InstitutionalEmailRequiredError,
+	assertMagicLinkRequestAllowed,
+	assertInstitutionalEmailForNewAccount,
+	isInstitutionalEmail,
+	normalizeEmail
+} from '../src/lib/server/authEmailPolicy.ts';
 
-type AuthModule = {
-	emailShouldBeVerified?: (source: 'magic-link' | 'qa-bypass') => boolean;
-};
+test('normaliza el correo sin distinguir mayúsculas ni espacios exteriores', () => {
+	assert.equal(
+		normalizeEmail('  Alumno+Noticias@Salesianos.Edu.Do  '),
+		'alumno+noticias@salesianos.edu.do'
+	);
+});
 
-async function loadModule(): Promise<AuthModule> {
-	return import('../src/lib/server/authEmailPolicy.ts').catch(() => ({}));
-}
+test('el magic link permite cuentas externas existentes pero no altas externas', () => {
+	assert.doesNotThrow(() => assertMagicLinkRequestAllowed('persona@gmail.com', true));
+	assert.doesNotThrow(() => assertMagicLinkRequestAllowed('alumno@salesianos.edu.do', false));
+	assert.throws(
+		() => assertMagicLinkRequestAllowed('nuevo@gmail.com', false),
+		InstitutionalEmailRequiredError
+	);
+});
 
-test('magic-link y bypass QA habilitan flujos que exigen correo verificado', async () => {
-	const { emailShouldBeVerified } = await loadModule();
-	assert.equal(typeof emailShouldBeVerified, 'function');
-	assert.equal(emailShouldBeVerified?.('magic-link'), true);
-	assert.equal(emailShouldBeVerified?.('qa-bypass'), true);
+test('acepta el dominio institucional exacto, incluyendo aliases', () => {
+	assert.equal(isInstitutionalEmail('alumno@salesianos.edu.do'), true);
+	assert.equal(isInstitutionalEmail('ALUMNO+periodico@SALESIANOS.EDU.DO'), true);
+});
+
+test('rechaza subdominios, dominios similares y correos malformados', () => {
+	for (const email of [
+		'alumno@sub.salesianos.edu.do',
+		'alumno@salesianos.edu.do.evil.test',
+		'alumno@xsalesianos.edu.do',
+		'alumno@salesianos.edu.com',
+		'alumno@',
+		'@salesianos.edu.do',
+		'alumnosalesianos.edu.do'
+	]) {
+		assert.equal(isInstitutionalEmail(email), false, email);
+	}
+});
+
+test('el rechazo de un alta externa usa el error de dominio institucional', () => {
+	assert.throws(
+		() => assertInstitutionalEmailForNewAccount('persona@gmail.com'),
+		(error: unknown) =>
+			error instanceof InstitutionalEmailRequiredError &&
+			error.message === 'Se requiere un correo institucional @salesianos.edu.do'
+	);
 });

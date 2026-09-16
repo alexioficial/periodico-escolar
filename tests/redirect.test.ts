@@ -16,10 +16,10 @@ test('safeReturnTo rechaza variantes con backslash que el navegador normaliza', 
 	assert.equal(safeReturnTo('/\\\\evil.example', '/feed'), '/feed');
 });
 
-test('loginPath devuelve el feed público cuando no hay sesión', () => {
-	assert.equal(loginPath('/redaccion?draft=1'), '/feed');
+test('loginPath conserva un destino interno en la ruta canónica de acceso', () => {
+	assert.equal(loginPath('/redaccion?draft=1'), '/login?returnTo=%2Fredaccion%3Fdraft%3D1');
 });
 
-test('loginPath reemplaza destinos externos por el feed', () => {
-	assert.equal(loginPath('https://evil.example'), '/feed');
+test('loginPath reemplaza destinos externos por el feed después del acceso', () => {
+	assert.equal(loginPath('https://evil.example'), '/login?returnTo=%2Ffeed');
 });

@@ -17,7 +17,7 @@ export function safeReturnTo(raw: unknown, fallback: string): string {
 	}
 }
 
-export function loginPath(_returnTo: unknown): string {
-	void _returnTo;
-	return '/feed';
+export function loginPath(returnTo: unknown): string {
+	const destination = safeReturnTo(returnTo, '/feed');
+	return `/login?returnTo=${encodeURIComponent(destination)}`;
 }

@@ -4,8 +4,9 @@ Plataforma SvelteKit para crear, moderar y publicar artículos de una comunidad 
 
 ## Funcionalidades
 
-- Feed público con categorías, paginación, guardados y conteo de vistas.
-- Acceso directo de cuentas existentes mediante `/login/<_id>`; no se crean usuarios nuevos.
+- Feed público con categorías, paginación, likes, guardados y conteo de vistas.
+- Inicio de sesión mediante enlace mágico o Google en `/login`.
+- Las cuentas nuevas requieren el dominio exacto `@salesianos.edu.do`; las cuentas existentes pueden iniciar sesión con cualquier dominio.
 - Perfil con avatar recortable.
 - Redacción con imágenes, videos y adjuntos almacenados en S3 privado.
 - Moderación para administradores.
@@ -54,11 +55,12 @@ pnpm create:superadmin -- usuario@ejemplo.com
 
 - Las sesiones se almacenan mediante hashes.
 - Los archivos permanecen privados y se sirven mediante URLs firmadas.
-- Las lecturas anónimas, los accesos directos y las impresiones de artículos se limitan por IP.
+- Las lecturas anónimas, las rutas públicas de autenticación y las impresiones de artículos se limitan por IP.
 - La creación de artículos se limita por usuario: 10 por hora para usuarios y 60 por hora para staff.
-- Abrir `/login/<_id>` inicia sesión inmediatamente como esa cuenta, incluso si es superadmin. El ID funciona como una credencial reutilizable: no compartas esos enlaces fuera del grupo autorizado. Cerrar sesión no invalida el enlace.
-- `/login`, IDs incorrectos y los antiguos flujos de Google, magic link y QA responden 404. Las sesiones QA anteriores se invalidan.
-- Los artículos publicados suman una vista al abrir su página y otra cuando su tarjeta entra en pantalla en el feed. La migración borra permanentemente los likes históricos e inicializa `views: 0` en artículos antiguos.
+- `/login/<cualquier-id>`, `/auth/login` y el bypass QA no existen. Las sesiones QA anteriores se invalidan.
+- El callback autorizado de Google es `${ORIGIN}/auth/google/callback`; no se envía `hd`, porque cuentas externas existentes deben poder entrar.
+- Los artículos publicados suman una vista al abrir su página y otra cuando su tarjeta entra en pantalla en el feed. La migración solo inicializa `views: 0` en artículos antiguos y nunca elimina likes.
+- Los correos transaccionales se envían con Cloudflare Email Sending; SMTP no se usa.
 
 Los rate limits se guardan en MongoDB, por lo que se comparten entre instancias y sobreviven reinicios.
 
