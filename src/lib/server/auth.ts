@@ -1,8 +1,8 @@
 import type { Db, ObjectId } from 'mongodb';
 import { MongoServerError } from 'mongodb';
 import { getDb } from './db';
-import type { EmailAuthSource } from './authEmailPolicy';
-import { findOrCreateUserByEmailInDb, generateUniqueUsernameInDb } from './authUserMaterialization';
+import { findOrCreateUserByEmailInDb } from './authUserMaterialization';
+import { findOrCreateGoogleUserInDb, type GoogleUserProfile } from './googleUserMaterialization';
 
 const USERS_COLLECTION = 'users';
 
@@ -17,14 +17,6 @@ interface UserDoc {
 	picture?: string;
 	emailVerified?: boolean;
 	role: 'user' | 'admin' | 'superadmin';
-}
-
-interface GoogleUserProfile {
-	sub: string;
-	email: string;
-	name?: string;
-	picture?: string;
-	email_verified?: boolean;
 }
 
 export class UsernameTakenError extends Error {
@@ -49,14 +41,17 @@ export async function getUserById(userId: ObjectId) {
 
 export const USERNAME_REGEX = /^[a-zA-Z0-9_.-]{3,20}$/;
 
-// Materializa usuarios de magic-link o del bypass QA. Ambos habilitan los
-// flujos que requieren correo verificado; el bypass solo existe con flag y secreto.
-export async function findOrCreateUserByEmail(
-	email: string,
-	source: EmailAuthSource = 'magic-link'
-) {
+// Materializa usuarios que demostraron controlar su correo mediante magic link.
+// La política institucional se aplica dentro del materializador antes de insertar.
+export async function findOrCreateUserByEmail(email: string) {
 	const db: Db = await getDb();
-	return findOrCreateUserByEmailInDb(db, email, source);
+	return findOrCreateUserByEmailInDb(db, email);
+}
+
+export async function getUserByEmail(email: string) {
+	const db: Db = await getDb();
+	const users = db.collection<UserDoc>(USERS_COLLECTION);
+	return users.findOne({ email: email.trim().toLowerCase() });
 }
 
 export interface ProfileUpdate {
@@ -130,60 +125,6 @@ export async function updateUserProfile(
 // su correo en Google). Si no, busca por correo y unifica con esa cuenta.
 // Si no existe, crea una nueva con username auto-generado.
 export async function findOrCreateUserFromGoogle(profile: GoogleUserProfile) {
-	if (typeof profile?.sub !== 'string' || typeof profile?.email !== 'string') {
-		throw new Error('Perfil de Google inválido');
-	}
-	if (profile.email_verified !== true) {
-		throw new Error('Google no confirmó que el correo esté verificado');
-	}
-
 	const db: Db = await getDb();
-	const users = db.collection<UserDoc>(USERS_COLLECTION);
-	const email = profile.email.toLowerCase();
-
-	const byGoogleId = await users.findOne({ googleId: profile.sub });
-	if (byGoogleId) return byGoogleId;
-
-	// Mismo correo en otra cuenta (registrada por magic-link previa). Unificamos
-	// adjuntando el googleId, marcando verificado y rellenando nombre/foto sólo
-	// si todavía no los tenía.
-	const byEmail = await users.findOne({ email });
-	if (byEmail) {
-		const $set: Partial<UserDoc> = {
-			googleId: profile.sub,
-			emailVerified: true
-		};
-		if (!byEmail.name && profile.name) $set.name = profile.name;
-		if (!byEmail.picture && profile.picture) $set.picture = profile.picture;
-		await users.updateOne({ _id: byEmail._id }, { $set });
-		return users.findOne({ _id: byEmail._id });
-	}
-
-	const username = await generateUniqueUsernameInDb(db, email);
-	try {
-		// Upsert atómico: si dos callbacks llegan a la vez sólo uno inserta.
-		await users.updateOne(
-			{ googleId: profile.sub },
-			{
-				$setOnInsert: {
-					email,
-					username,
-					provider: 'google',
-					googleId: profile.sub,
-					name: profile.name,
-					picture: profile.picture,
-					emailVerified: true,
-					role: 'user',
-					createdAt: new Date()
-				}
-			},
-			{ upsert: true }
-		);
-	} catch (err) {
-		if (isDuplicateKeyError(err, 'email')) {
-			return users.findOne({ email });
-		}
-		throw err;
-	}
-	return users.findOne({ googleId: profile.sub });
+	return findOrCreateGoogleUserInDb(db, profile);
 }

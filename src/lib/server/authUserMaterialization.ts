@@ -1,6 +1,6 @@
 import crypto from 'crypto';
 import { MongoServerError, type Collection, type Db, type ObjectId } from 'mongodb';
-import { emailShouldBeVerified, type EmailAuthSource } from './authEmailPolicy';
+import { assertInstitutionalEmailForNewAccount, normalizeEmail } from './authEmailPolicy';
 
 const USERS_COLLECTION = 'users';
 
@@ -56,19 +56,17 @@ async function applyRequiredEmailVerification(
 	return user;
 }
 
-export async function findOrCreateUserByEmailInDb(
-	db: Db,
-	email: string,
-	source: EmailAuthSource = 'magic-link'
-) {
+export async function findOrCreateUserByEmailInDb(db: Db, email: string) {
 	if (typeof email !== 'string' || !email) throw new Error('Email inválido');
 
 	const users = db.collection<MaterializedUser>(USERS_COLLECTION);
-	const normalized = email.toLowerCase();
-	const verifyEmail = emailShouldBeVerified(source);
+	const normalized = normalizeEmail(email);
+	if (!normalized) throw new Error('Email inválido');
 	const existing = await users.findOne({ email: normalized });
 
-	if (existing) return applyRequiredEmailVerification(users, existing, verifyEmail);
+	if (existing) return applyRequiredEmailVerification(users, existing, true);
+
+	assertInstitutionalEmailForNewAccount(normalized);
 
 	const username = await generateUniqueUsernameInDb(db, normalized);
 	try {
@@ -77,7 +75,7 @@ export async function findOrCreateUserByEmailInDb(
 			username,
 			createdAt: new Date(),
 			provider: 'credentials',
-			emailVerified: verifyEmail,
+			emailVerified: true,
 			role: 'user'
 		} as MaterializedUser);
 		return users.findOne({ _id: result.insertedId });
@@ -85,9 +83,7 @@ export async function findOrCreateUserByEmailInDb(
 		// Otra request creó la cuenta entre el findOne y el insert.
 		if (isDuplicateEmailError(error)) {
 			const concurrentUser = await users.findOne({ email: normalized });
-			return concurrentUser
-				? applyRequiredEmailVerification(users, concurrentUser, verifyEmail)
-				: null;
+			return concurrentUser ? applyRequiredEmailVerification(users, concurrentUser, true) : null;
 		}
 		throw error;
 	}

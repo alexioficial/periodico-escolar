@@ -2,6 +2,7 @@ import { type Db, ObjectId } from 'mongodb';
 import { getDb } from './db';
 import { getViewUrl, getDownloadUrl } from './storage';
 import { incrementPublishedArticleView } from './articleViews';
+import { setPublishedArticleLike } from './articleLikes';
 
 const ARTICLES_COLLECTION = 'articles';
 
@@ -40,6 +41,7 @@ export interface ArticleDoc {
 	attachments?: ArticleAttachment[];
 
 	views: number;
+	likes?: string[];
 	savedBy?: string[];
 }
 
@@ -90,7 +92,9 @@ export const TITLE_MAX = 200;
 export const EXCERPT_MAX = 500;
 export const CONTENT_MAX = 50_000;
 
-export async function createArticle(article: Omit<ArticleDoc, '_id' | 'createdAt' | 'views'>) {
+export async function createArticle(
+	article: Omit<ArticleDoc, '_id' | 'createdAt' | 'views' | 'likes' | 'savedBy'>
+) {
 	if (typeof article.title !== 'string' || article.title.length > TITLE_MAX) {
 		throw new Error(`El título supera los ${TITLE_MAX} caracteres`);
 	}
@@ -108,6 +112,7 @@ export async function createArticle(article: Omit<ArticleDoc, '_id' | 'createdAt
 		...article,
 		createdAt: new Date(),
 		views: 0,
+		likes: [],
 		savedBy: []
 	});
 
@@ -208,6 +213,12 @@ export async function recordPublishedArticleView(articleId: string): Promise<boo
 	if (!/^[a-f\d]{24}$/i.test(articleId)) return false;
 	const db: Db = await getDb();
 	return incrementPublishedArticleView(db.collection<ArticleDoc>(ARTICLES_COLLECTION), articleId);
+}
+
+export async function setLike(articleId: string, userId: string, liked: boolean) {
+	const db: Db = await getDb();
+	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
+	return setPublishedArticleLike(collection, articleId, userId, liked);
 }
 
 export async function toggleSave(articleId: string, userId: string) {

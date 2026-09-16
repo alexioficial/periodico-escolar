@@ -167,6 +167,14 @@
 				>
 					{loggingOut ? 'Cerrando…' : 'Cerrar sesión'}
 				</button>
+			{:else}
+				<a
+					href="/login"
+					onclick={onClose}
+					class="block w-full rounded-xl bg-slate-900 px-4 py-2.5 text-center text-sm font-semibold text-white transition-colors hover:bg-slate-800"
+				>
+					Iniciar sesión
+				</a>
 			{/if}
 		</footer>
 	</div>
