@@ -2,7 +2,7 @@ import { type Db, ObjectId } from 'mongodb';
 import { getDb } from './db';
 import { getViewUrl, getDownloadUrl } from './storage';
 import { incrementPublishedArticleView } from './articleViews';
-import { togglePublishedArticleLike } from './articleLikes';
+import { setPublishedArticleLike } from './articleLikes';
 
 const ARTICLES_COLLECTION = 'articles';
 
@@ -215,10 +215,10 @@ export async function recordPublishedArticleView(articleId: string): Promise<boo
 	return incrementPublishedArticleView(db.collection<ArticleDoc>(ARTICLES_COLLECTION), articleId);
 }
 
-export async function toggleLike(articleId: string, userId: string) {
+export async function setLike(articleId: string, userId: string, liked: boolean) {
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
-	return togglePublishedArticleLike(collection, articleId, userId);
+	return setPublishedArticleLike(collection, articleId, userId, liked);
 }
 
 export async function toggleSave(articleId: string, userId: string) {

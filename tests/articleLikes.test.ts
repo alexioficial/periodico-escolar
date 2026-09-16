@@ -1,9 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import {
-	getArticleLikeSummary,
-	togglePublishedArticleLike
-} from '../src/lib/server/articleLikes.ts';
+import { getArticleLikeSummary, setPublishedArticleLike } from '../src/lib/server/articleLikes.ts';
 
 test('el resumen público expone conteo y estado, nunca IDs', () => {
 	assert.deepEqual(getArticleLikeSummary(['user-1', 'user-2'], 'user-2'), {
@@ -16,21 +13,18 @@ test('el resumen público expone conteo y estado, nunca IDs', () => {
 	});
 });
 
-test('agrega un like una sola vez a un artículo publicado', async () => {
+test('fija un like de forma idempotente y devuelve el estado persistido', async () => {
 	const calls: unknown[][] = [];
 	const collection = {
-		async findOne() {
-			return { likes: [] };
-		},
-		async updateOne(filter: unknown, update: unknown) {
-			calls.push([filter, update]);
-			return { matchedCount: 1 };
+		async findOneAndUpdate(filter: unknown, update: unknown, options: unknown) {
+			calls.push([filter, update, options]);
+			return { likes: ['user-1'] };
 		}
 	};
 
-	assert.equal(
-		await togglePublishedArticleLike(collection, '507f1f77bcf86cd799439011', 'user-1'),
-		true
+	assert.deepEqual(
+		await setPublishedArticleLike(collection, '507f1f77bcf86cd799439011', 'user-1', true),
+		{ isLiked: true, likesCount: 1 }
 	);
 	assert.equal(
 		(calls[0][0] as { _id: { toHexString(): string } })._id.toHexString(),
@@ -41,44 +35,42 @@ test('agrega un like una sola vez a un artículo publicado', async () => {
 		{ _id: undefined, status: 'published' }
 	);
 	assert.deepEqual(calls[0][1], { $addToSet: { likes: 'user-1' } });
+	assert.deepEqual(calls[0][2], { returnDocument: 'after', projection: { likes: 1 } });
 });
 
-test('quita un like existente de un artículo publicado', async () => {
-	let update: unknown;
+test('fija el estado sin depender de una lectura previa', async () => {
+	let call: unknown[] | undefined;
 	const collection = {
-		async findOne() {
-			return { likes: ['user-1'] };
-		},
-		async updateOne(_filter: unknown, nextUpdate: unknown) {
-			update = nextUpdate;
-			return { matchedCount: 1 };
+		async findOneAndUpdate(filter: unknown, update: unknown, options: unknown) {
+			call = [filter, update, options];
+			return { likes: ['user-2'] };
 		}
 	};
 
-	assert.equal(
-		await togglePublishedArticleLike(collection, '507f1f77bcf86cd799439011', 'user-1'),
-		false
+	assert.deepEqual(
+		await setPublishedArticleLike(collection, '507f1f77bcf86cd799439011', 'user-1', false),
+		{ isLiked: false, likesCount: 1 }
 	);
-	assert.deepEqual(update, { $pull: { likes: 'user-1' } });
+	assert.deepEqual(call?.[1], { $pull: { likes: 'user-1' } });
 });
 
 test('no cambia drafts, IDs inválidos ni usuarios vacíos', async () => {
 	let updates = 0;
 	const collection = {
-		async findOne() {
-			return null;
-		},
-		async updateOne() {
+		async findOneAndUpdate() {
 			updates++;
-			return { matchedCount: 0 };
+			return null;
 		}
 	};
 
-	assert.equal(await togglePublishedArticleLike(collection, 'bad-id', 'user-1'), null);
-	assert.equal(await togglePublishedArticleLike(collection, '507f1f77bcf86cd799439011', ''), null);
+	assert.equal(await setPublishedArticleLike(collection, 'bad-id', 'user-1', true), null);
 	assert.equal(
-		await togglePublishedArticleLike(collection, '507f1f77bcf86cd799439011', 'user-1'),
+		await setPublishedArticleLike(collection, '507f1f77bcf86cd799439011', '', true),
 		null
 	);
-	assert.equal(updates, 0);
+	assert.equal(
+		await setPublishedArticleLike(collection, '507f1f77bcf86cd799439011', 'user-1', true),
+		null
+	);
+	assert.equal(updates, 1);
 });

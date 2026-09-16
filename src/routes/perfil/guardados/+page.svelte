@@ -12,6 +12,7 @@
 	let articles = $state<Article[]>([...data.articles]);
 	// svelte-ignore state_referenced_locally
 	let trackedPage = $state(data.pagination.currentPage);
+	let liking = $state<Record<string, boolean>>({});
 
 	$effect(() => {
 		// Dependemos SOLO de los datos del server; la fusión va en untrack
@@ -40,16 +41,28 @@
 	}
 
 	async function handleLike(article: Article) {
+		if (liking[article._id]) return;
+		liking[article._id] = true;
 		const wasLiked = article.isLiked;
-		article.isLiked = !wasLiked;
+		const desiredLiked = !wasLiked;
+		article.isLiked = desiredLiked;
 		article.likesCount += wasLiked ? -1 : 1;
 		try {
-			const res = await fetch(`/api/articles/${article._id}/like`, { method: 'POST' });
+			const res = await fetch(`/api/articles/${article._id}/like`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ liked: desiredLiked })
+			});
 			if (!res.ok) throw new Error(await readError(res, 'No se pudo actualizar el me gusta'));
+			const persisted = (await res.json()) as { isLiked: boolean; likesCount: number };
+			article.isLiked = persisted.isLiked;
+			article.likesCount = persisted.likesCount;
 		} catch (error) {
 			article.isLiked = wasLiked;
 			article.likesCount += wasLiked ? 1 : -1;
 			toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el me gusta');
+		} finally {
+			liking[article._id] = false;
 		}
 	}
 
@@ -224,6 +237,7 @@
 								<button
 									type="button"
 									onclick={() => handleLike(article)}
+									disabled={liking[article._id]}
 									class="group flex items-center gap-1.5"
 									aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}
 								>

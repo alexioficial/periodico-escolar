@@ -1,11 +1,11 @@
 import { ObjectId } from 'mongodb';
 
 type LikeCollection = {
-	findOne(filter: { _id: ObjectId; status: 'published' }): Promise<{ likes?: string[] } | null>;
-	updateOne(
+	findOneAndUpdate(
 		filter: { _id: ObjectId; status: 'published' },
-		update: { $addToSet: { likes: string } } | { $pull: { likes: string } }
-	): Promise<{ matchedCount: number }>;
+		update: { $addToSet: { likes: string } } | { $pull: { likes: string } },
+		options: { returnDocument: 'after'; projection: { likes: 1 } }
+	): Promise<{ likes?: string[] } | null>;
 };
 
 export function getArticleLikeSummary(likes: string[] | undefined, userId: string | undefined) {
@@ -17,25 +17,24 @@ export function getArticleLikeSummary(likes: string[] | undefined, userId: strin
 }
 
 /**
- * Alterna el like únicamente si el artículo está publicado.
- * Retorna el nuevo estado, o null cuando el artículo/entrada no es válido.
+ * Fija el estado deseado en una única operación atómica sobre un artículo publicado.
+ * Retorna el estado persistido, o null cuando el artículo/entrada no es válido.
  */
-export async function togglePublishedArticleLike(
+export async function setPublishedArticleLike(
 	collection: LikeCollection,
 	articleId: string,
-	userId: string
-): Promise<boolean | null> {
+	userId: string,
+	liked: boolean
+): Promise<{ isLiked: boolean; likesCount: number } | null> {
 	if (typeof articleId !== 'string' || !ObjectId.isValid(articleId)) return null;
 	if (typeof userId !== 'string' || !userId) return null;
+	if (typeof liked !== 'boolean') return null;
 
 	const filter = { _id: new ObjectId(articleId), status: 'published' as const };
-	const article = await collection.findOne(filter);
-	if (!article) return null;
-
-	const wasLiked = (article.likes ?? []).includes(userId);
-	const result = await collection.updateOne(
+	const article = await collection.findOneAndUpdate(
 		filter,
-		wasLiked ? { $pull: { likes: userId } } : { $addToSet: { likes: userId } }
+		liked ? { $addToSet: { likes: userId } } : { $pull: { likes: userId } },
+		{ returnDocument: 'after', projection: { likes: 1 } }
 	);
-	return result.matchedCount === 1 ? !wasLiked : null;
+	return article ? getArticleLikeSummary(article.likes, userId) : null;
 }

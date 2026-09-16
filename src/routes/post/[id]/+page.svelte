@@ -9,6 +9,7 @@
 
 	// svelte-ignore state_referenced_locally
 	let article = $state({ ...data.article });
+	let liking = $state(false);
 
 	function requireLogin() {
 		toast.info('Inicia sesión', 'Necesitas una cuenta para interactuar con los artículos.');
@@ -27,17 +28,29 @@
 
 	async function handleLike() {
 		if (!data.user) return requireLogin();
+		if (liking) return;
+		liking = true;
 		const wasLiked = article.isLiked;
-		article.isLiked = !wasLiked;
+		const desiredLiked = !wasLiked;
+		article.isLiked = desiredLiked;
 		article.likesCount += wasLiked ? -1 : 1;
 
 		try {
-			const res = await fetch(`/api/articles/${article._id}/like`, { method: 'POST' });
+			const res = await fetch(`/api/articles/${article._id}/like`, {
+				method: 'POST',
+				headers: { 'Content-Type': 'application/json' },
+				body: JSON.stringify({ liked: desiredLiked })
+			});
 			if (!res.ok) throw new Error(await readError(res, 'No se pudo actualizar el me gusta'));
+			const persisted = (await res.json()) as { isLiked: boolean; likesCount: number };
+			article.isLiked = persisted.isLiked;
+			article.likesCount = persisted.likesCount;
 		} catch (error) {
 			article.isLiked = wasLiked;
 			article.likesCount += wasLiked ? 1 : -1;
 			toast.error(error instanceof Error ? error.message : 'No se pudo actualizar el me gusta');
+		} finally {
+			liking = false;
 		}
 	}
 
@@ -123,6 +136,7 @@
 				<button
 					type="button"
 					onclick={handleLike}
+					disabled={liking}
 					aria-pressed={article.isLiked}
 					class="group inline-flex min-h-10 items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 text-sm font-semibold text-slate-700 transition-colors hover:border-red-200 hover:text-red-600 focus-visible:ring-2 focus-visible:ring-red-300 focus-visible:ring-offset-2 focus-visible:outline-none"
 					aria-label={article.isLiked ? 'Quitar me gusta' : 'Me gusta'}
