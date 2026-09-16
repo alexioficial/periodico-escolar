@@ -1,6 +1,18 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { getArticleLikeSummary, setPublishedArticleLike } from '../src/lib/server/articleLikes.ts';
+import {
+	getArticleLikeSummary,
+	getRequestedLikeState,
+	setPublishedArticleLike
+} from '../src/lib/server/articleLikes.ts';
+
+test('acepta únicamente un estado de like booleano en el body', () => {
+	assert.equal(getRequestedLikeState({ liked: true }), true);
+	assert.equal(getRequestedLikeState({ liked: false }), false);
+	for (const body of [null, [], {}, { liked: 'true' }, true]) {
+		assert.equal(getRequestedLikeState(body), null);
+	}
+});
 
 test('el resumen público expone conteo y estado, nunca IDs', () => {
 	assert.deepEqual(getArticleLikeSummary(['user-1', 'user-2'], 'user-2'), {

@@ -16,6 +16,12 @@ export function getArticleLikeSummary(likes: string[] | undefined, userId: strin
 	};
 }
 
+export function getRequestedLikeState(body: unknown): boolean | null {
+	if (body === null || typeof body !== 'object' || Array.isArray(body)) return null;
+	const liked = (body as Record<string, unknown>).liked;
+	return typeof liked === 'boolean' ? liked : null;
+}
+
 /**
  * Fija el estado deseado en una única operación atómica sobre un artículo publicado.
  * Retorna el estado persistido, o null cuando el artículo/entrada no es válido.

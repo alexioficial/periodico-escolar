@@ -1,6 +1,7 @@
 import { error, json } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { setLike } from '$lib/server/articles';
+import { getRequestedLikeState } from '$lib/server/articleLikes';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { LimitedJsonBodyError, readLimitedJsonBody } from '$lib/server/requestBody';
 
@@ -14,16 +15,17 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	});
 	if (!limit.ok) throw error(429, `Vuelve a intentarlo en ${limit.retryAfter}s.`);
 
-	let body: { liked?: unknown };
+	let body: unknown;
 	try {
-		body = (await readLimitedJsonBody(request, 256)) as typeof body;
+		body = await readLimitedJsonBody(request, 256);
 	} catch (cause) {
 		if (cause instanceof LimitedJsonBodyError) throw error(cause.status, cause.message);
 		throw cause;
 	}
-	if (typeof body.liked !== 'boolean') throw error(400, 'Estado de like inválido');
+	const liked = getRequestedLikeState(body);
+	if (liked === null) throw error(400, 'Estado de like inválido');
 
-	const result = await setLike(params.id, locals.user._id, body.liked);
+	const result = await setLike(params.id, locals.user._id, liked);
 	if (!result) throw error(404, 'Artículo no encontrado');
 	return json({ ok: true, ...result });
 };
