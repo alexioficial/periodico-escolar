@@ -47,9 +47,8 @@
 			baseLinks.push({ href: '/perfil/guardados', label: 'Guardados' });
 		}
 
-		baseLinks.push({ href: '/redaccion', label: 'Redacción' });
-
 		if (!user) return baseLinks;
+		baseLinks.push({ href: '/redaccion', label: 'Redacción' });
 
 		if (user.role === 'admin' || user.role === 'superadmin') {
 			baseLinks.push({ href: '/redaccion/verificar', label: 'Verificar' });
@@ -181,13 +180,6 @@
 						>
 							{loggingOut ? 'Cerrando…' : 'Cerrar sesión'}
 						</button>
-					{:else}
-						<a
-							href="/auth/login"
-							class="rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-slate-50 transition-colors hover:bg-slate-800"
-						>
-							Iniciar sesión
-						</a>
 					{/if}
 				</div>
 			</nav>

@@ -1,8 +1,7 @@
 import { ObjectId, type Db } from 'mongodb';
 import crypto from 'crypto';
-import { env } from '$env/dynamic/private';
 import { getDb } from './db';
-import { isQaAuthVersionActive } from './qaAuthBypass';
+import { sessionIsAllowed } from './sessionPolicy';
 
 const SESSIONS_COLLECTION = 'sessions';
 const SESSION_TTL_DAYS = 7;
@@ -64,14 +63,7 @@ export async function getUserBySessionToken(token: string) {
 	const tokenHash = hashToken(token);
 	const session = await sessions.findOne({ $or: [{ tokenHash }, { token }] });
 	if (!session) return null;
-	if (
-		session.qaAuthVersion &&
-		!isQaAuthVersionActive({
-			enabled: env.QA_AUTH_BYPASS_ENABLED,
-			configuredSecret: env.QA_AUTH_BYPASS_SECRET,
-			version: session.qaAuthVersion
-		})
-	) {
+	if (!sessionIsAllowed(session)) {
 		await sessions.deleteOne({ _id: session._id });
 		return null;
 	}

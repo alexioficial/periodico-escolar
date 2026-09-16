@@ -3,7 +3,7 @@ import { sequence } from '@sveltejs/kit/hooks';
 import { getUserBySessionToken } from '$lib/server/session';
 import { getViewUrl } from '$lib/server/storage';
 import { checkRateLimit } from '$lib/server/rateLimit';
-import { getPublicRateLimitPolicy } from '$lib/server/publicRateLimit';
+import { getPublicRateLimitPolicy, shouldApplyPublicRateLimit } from '$lib/server/publicRateLimit';
 
 async function resolvePictureUrl(picture: string | undefined | null): Promise<string | undefined> {
 	if (!picture) return undefined;
@@ -90,7 +90,9 @@ const securityHeadersHandle: Handle = async ({ event, resolve }) => {
 };
 
 const publicRateLimitHandle: Handle = async ({ event, resolve }) => {
-	if (event.request.method !== 'GET' || event.locals.user) return resolve(event);
+	if (!shouldApplyPublicRateLimit(event.request.method, event.url.pathname, !!event.locals.user)) {
+		return resolve(event);
+	}
 
 	const policy = getPublicRateLimitPolicy(event.url.pathname);
 	if (!policy) return resolve(event);

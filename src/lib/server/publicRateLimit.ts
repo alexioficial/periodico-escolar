@@ -14,13 +14,18 @@ export function getPublicRateLimitPolicy(pathname: string): PublicRateLimitPolic
 		return { scope: 'public-pages', limit: 120, windowMs: 5 * 60_000 };
 	}
 
-	if (pathname === '/auth/google' || pathname === '/auth/google/callback') {
-		return { scope: 'public-oauth', limit: 20, windowMs: 5 * 60_000 };
-	}
-
-	if (pathname === '/auth/login' || pathname.startsWith('/auth/m/')) {
-		return { scope: 'public-auth-pages', limit: 60, windowMs: 5 * 60_000 };
+	if (/^\/login\/[a-f\d]{24}$/i.test(pathname)) {
+		return { scope: 'direct-login', limit: 20, windowMs: 5 * 60_000 };
 	}
 
 	return null;
+}
+
+export function shouldApplyPublicRateLimit(
+	method: string,
+	pathname: string,
+	isAuthenticated: boolean
+): boolean {
+	if (method !== 'GET' || !getPublicRateLimitPolicy(pathname)) return false;
+	return !isAuthenticated || pathname.startsWith('/post/') || pathname.startsWith('/login/');
 }

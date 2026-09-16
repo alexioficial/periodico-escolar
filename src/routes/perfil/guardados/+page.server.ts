@@ -28,14 +28,11 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const enrichedArticles = articlesWithUrls.map((article) => {
 		const publicArticle = toPublicArticle(article);
-		const likes = article.likes ?? [];
 		return {
 			...publicArticle,
 			authorDisplay: publicArticle.authorUsername?.trim() || 'Autor',
 			category: categoryMap.get(publicArticle.categoryId) ?? 'Sin categoría',
-			isLiked: likes.includes(locals.user!._id),
-			isSaved: true,
-			likesCount: likes.length
+			isSaved: true
 		};
 	});
 

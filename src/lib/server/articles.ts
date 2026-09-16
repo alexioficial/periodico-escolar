@@ -1,6 +1,7 @@
 import { type Db, ObjectId } from 'mongodb';
 import { getDb } from './db';
 import { getViewUrl, getDownloadUrl } from './storage';
+import { incrementPublishedArticleView } from './articleViews';
 
 const ARTICLES_COLLECTION = 'articles';
 
@@ -38,7 +39,7 @@ export interface ArticleDoc {
 	media?: ArticleMedia[];
 	attachments?: ArticleAttachment[];
 
-	likes?: string[];
+	views: number;
 	savedBy?: string[];
 }
 
@@ -89,7 +90,7 @@ export const TITLE_MAX = 200;
 export const EXCERPT_MAX = 500;
 export const CONTENT_MAX = 50_000;
 
-export async function createArticle(article: Omit<ArticleDoc, '_id' | 'createdAt'>) {
+export async function createArticle(article: Omit<ArticleDoc, '_id' | 'createdAt' | 'views'>) {
 	if (typeof article.title !== 'string' || article.title.length > TITLE_MAX) {
 		throw new Error(`El título supera los ${TITLE_MAX} caracteres`);
 	}
@@ -106,7 +107,7 @@ export async function createArticle(article: Omit<ArticleDoc, '_id' | 'createdAt
 	const result = await collection.insertOne({
 		...article,
 		createdAt: new Date(),
-		likes: [],
+		views: 0,
 		savedBy: []
 	});
 
@@ -203,26 +204,10 @@ export async function getArticleById(id: string) {
 	return collection.findOne({ _id: new ObjectId(id) });
 }
 
-export async function toggleLike(articleId: string, userId: string) {
-	if (typeof articleId !== 'string' || !ObjectId.isValid(articleId)) return;
-	if (typeof userId !== 'string' || !userId) return;
-
+export async function recordPublishedArticleView(articleId: string): Promise<boolean> {
+	if (!/^[a-f\d]{24}$/i.test(articleId)) return false;
 	const db: Db = await getDb();
-	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
-	const _id = new ObjectId(articleId);
-	// Sólo permitimos like sobre artículos publicados — drafts/pending/rejected
-	// no son alcanzables por nadie excepto su autor o los moderadores.
-	const article = await collection.findOne({ _id, status: 'published' });
-
-	if (!article) return;
-
-	const isLiked = (article.likes ?? []).includes(userId);
-
-	if (isLiked) {
-		await collection.updateOne({ _id, status: 'published' }, { $pull: { likes: userId } });
-	} else {
-		await collection.updateOne({ _id, status: 'published' }, { $addToSet: { likes: userId } });
-	}
+	return incrementPublishedArticleView(db.collection<ArticleDoc>(ARTICLES_COLLECTION), articleId);
 }
 
 export async function toggleSave(articleId: string, userId: string) {
