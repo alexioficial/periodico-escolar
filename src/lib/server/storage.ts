@@ -247,7 +247,10 @@ export async function getDownloadUrl(
 /**
  * Elimina un objeto. No lanza si no existe.
  */
-export async function deleteFile(key: string): Promise<void> {
+export async function deleteFile(
+	key: string,
+	options: { throwOnError?: boolean } = {}
+): Promise<void> {
 	signedUrlCache.delete(key);
 	try {
 		await getClient().send(
@@ -258,5 +261,6 @@ export async function deleteFile(key: string): Promise<void> {
 		);
 	} catch (error) {
 		console.error('Error deleting file from S3:', error);
+		if (options.throwOnError) throw error;
 	}
 }

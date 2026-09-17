@@ -19,6 +19,8 @@ import {
 	parseSubmittedArticleContent,
 	toArticleContentPresentation
 } from '$lib/server/articleRichText';
+import { handleOwnArticleMutation } from '$lib/server/ownArticleRequest';
+import { ownArticleDependencies } from '$lib/server/ownArticleDependencies';
 
 const ALLOWED_ATTACHMENT_MIMES = new Set([
 	'application/pdf',
@@ -62,6 +64,26 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 };
 
 export const actions: Actions = {
+	delete: async ({ request, locals }) => {
+		if (!locals.user) return fail(401, { message: 'No autorizado' });
+		const form = await request.formData();
+		const id = form.get('id');
+		if (typeof id !== 'string') return fail(404, { message: 'Artículo no encontrado' });
+		try {
+			const result = await handleOwnArticleMutation(
+				request,
+				locals.user,
+				id,
+				'delete',
+				await ownArticleDependencies()
+			);
+			if (result.status !== 200) return fail(result.status, { message: result.message, id });
+			return { deleted: true, message: result.message, cleanupFailed: result.cleanupFailed };
+		} catch (error) {
+			console.error(error);
+			return fail(500, { message: 'No se pudo eliminar el artículo. Intenta de nuevo.', id });
+		}
+	},
 	create: async ({ request, locals }) => {
 		if (!locals.user) {
 			return fail(401, { message: 'No autorizado' });

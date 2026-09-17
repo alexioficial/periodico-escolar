@@ -5,8 +5,9 @@
 	import { toast } from '$lib/toast';
 	import FileUploader from '$lib/components/FileUploader.svelte';
 	import ArticleEditor from '$lib/components/ArticleEditor.svelte';
+	import OwnArticleDelete from '$lib/components/OwnArticleDelete.svelte';
 	import { formatArticleDate } from '$lib/articlePresentation';
-	let { data } = $props();
+	let { data, form } = $props();
 
 	let showForm = $state(false);
 	let isSaving = $state(false);
@@ -57,6 +58,14 @@
 </svelte:head>
 
 <section class="space-y-8">
+	{#if form && 'message' in form}
+		<p
+			role={'deleted' in form && form.deleted ? 'status' : 'alert'}
+			class="rounded-lg border border-slate-200 bg-white p-4 text-sm text-slate-800"
+		>
+			{form.message}
+		</p>
+	{/if}
 	<header class="flex items-center justify-between">
 		<div class="space-y-1">
 			<p class="text-xs tracking-[0.25em] text-slate-500 uppercase">Panel de redacción</p>
@@ -193,8 +202,8 @@
 									{article.category}
 								</span>
 								<span
-									class:text-green-600={article.status === 'published'}
-									class:text-amber-600={article.status === 'pending'}
+									class:text-green-700={article.status === 'published'}
+									class:text-amber-700={article.status === 'pending'}
 									class:text-red-600={article.status === 'rejected'}
 									class="text-xs font-medium capitalize"
 								>
@@ -219,6 +228,14 @@
 						</div>
 						<div class="mt-4 border-t border-slate-100 pt-4 text-xs text-slate-500">
 							{formatArticleDate(article.createdAt)}
+							<div class="mt-2 space-y-1">
+								<a
+									href={`/redaccion/${article._id}/editar`}
+									class="inline-flex min-h-11 items-center rounded-lg px-3 py-2 text-sm font-medium text-indigo-700 hover:bg-indigo-50"
+									>Editar</a
+								>
+								<OwnArticleDelete id={article._id.toString()} title={article.title} />
+							</div>
 						</div>
 					</article>
 				{/each}

@@ -61,7 +61,18 @@ export { toast } from './src/lib/toast.ts';`,
 				name: 'svelte-dom-test',
 				setup(builder) {
 					builder.onResolve({ filter: /^\$lib\// }, (args) => ({
-						path: resolve('src/lib', args.path.slice(5)) + '.ts'
+						path:
+							resolve('src/lib', args.path.slice(5)) + (args.path.endsWith('.svelte') ? '' : '.ts')
+					}));
+					builder.onResolve({ filter: /^\$app\/forms$/ }, () => ({
+						path: 'forms',
+						namespace: 'forms-test'
+					}));
+					builder.onLoad({ filter: /.*/, namespace: 'forms-test' }, () => ({
+						contents: `export function enhance(form, submit) {
+ form.__submit = submit;
+ return { destroy() { delete form.__submit; } };
+}`
 					}));
 					// This SvelteKit-only refresh is irrelevant to clicking or editing links.
 					builder.onResolve({ filter: /^\$app\/navigation$/ }, () => ({

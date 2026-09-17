@@ -312,7 +312,7 @@
 			<button
 				type="button"
 				onclick={() => fileInputRef?.click()}
-				class="flex aspect-square w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white text-slate-400 transition-all hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600"
+				class="flex aspect-square w-full flex-col items-center justify-center rounded-lg border-2 border-dashed border-slate-300 bg-white text-slate-500 transition-all hover:border-indigo-500 hover:bg-indigo-50 hover:text-indigo-600"
 			>
 				<svg
 					xmlns="http://www.w3.org/2000/svg"

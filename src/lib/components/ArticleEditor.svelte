@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
+	import { onMount, untrack } from 'svelte';
 	import { Editor } from '@tiptap/core';
 	import {
 		articleEditorExtensions,
@@ -10,12 +10,20 @@
 	import { lockBodyScroll, unlockBodyScroll } from '$lib/scrollLock';
 	let {
 		api = $bindable(null),
-		disabled = false
-	}: { api?: { clear: () => void } | null; disabled?: boolean } = $props();
+		disabled = false,
+		initialContentHtml = '',
+		initialContent = ''
+	}: {
+		api?: { clear: () => void } | null;
+		disabled?: boolean;
+		/** Only server-produced, allowlisted article HTML. Never user-submitted HTML. */
+		initialContentHtml?: string;
+		initialContent?: string;
+	} = $props();
 	let host: HTMLDivElement;
 	let editor = $state.raw<Editor | null>(null);
 	let revision = $state(0);
-	let plain = $state('');
+	let plain = $state(untrack(() => initialContent));
 	let rich = $state('');
 	let linkOpen = $state(false);
 	let linkUrl = $state('');
@@ -208,12 +216,26 @@
 		const instance = new Editor({
 			element: host,
 			extensions: articleEditorExtensions(),
-			content: plain
-				? {
-						type: 'doc',
-						content: [{ type: 'paragraph', content: [{ type: 'text', text: plain }] }]
-					}
-				: '',
+			content:
+				initialContentHtml ||
+				(plain
+					? {
+							type: 'doc',
+							content: [
+								{
+									type: 'paragraph',
+									content: plain
+										.replace(/\r\n?/g, '\n')
+										.split('\n')
+										.flatMap((line, index) => [
+											...(index ? [{ type: 'hardBreak' }] : []),
+											...(line ? [{ type: 'text', text: line }] : [])
+										])
+								}
+							]
+						}
+					: ''),
+			parseOptions: { preserveWhitespace: 'full' },
 			editorProps: {
 				attributes: {
 					role: 'textbox',
