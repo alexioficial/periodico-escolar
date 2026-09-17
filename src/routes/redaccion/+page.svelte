@@ -4,6 +4,7 @@
 	import type { SubmitFunction } from '@sveltejs/kit';
 	import { toast } from '$lib/toast';
 	import FileUploader from '$lib/components/FileUploader.svelte';
+	import ArticleEditor from '$lib/components/ArticleEditor.svelte';
 	import { formatArticleDate } from '$lib/articlePresentation';
 	let { data } = $props();
 
@@ -11,6 +12,7 @@
 	let isSaving = $state(false);
 	let mediaApi = $state<{ clear: () => void } | null>(null);
 	let attachmentsApi = $state<{ clear: () => void } | null>(null);
+	let editorApi = $state<{ clear: () => void } | null>(null);
 
 	const isSuperadmin = $derived(data.user.role === 'superadmin');
 	const isStaff = $derived(['admin', 'superadmin'].includes(data.user.role));
@@ -32,6 +34,7 @@
 				);
 				mediaApi?.clear();
 				attachmentsApi?.clear();
+				editorApi?.clear();
 				await update({ reset: true });
 				showForm = false;
 			} else if (result.type === 'failure') {
@@ -137,16 +140,7 @@
 					bind:api={attachmentsApi}
 				/>
 
-				<div class="space-y-2">
-					<label for="content" class="text-sm font-medium text-slate-700">Contenido</label>
-					<textarea
-						name="content"
-						id="content"
-						rows="10"
-						required
-						class="w-full rounded-md border-slate-300 shadow-sm focus:border-slate-500 focus:ring-slate-500"
-					></textarea>
-				</div>
+				<ArticleEditor bind:api={editorApi} disabled={isSaving} />
 
 				<div class="flex justify-end">
 					<button

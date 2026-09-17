@@ -11,6 +11,7 @@
 	import ConfirmDialog from '$lib/components/ConfirmDialog.svelte';
 	import ShareDialog from '$lib/components/ShareDialog.svelte';
 	import MobileMenu from '$lib/components/MobileMenu.svelte';
+	import ExternalLinkDialog from '$lib/components/ExternalLinkDialog.svelte';
 
 	let { children, data } = $props();
 
@@ -200,6 +201,7 @@
 	<ToastHost />
 	<ConfirmDialog />
 	<ShareDialog />
+	<ExternalLinkDialog user={page.data.user} />
 	<MobileMenu
 		open={mobileMenuOpen}
 		user={data.user}

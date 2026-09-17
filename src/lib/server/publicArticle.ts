@@ -1,4 +1,5 @@
 import type { ArticleWithUrls } from './articles';
+import { renderArticleContent } from './articleRichText';
 
 /**
  * DTO público explícito. Mantener una whitelist evita que campos privados
@@ -10,6 +11,7 @@ export function toPublicArticle(article: ArticleWithUrls) {
 		_id: article._id.toString(),
 		title: article.title,
 		content: article.content,
+		contentHtml: renderArticleContent(article.content, article.contentRich),
 		excerpt: article.excerpt,
 		categoryId: article.categoryId,
 		authorUsername: article.authorUsername,

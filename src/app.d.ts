@@ -9,6 +9,7 @@ declare global {
 				username?: string;
 				name?: string;
 				picture?: string;
+				trustedDomains: string[];
 			} | null;
 		}
 	}

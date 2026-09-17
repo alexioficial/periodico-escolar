@@ -5,7 +5,6 @@ import {
 	getArticlesByAuthor,
 	TITLE_MAX,
 	EXCERPT_MAX,
-	CONTENT_MAX,
 	type ArticleMedia,
 	type ArticleAttachment
 } from '$lib/server/articles';
@@ -16,6 +15,10 @@ import { getDb } from '$lib/server/db';
 import { ObjectId } from 'mongodb';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { loginPath } from '$lib/server/redirect';
+import {
+	parseSubmittedArticleContent,
+	toArticleContentPresentation
+} from '$lib/server/articleRichText';
 
 const ALLOWED_ATTACHMENT_MIMES = new Set([
 	'application/pdf',
@@ -47,7 +50,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 
 	const categoryMap = new Map(categories.map((c) => [c._id!.toString(), c.name]));
 	const enrichedArticles = articles.map((a) => ({
-		...a,
+		...toArticleContentPresentation(a),
 		category: categoryMap.get(a.categoryId) ?? 'Sin categoría'
 	}));
 
@@ -92,7 +95,18 @@ export const actions: Actions = {
 
 		const formData = await request.formData();
 		const title = (formData.get('title') as string)?.trim();
-		const content = (formData.get('content') as string)?.trim();
+		let articleContent: ReturnType<typeof parseSubmittedArticleContent>;
+		try {
+			articleContent = parseSubmittedArticleContent(
+				formData.get('content'),
+				formData.get('contentRich')
+			);
+		} catch (error) {
+			return fail(400, {
+				message: error instanceof Error ? error.message : 'El contenido no es válido'
+			});
+		}
+		const content = articleContent.content;
 		const categoryId = (formData.get('categoryId') as string)?.trim();
 		const excerpt = (formData.get('excerpt') as string)?.trim();
 
@@ -105,9 +119,6 @@ export const actions: Actions = {
 		}
 		if (excerpt.length > EXCERPT_MAX) {
 			return fail(400, { message: `El extracto no puede superar los ${EXCERPT_MAX} caracteres` });
-		}
-		if (content.length > CONTENT_MAX) {
-			return fail(400, { message: `El contenido no puede superar los ${CONTENT_MAX} caracteres` });
 		}
 
 		try {
@@ -212,6 +223,7 @@ export const actions: Actions = {
 			await createArticle({
 				title,
 				content,
+				contentRich: articleContent.contentRich,
 				categoryId,
 				excerpt,
 				authorId: locals.user._id,

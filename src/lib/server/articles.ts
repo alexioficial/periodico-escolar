@@ -3,6 +3,12 @@ import { getDb } from './db';
 import { getViewUrl, getDownloadUrl } from './storage';
 import { incrementPublishedArticleView } from './articleViews';
 import { setPublishedArticleLike } from './articleLikes';
+import {
+	ARTICLE_RICH_TEXT_MAX_TEXT,
+	prepareArticleContent,
+	stripClientArticleHtml,
+	type StoredArticleRichText
+} from './articleRichText';
 
 const ARTICLES_COLLECTION = 'articles';
 
@@ -23,6 +29,7 @@ export interface ArticleDoc {
 	_id?: ObjectId;
 	title: string;
 	content: string;
+	contentRich?: StoredArticleRichText;
 	excerpt: string;
 	categoryId: string;
 	authorId: string;
@@ -90,7 +97,7 @@ export async function enrichArticlesWithUrls<T extends ArticleDoc>(
 // Topes de longitud para no inflar la DB ni romper la UI con contenido enorme.
 export const TITLE_MAX = 200;
 export const EXCERPT_MAX = 500;
-export const CONTENT_MAX = 50_000;
+export const CONTENT_MAX = ARTICLE_RICH_TEXT_MAX_TEXT;
 
 export async function createArticle(
 	article: Omit<ArticleDoc, '_id' | 'createdAt' | 'views' | 'likes' | 'savedBy'>
@@ -101,15 +108,18 @@ export async function createArticle(
 	if (typeof article.excerpt !== 'string' || article.excerpt.length > EXCERPT_MAX) {
 		throw new Error(`El extracto supera los ${EXCERPT_MAX} caracteres`);
 	}
-	if (typeof article.content !== 'string' || article.content.length > CONTENT_MAX) {
-		throw new Error(`El contenido supera los ${CONTENT_MAX} caracteres`);
-	}
+	// Esta validación es deliberadamente redundante con la action: createArticle
+	// es la frontera de persistencia y nunca confía en datos ya validados.
+	const { content, contentRich, ...metadata } = article;
+	const safeContent = prepareArticleContent(content, contentRich);
+	const safeMetadata = stripClientArticleHtml(metadata);
 
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
 
 	const result = await collection.insertOne({
-		...article,
+		...safeMetadata,
+		...safeContent,
 		createdAt: new Date(),
 		views: 0,
 		likes: [],

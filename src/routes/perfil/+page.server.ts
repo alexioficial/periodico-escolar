@@ -9,6 +9,7 @@ import {
 } from '$lib/server/auth';
 import { saveFile, deleteFile, getViewUrl } from '$lib/server/storage';
 import { loginPath } from '$lib/server/redirect';
+import { sanitizeTrustedDomains } from '$lib/trustedDomains';
 
 const MAX_AVATAR_MB = 4.5;
 
@@ -42,7 +43,8 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 			name: fullUser.name ?? '',
 			pictureUrl,
 			provider: fullUser.provider,
-			emailVerified: fullUser.emailVerified === true
+			emailVerified: fullUser.emailVerified === true,
+			trustedDomains: sanitizeTrustedDomains(fullUser.trustedDomains)
 		}
 	};
 };

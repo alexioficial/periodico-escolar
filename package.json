@@ -14,7 +14,8 @@
 		"test": "tsx --test tests/*.test.ts",
 		"lint": "prettier --check . && eslint .",
 		"format": "prettier --write .",
-		"create:superadmin": "tsx scripts/createSuperadmin.ts"
+		"create:superadmin": "tsx scripts/createSuperadmin.ts",
+		"smoke:rich-text": "tsx scripts/smokeRichText.ts"
 	},
 	"devDependencies": {
 		"@eslint/compat": "^2.0.2",
@@ -25,12 +26,16 @@
 		"@tailwindcss/forms": "^0.5.11",
 		"@tailwindcss/typography": "^0.5.19",
 		"@tailwindcss/vite": "^4.1.18",
+		"@types/jsdom": "^30.0.0",
 		"@types/node": "^24",
 		"dotenv": "^17.4.2",
+		"esbuild": "^0.27.3",
 		"eslint": "^9.39.2",
 		"eslint-config-prettier": "^10.1.8",
 		"eslint-plugin-svelte": "^3.14.0",
 		"globals": "^17.3.0",
+		"jsdom": "^30.0.1",
+		"mongodb-memory-server": "^11.2.0",
 		"prettier": "^3.8.1",
 		"prettier-plugin-svelte": "^3.4.1",
 		"prettier-plugin-tailwindcss": "^0.7.2",
@@ -45,6 +50,11 @@
 	"dependencies": {
 		"@aws-sdk/client-s3": "^3.1045.0",
 		"@aws-sdk/s3-request-presigner": "^3.1045.0",
+		"@tiptap/core": "^3.31.3",
+		"@tiptap/extension-link": "^3.31.3",
+		"@tiptap/extension-placeholder": "^3.31.3",
+		"@tiptap/pm": "^3.31.3",
+		"@tiptap/starter-kit": "^3.31.3",
 		"file-type": "^22.0.1",
 		"mongodb": "^7.1.0"
 	}

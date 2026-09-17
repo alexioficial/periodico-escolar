@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ArticleContent from '$lib/components/ArticleContent.svelte';
 	import { untrack } from 'svelte';
 	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
@@ -177,9 +178,7 @@
 						<h3 class="mb-2 text-xl font-bold text-slate-900">
 							{article.title}
 						</h3>
-						<p class="mb-4 text-sm whitespace-pre-wrap text-slate-600">
-							{article.content}
-						</p>
+						<ArticleContent content={article.content} contentHtml={article.contentHtml} compact />
 
 						<!-- Attachments -->
 						{#if article.attachments && article.attachments.length > 0}

@@ -4,6 +4,7 @@ import { getUserBySessionToken } from '$lib/server/session';
 import { getViewUrl } from '$lib/server/storage';
 import { checkRateLimit } from '$lib/server/rateLimit';
 import { getPublicRateLimitPolicy, shouldApplyPublicRateLimit } from '$lib/server/publicRateLimit';
+import { sanitizeTrustedDomains } from '$lib/trustedDomains';
 
 async function resolvePictureUrl(picture: string | undefined | null): Promise<string | undefined> {
 	if (!picture) return undefined;
@@ -32,7 +33,8 @@ const sessionHandle: Handle = async ({ event, resolve }) => {
 						role: user.role || 'user',
 						username: user.username,
 						name: user.name,
-						picture: await resolvePictureUrl(user.picture)
+						picture: await resolvePictureUrl(user.picture),
+						trustedDomains: sanitizeTrustedDomains(user.trustedDomains)
 					}
 				: null;
 		} catch (error) {

@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ArticleContent from '$lib/components/ArticleContent.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
@@ -123,8 +124,8 @@
 						<h3 class="mb-2 text-xl font-bold text-slate-900">{article.title}</h3>
 						<p class="mb-4 text-sm text-slate-600">{article.excerpt}</p>
 
-						<div class="mb-6 rounded-lg bg-slate-50 p-4 text-sm whitespace-pre-wrap text-slate-700">
-							{article.content}
+						<div class="mb-6 rounded-lg bg-slate-50 p-4">
+							<ArticleContent content={article.content} contentHtml={article.contentHtml} compact />
 						</div>
 
 						{#if article.media && article.media.length > 0}

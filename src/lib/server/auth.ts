@@ -17,6 +17,7 @@ interface UserDoc {
 	picture?: string;
 	emailVerified?: boolean;
 	role: 'user' | 'admin' | 'superadmin';
+	trustedDomains?: string[];
 }
 
 export class UsernameTakenError extends Error {
