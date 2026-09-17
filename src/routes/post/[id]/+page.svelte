@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ArticleContent from '$lib/components/ArticleContent.svelte';
 	import { goto } from '$app/navigation';
 	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
@@ -261,9 +262,7 @@
 	{/if}
 
 	<div class="mx-auto max-w-3xl pt-10 sm:pt-14">
-		<p class="text-lg leading-8 whitespace-pre-wrap text-slate-700 sm:text-xl sm:leading-9">
-			{article.content}
-		</p>
+		<ArticleContent content={article.content} contentHtml={article.contentHtml} />
 
 		{#if article.attachments && article.attachments.length > 0}
 			<aside class="mt-12 border-y border-slate-200 py-7" aria-labelledby="attachments-title">

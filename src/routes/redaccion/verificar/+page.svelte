@@ -1,4 +1,5 @@
 <script lang="ts">
+	import ArticleContent from '$lib/components/ArticleContent.svelte';
 	import { invalidateAll } from '$app/navigation';
 	import { brandTitle } from '$lib/brand';
 	import { toast } from '$lib/toast';
@@ -9,11 +10,13 @@
 	// Manejo del flujo de "rechazar con motivo": al apretar el botón, abrimos
 	// un dialog con textarea. El submit lleva el motivo al servidor.
 	let rejectingId = $state<string | null>(null);
+	let rejectingRevision = $state(0);
 	let rejectReason = $state('');
 	let submittingId = $state<string | null>(null);
 
 	function openReject(id: string) {
 		rejectingId = id;
+		rejectingRevision = data.articles.find((article) => article._id === id)?.revision ?? 0;
 		rejectReason = '';
 	}
 
@@ -38,10 +41,14 @@
 			const res = await fetch(`/api/articles/${id}/moderate`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ decision: 'approve' })
+				body: JSON.stringify({
+					decision: 'approve',
+					revision: data.articles.find((article) => article._id === id)?.revision ?? 0
+				})
 			});
 			if (!res.ok) {
 				toast.error('No se pudo aprobar', await readError(res, 'Error al aprobar el artículo'));
+				if (res.status === 409) await invalidateAll();
 				return;
 			}
 			toast.success('Artículo publicado');
@@ -61,10 +68,18 @@
 			const res = await fetch(`/api/articles/${id}/moderate`, {
 				method: 'POST',
 				headers: { 'Content-Type': 'application/json' },
-				body: JSON.stringify({ decision: 'reject', reason: rejectReason })
+				body: JSON.stringify({
+					decision: 'reject',
+					reason: rejectReason,
+					revision: rejectingRevision
+				})
 			});
 			if (!res.ok) {
 				toast.error('No se pudo rechazar', await readError(res, 'Error al rechazar el artículo'));
+				if (res.status === 409) {
+					closeReject();
+					await invalidateAll();
+				}
 				return;
 			}
 			toast.success('Artículo rechazado');
@@ -123,8 +138,8 @@
 						<h3 class="mb-2 text-xl font-bold text-slate-900">{article.title}</h3>
 						<p class="mb-4 text-sm text-slate-600">{article.excerpt}</p>
 
-						<div class="mb-6 rounded-lg bg-slate-50 p-4 text-sm whitespace-pre-wrap text-slate-700">
-							{article.content}
+						<div class="mb-6 rounded-lg bg-slate-50 p-4">
+							<ArticleContent content={article.content} contentHtml={article.contentHtml} compact />
 						</div>
 
 						{#if article.media && article.media.length > 0}

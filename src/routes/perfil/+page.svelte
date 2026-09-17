@@ -5,6 +5,7 @@
 	import { invalidateAll } from '$app/navigation';
 	import { toast } from '$lib/toast';
 	import AvatarCropper from '$lib/components/AvatarCropper.svelte';
+	import TrustedSites from '$lib/components/TrustedSites.svelte';
 
 	let { data } = $props();
 
@@ -281,6 +282,7 @@
 			</button>
 		</div>
 	</form>
+	<TrustedSites domains={data.profile.trustedDomains} />
 </section>
 
 <AvatarCropper

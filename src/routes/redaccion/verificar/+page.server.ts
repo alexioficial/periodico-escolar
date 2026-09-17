@@ -4,6 +4,7 @@ import { getPendingArticles, enrichArticlesWithUrls } from '$lib/server/articles
 import { getCategories } from '$lib/server/categories';
 import { serialize } from '$lib/server/serialize';
 import { loginPath } from '$lib/server/redirect';
+import { toArticleContentPresentation } from '$lib/server/articleRichText';
 
 export const load: PageServerLoad = async ({ locals, url }) => {
 	if (!locals.user) {
@@ -20,7 +21,7 @@ export const load: PageServerLoad = async ({ locals, url }) => {
 	const categoryMap = new Map(categories.map((c) => [c._id!.toString(), c.name]));
 
 	const enrichedArticles = articlesWithUrls.map((article) => ({
-		...article,
+		...toArticleContentPresentation(article),
 		_id: article._id!.toString(),
 		category: categoryMap.get(article.categoryId) ?? 'Sin categoría'
 	}));

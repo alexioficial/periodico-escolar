@@ -3,6 +3,13 @@ import { getDb } from './db';
 import { getViewUrl, getDownloadUrl } from './storage';
 import { incrementPublishedArticleView } from './articleViews';
 import { setPublishedArticleLike } from './articleLikes';
+import { reviewArticleRevision } from './ownArticleModeration';
+import {
+	ARTICLE_RICH_TEXT_MAX_TEXT,
+	prepareArticleContent,
+	stripClientArticleHtml,
+	type StoredArticleRichText
+} from './articleRichText';
 
 const ARTICLES_COLLECTION = 'articles';
 
@@ -23,6 +30,7 @@ export interface ArticleDoc {
 	_id?: ObjectId;
 	title: string;
 	content: string;
+	contentRich?: StoredArticleRichText;
 	excerpt: string;
 	categoryId: string;
 	authorId: string;
@@ -32,6 +40,8 @@ export interface ArticleDoc {
 	authorUsername?: string;
 	status: 'draft' | 'pending' | 'published' | 'rejected';
 	createdAt: Date;
+	updatedAt?: Date;
+	revision?: number;
 	publishedAt?: Date;
 	// Motivo opcional registrado por el moderador al rechazar. Aparece como
 	// feedback en el panel de redacción del autor.
@@ -90,7 +100,7 @@ export async function enrichArticlesWithUrls<T extends ArticleDoc>(
 // Topes de longitud para no inflar la DB ni romper la UI con contenido enorme.
 export const TITLE_MAX = 200;
 export const EXCERPT_MAX = 500;
-export const CONTENT_MAX = 50_000;
+export const CONTENT_MAX = ARTICLE_RICH_TEXT_MAX_TEXT;
 
 export async function createArticle(
 	article: Omit<ArticleDoc, '_id' | 'createdAt' | 'views' | 'likes' | 'savedBy'>
@@ -101,15 +111,18 @@ export async function createArticle(
 	if (typeof article.excerpt !== 'string' || article.excerpt.length > EXCERPT_MAX) {
 		throw new Error(`El extracto supera los ${EXCERPT_MAX} caracteres`);
 	}
-	if (typeof article.content !== 'string' || article.content.length > CONTENT_MAX) {
-		throw new Error(`El contenido supera los ${CONTENT_MAX} caracteres`);
-	}
+	// Esta validación es deliberadamente redundante con la action: createArticle
+	// es la frontera de persistencia y nunca confía en datos ya validados.
+	const { content, contentRich, ...metadata } = article;
+	const safeContent = prepareArticleContent(content, contentRich);
+	const safeMetadata = stripClientArticleHtml(metadata);
 
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
 
 	const result = await collection.insertOne({
-		...article,
+		...safeMetadata,
+		...safeContent,
 		createdAt: new Date(),
 		views: 0,
 		likes: [],
@@ -177,29 +190,22 @@ const REVIEWABLE_STATUS = new Set<ArticleDoc['status']>(['published', 'rejected'
 export async function updateArticleStatus(
 	id: string,
 	status: ArticleDoc['status'],
-	rejectionReason?: string
+	rejectionReason?: string,
+	revision?: number
 ): Promise<boolean> {
 	if (typeof id !== 'string' || !ObjectId.isValid(id)) return false;
 	if (!REVIEWABLE_STATUS.has(status)) return false;
 
 	const db: Db = await getDb();
 	const collection = db.collection<ArticleDoc>(ARTICLES_COLLECTION);
-
-	const update: { status: ArticleDoc['status']; publishedAt?: Date; rejectionReason?: string } = {
-		status
-	};
-	if (status === 'published') {
-		update.publishedAt = new Date();
-	}
-	if (status === 'rejected' && typeof rejectionReason === 'string' && rejectionReason.trim()) {
-		update.rejectionReason = rejectionReason.trim().slice(0, 500);
-	}
-
-	const result = await collection.updateOne(
-		{ _id: new ObjectId(id), status: 'pending' },
-		{ $set: update }
+	if (revision === undefined) return false;
+	return reviewArticleRevision(
+		collection,
+		id,
+		status as 'published' | 'rejected',
+		revision,
+		rejectionReason
 	);
-	return result.matchedCount === 1;
 }
 
 export async function getArticleById(id: string) {

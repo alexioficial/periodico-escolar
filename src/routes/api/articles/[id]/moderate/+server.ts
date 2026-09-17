@@ -1,4 +1,4 @@
-import { json, error } from '@sveltejs/kit';
+import { json, error, isHttpError } from '@sveltejs/kit';
 import type { RequestHandler } from './$types';
 import { updateArticleStatus } from '$lib/server/articles';
 
@@ -17,6 +17,9 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 	if (decision !== 'approve' && decision !== 'reject') {
 		throw error(400, 'Decisión inválida');
 	}
+	const revision = (body as { revision?: unknown })?.revision;
+	if (typeof revision !== 'number' || !Number.isSafeInteger(revision) || revision < 0)
+		throw error(400, 'Versión de revisión inválida');
 
 	let reason: string | undefined;
 	if (decision === 'reject') {
@@ -31,12 +34,17 @@ export const POST: RequestHandler = async ({ locals, params, request }) => {
 		const ok = await updateArticleStatus(
 			params.id,
 			decision === 'approve' ? 'published' : 'rejected',
-			reason
+			reason,
+			revision
 		);
-		if (!ok) throw error(409, 'El artículo ya no está pendiente de revisión');
+		if (!ok)
+			throw error(
+				409,
+				'El artículo cambió o ya no está pendiente. Recarga y revisa la versión actual.'
+			);
 		return json({ ok: true });
 	} catch (e) {
-		if (e instanceof Error && 'status' in e) throw e;
+		if (isHttpError(e)) throw e;
 		console.error(e);
 		throw error(
 			500,
